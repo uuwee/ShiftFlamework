@@ -1,6 +1,11 @@
 #include <GLFW/glfw3.h>
 #include <webgpu/webgpu_cpp.h>
-#include <webgpu/webgpu_glfw.h>
+
+#if defined(__EMSCRIPTEN__)
+    #include <emscripten/emscripten.h>
+#else
+    #include <webgpu/webgpu_glfw.h>
+#endif
 
 #include <iostream>
 #include <memory>
@@ -87,15 +92,28 @@ void Start() {
   GLFWwindow* window =
       glfwCreateWindow(kWidth, kHeight, "WebGPU window", nullptr, nullptr);
 
-  wgpu::Surface surface = wgpu::glfw::CreateSurfaceForWindow(instance, window);
+#if defined(__EMSCRIPTEN__)
+  wgpu::SurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
+  canvasDesc.selector = "#canvas";
+
+  wgpu::SurfaceDescriptor surfaceDesc{.nextInChain = &canvasDesc};
+  wgpu::Surface surface = instance.CreateSurface(&surfaceDesc);
+#else
+  wgpu::Surface surface =
+      wgpu::glfw::CreateSurfaceForWindow(instance, window);
+#endif
 
   InitGraphics(surface);
 
+#if defined(__EMSCRIPTEN__)
+  emscripten_set_main_loop(Render, 0, false);
+#else
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
     Render();
     swapChain.Present();
   }
+#endif
 }
 
 void GetDevice(void (*callback)(wgpu::Device)) {
