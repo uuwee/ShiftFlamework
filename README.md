@@ -21,9 +21,15 @@
   https://emscripten.org/docs/getting_started/downloads.html
 
   に従ってインストールする
+
+### Pull
 ```
 git pull --force
 git submodule init
 git submodule update
+
+cd .\lib\dawn
+cp scripts\standalone.gclient .glient
+gclient sync
 ```
 
