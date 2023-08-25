@@ -12,9 +12,7 @@ git submodule init
 git submodule update
 ```
 
-## ビルド
-#### ネイティブ版(Windows, Mac)
-google depot toolのインストール
+### google depot toolのインストール
 
 https://www.chromium.org/developers/how-tos/depottools/#installing
 
@@ -26,12 +24,25 @@ cp scripts/standalone.gclient .gclient
 gclient sync
 ```	
 
-#### Web版
-
-emscriptenのインストール
+### emscriptenのインストール
 
 https://emscripten.org/docs/getting_started/downloads.html
 
 に従ってインストールする
 
-
+## ビルド、実行
+### windows
+リポジトリのディレクトリ直下で
+```
+.\build\win.bat
+.\out\win\Debug\game.exe
+```
+### web
+リポジトリのディレクトリ直下で
+```
+emcmake cmake -B out\web
+cmake --build .\out\web
+cd .\out\web
+python -m http.server 8080
+```
+ブラウザで http://localhost:8080/game.html 
