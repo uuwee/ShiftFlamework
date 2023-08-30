@@ -10,6 +10,7 @@
 #include <webgpu/webgpu_glfw.h>
 #endif
 
+#include "../include/vector3.hpp"
 wgpu::Instance instance = nullptr;
 wgpu::Device device = nullptr;
 
