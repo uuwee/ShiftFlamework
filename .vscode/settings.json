@@ -1,6 +1,9 @@
 {
     "files.associations": {
         "iostream": "cpp",
-        "memory": "cpp"
+        "memory": "cpp",
+        "future": "cpp",
+        "regex": "cpp",
+        "system_error": "cpp"
     }
 }
