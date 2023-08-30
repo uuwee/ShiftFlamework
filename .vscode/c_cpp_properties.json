@@ -4,7 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/lib/dawn/**"
+                "${workspaceFolder}/lib/dawn/**",
+                "${workspaceFolder}/include"
             ],
             "defines": [
                 "_DEBUG",
