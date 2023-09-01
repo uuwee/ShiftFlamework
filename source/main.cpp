@@ -3,12 +3,17 @@
 
 #include <iostream>
 #include <memory>
+#include <tuple>
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten/emscripten.h>
 #else
 #include <webgpu/webgpu_glfw.h>
 #endif
+
+#include "../include/engine.hpp"
+
+using namespace ShiftFlamework;
 
 wgpu::Instance instance;
 wgpu::Device device;
@@ -85,30 +90,22 @@ void render() {
 }
 
 void start() {
-  if (!glfwInit()) {
-    std::cerr << "failed to initialize glfw" << std::endl;
-    return;
-  }
+  std::get<std::shared_ptr<Window>>(Engine::modules) =
+      std::make_shared<Window>();
 
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  GLFWwindow* window =
-      glfwCreateWindow(k_width, k_height, "WebGPU window", nullptr, nullptr);
-#if defined(__EMSCRIPTEN__)
-  wgpu::SurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
-  canvasDesc.selector = "#canvas";
+  WindowDescriptor window_desc{
+      .name = "Game Window",
+      .height = k_height,
+      .width = k_width,
+  };
+  Engine::GetModule<Window>()->initialize(window_desc, instance);
 
-  wgpu::SurfaceDescriptor surfaceDesc{.nextInChain = &canvasDesc};
-  wgpu::Surface surface = instance.CreateSurface(&surfaceDesc);
-#else
-  wgpu::Surface surface = wgpu::glfw::CreateSurfaceForWindow(instance, window);
-#endif
-
-  init_graphics(surface);
+  init_graphics(Engine::GetModule<Window>()->get_surface());
 
 #if defined(__EMSCRIPTEN__)
   emscripten_set_main_loop(render, 0, false);
 #else
-  while (!glfwWindowShouldClose(window)) {
+  while (!Engine::GetModule<Window>()->window_should_close()) {
     glfwPollEvents();
     render();
     swap_chain.Present();
@@ -138,8 +135,13 @@ void get_device(void (*callback)(wgpu::Device)) {
       reinterpret_cast<void*>(callback));
 }
 
+std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>> Engine::modules;
+
 int main() {
   instance = wgpu::CreateInstance();
+  std::get<std::shared_ptr<Graphics>>(Engine::modules) =
+      std::make_shared<Graphics>();
+  Engine::GetModule<Graphics>()->instance = instance;
   get_device([](wgpu::Device dev) {
     device = dev;
     start();
