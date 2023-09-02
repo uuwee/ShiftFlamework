@@ -11,7 +11,7 @@
 #include <webgpu/webgpu_glfw.h>
 #endif
 
-#include "../include/engine.hpp"
+#include "engine.hpp"
 
 using namespace ShiftFlamework;
 

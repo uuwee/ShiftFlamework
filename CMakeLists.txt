@@ -4,8 +4,9 @@ project(shift_flamework)
 set(CMAKE_CXX_STANDARD 20)
 
 file(GLOB sources source/*.cpp)
-file(GLOB includes  include/*.hpp)
-add_executable(game ${includes} ${sources})
+file(GLOB includes include/*.hpp)
+add_executable(game ${sources} ${includes})
+target_include_directories(game PUBLIC include)
 
 if(EMSCRIPTEN)
     set_target_properties(game PROPERTIES SUFFIX ".html")
