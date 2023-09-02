@@ -17,7 +17,6 @@ using namespace ShiftFlamework;
 
 wgpu::Instance instance;
 wgpu::Device device;
-wgpu::SwapChain swap_chain;
 wgpu::RenderPipeline pipeline;
 
 const uint32_t k_width = 512;
@@ -33,16 +32,6 @@ const char shader_code[] = R"(
         return vec4f(1, 0, 0, 1);
     }
 )";
-
-void setup_swap_chain(wgpu::Surface surface) {
-  wgpu::SwapChainDescriptor sc_desc{
-      .usage = wgpu::TextureUsage::RenderAttachment,
-      .format = wgpu::TextureFormat::BGRA8Unorm,
-      .width = k_width,
-      .height = k_height,
-      .presentMode = wgpu::PresentMode::Fifo};
-  swap_chain = device.CreateSwapChain(surface, &sc_desc);
-}
 
 void create_render_pipeline() {
   wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
@@ -66,14 +55,10 @@ void create_render_pipeline() {
   pipeline = device.CreateRenderPipeline(&render_pipeline_desc);
 }
 
-void init_graphics(wgpu::Surface surface) {
-  setup_swap_chain(surface);
-  create_render_pipeline();
-}
-
 void render() {
   wgpu::RenderPassColorAttachment attachment{
-      .view = swap_chain.GetCurrentTextureView(),
+      .view =
+          Engine::GetModule<Window>()->get_swap_chain().GetCurrentTextureView(),
       .loadOp = wgpu::LoadOp::Clear,
       .storeOp = wgpu::StoreOp::Store};
 
@@ -90,27 +75,16 @@ void render() {
 }
 
 void start() {
-  std::get<std::shared_ptr<Window>>(Engine::modules) =
-      std::make_shared<Window>();
-
-  WindowDescriptor window_desc{
-      .name = "Game Window",
-      .height = k_height,
-      .width = k_width,
-  };
-  Engine::GetModule<Window>()->initialize(window_desc, instance);
-
-  init_graphics(Engine::GetModule<Window>()->get_surface());
-
-#if defined(__EMSCRIPTEN__)
-  emscripten_set_main_loop(render, 0, false);
-#else
-  while (!Engine::GetModule<Window>()->window_should_close()) {
-    glfwPollEvents();
-    render();
-    swap_chain.Present();
+  {
+    Window window("game window", k_width, k_height);
+    std::get<std::shared_ptr<Window>>(Engine::modules) =
+        std::make_shared<Window>(window);
   }
-#endif
+
+  Engine::GetModule<Window>()->initialize_swap_chain(instance, device);
+  create_render_pipeline();
+
+  Engine::GetModule<Window>()->start_main_loop(render);
 }
 
 void get_device(void (*callback)(wgpu::Device)) {
