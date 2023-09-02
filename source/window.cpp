@@ -40,9 +40,14 @@ bool Window::initialize_swap_chain(wgpu::Instance& instance,
   return true;
 }
 
-void Window::start_main_loop(void (*main_loop)()) {
+void main_loop_internal(void* arg) {
+  static_cast<Window*>(arg)->call_main_loop();
+}
+
+void Window::start_main_loop(std::function<void()> main_loop) {
+  this->main_loop = main_loop;
 #if defined(__EMSCRIPTEN__)
-  emscripten_set_main_loop(main_loop, 0, false);
+  emscripten_set_main_loop_arg(main_loop_internal, this, 0, false);
 #else
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
