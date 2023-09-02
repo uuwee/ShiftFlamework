@@ -1,4 +1,4 @@
-#include "../include/window.hpp"
+#include "window.hpp"
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten/emscripten.h>
