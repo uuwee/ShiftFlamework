@@ -15,9 +15,13 @@
 namespace ShiftFlamework {
 class Graphics {
  public:
-  wgpu::Instance instance;
-  wgpu::Device device;
-  wgpu::SwapChain swap_chain;
-  wgpu::RenderPipeline pipeline;
+  wgpu::Instance instance = nullptr;
+  wgpu::Adapter adapter = nullptr;
+  wgpu::Device device = nullptr;
+  wgpu::SwapChain swap_chain = nullptr;
+  wgpu::RenderPipeline pipeline = nullptr;
+
+  void initialize(std::function<void()> on_initialize_end);
+  std::function<void()> on_initialize_end;
 };
 }  // namespace ShiftFlamework
