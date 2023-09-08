@@ -15,8 +15,6 @@
 
 using namespace ShiftFlamework;
 
-wgpu::Instance instance;
-wgpu::Device device;
 wgpu::RenderPipeline pipeline;
 
 const uint32_t k_width = 512;
@@ -39,7 +37,8 @@ void create_render_pipeline() {
 
   wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
   wgpu::ShaderModule shader_module =
-      device.CreateShaderModule(&shader_module_desc);
+      Engine::GetModule<Graphics>()->device.CreateShaderModule(
+          &shader_module_desc);
 
   wgpu::ColorTargetState color_target_state{
       .format = wgpu::TextureFormat::BGRA8Unorm};
@@ -52,7 +51,8 @@ void create_render_pipeline() {
   wgpu::RenderPipelineDescriptor render_pipeline_desc{
       .vertex = {.module = shader_module, .entryPoint = "vertexMain"},
       .fragment = &fragment_state};
-  pipeline = device.CreateRenderPipeline(&render_pipeline_desc);
+  pipeline = Engine::GetModule<Graphics>()->device.CreateRenderPipeline(
+      &render_pipeline_desc);
 }
 
 void render() {
@@ -65,13 +65,14 @@ void render() {
   wgpu::RenderPassDescriptor renderpass{.colorAttachmentCount = 1,
                                         .colorAttachments = &attachment};
 
-  wgpu::CommandEncoder encoder = device.CreateCommandEncoder();
+  wgpu::CommandEncoder encoder =
+      Engine::GetModule<Graphics>()->device.CreateCommandEncoder();
   wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass);
   pass.SetPipeline(pipeline);
   pass.Draw(3);
   pass.End();
   wgpu::CommandBuffer commands = encoder.Finish();
-  device.GetQueue().Submit(1, &commands);
+  Engine::GetModule<Graphics>()->device.GetQueue().Submit(1, &commands);
 }
 
 void start() {
@@ -81,43 +82,21 @@ void start() {
         std::make_shared<Window>(window);
   }
 
-  Engine::GetModule<Window>()->initialize_swap_chain(instance, device);
+  Engine::GetModule<Window>()->initialize_swap_chain(
+      Engine::GetModule<Graphics>()->instance,
+      Engine::GetModule<Graphics>()->device);
   create_render_pipeline();
 
   Engine::GetModule<Window>()->start_main_loop(render);
 }
 
-void get_device(void (*callback)(wgpu::Device)) {
-  instance.RequestAdapter(
-      nullptr,
-      [](WGPURequestAdapterStatus status, WGPUAdapter c_adapter,
-         const char* message, void* userdata) {
-        if (status != WGPURequestAdapterStatus_Success) {
-          std::cerr << "failed to get adapter" << std::endl;
-          return;
-        }
-        wgpu::Adapter adapter = wgpu::Adapter::Acquire(c_adapter);
-        adapter.RequestDevice(
-            nullptr,
-            [](WGPURequestDeviceStatus status, WGPUDevice c_device,
-               const char* message, void* userdata) {
-              wgpu::Device device = wgpu::Device::Acquire(c_device);
-              reinterpret_cast<void (*)(wgpu::Device)>(userdata)(device);
-            },
-            userdata);
-      },
-      reinterpret_cast<void*>(callback));
-}
-
 std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>> Engine::modules;
 
 int main() {
-  instance = wgpu::CreateInstance();
+  std::cout << "game start!" << std::endl;
   std::get<std::shared_ptr<Graphics>>(Engine::modules) =
       std::make_shared<Graphics>();
-  Engine::GetModule<Graphics>()->instance = instance;
-  get_device([](wgpu::Device dev) {
-    device = dev;
-    start();
-  });
+  Engine::GetModule<Graphics>()->instance = wgpu::CreateInstance();
+  Engine::GetModule<Graphics>()->initialize();
+  start();
 }
