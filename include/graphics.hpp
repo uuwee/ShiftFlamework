@@ -23,5 +23,7 @@ class Graphics {
 
   void initialize(std::function<void()> on_initialize_end);
   std::function<void()> on_initialize_end;
+
+  void create_render_pipeline();
 };
 }  // namespace ShiftFlamework

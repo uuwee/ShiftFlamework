@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "iostream": "cpp",
-        "memory": "cpp"
+        "memory": "cpp",
+        "*.hpp11": "cpp"
     }
 }
