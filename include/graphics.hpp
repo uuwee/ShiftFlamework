@@ -25,5 +25,21 @@ class Graphics {
   std::function<void()> on_initialize_end;
 
   void create_render_pipeline();
+  void render(wgpu::TextureView current_texture_view) {
+    wgpu::RenderPassColorAttachment attachment{.view = current_texture_view,
+                                               .loadOp = wgpu::LoadOp::Clear,
+                                               .storeOp = wgpu::StoreOp::Store};
+
+    wgpu::RenderPassDescriptor renderpass{.colorAttachmentCount = 1,
+                                          .colorAttachments = &attachment};
+
+    wgpu::CommandEncoder encoder = device.CreateCommandEncoder();
+    wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass);
+    pass.SetPipeline(pipeline);
+    pass.Draw(3);
+    pass.End();
+    wgpu::CommandBuffer commands = encoder.Finish();
+    device.GetQueue().Submit(1, &commands);
+  }
 };
 }  // namespace ShiftFlamework
