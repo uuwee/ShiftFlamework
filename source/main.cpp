@@ -15,9 +15,6 @@
 
 using namespace ShiftFlamework;
 
-const uint32_t k_width = 512;
-const uint32_t k_height = 512;
-
 void render() {
   wgpu::RenderPassColorAttachment attachment{
       .view =
@@ -42,7 +39,7 @@ void main_loop() { render(); }
 
 void start() {
   {
-    Window window("game window", k_width, k_height);
+    Window window("game window", 512, 512);
     std::get<std::shared_ptr<Window>>(Engine::modules) =
         std::make_shared<Window>(window);
   }
