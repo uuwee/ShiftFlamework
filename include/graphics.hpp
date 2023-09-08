@@ -21,6 +21,7 @@ class Graphics {
   wgpu::SwapChain swap_chain = nullptr;
   wgpu::RenderPipeline pipeline = nullptr;
 
-  void initialize();
+  void initialize(std::function<void()> on_initialize_end);
+  std::function<void()> on_initialize_end;
 };
 }  // namespace ShiftFlamework

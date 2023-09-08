@@ -75,6 +75,8 @@ void render() {
   Engine::GetModule<Graphics>()->device.GetQueue().Submit(1, &commands);
 }
 
+void main_loop() { render(); }
+
 void start() {
   {
     Window window("game window", k_width, k_height);
@@ -87,7 +89,7 @@ void start() {
       Engine::GetModule<Graphics>()->device);
   create_render_pipeline();
 
-  Engine::GetModule<Window>()->start_main_loop(render);
+  Engine::GetModule<Window>()->start_main_loop(main_loop);
 }
 
 std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>> Engine::modules;
@@ -97,6 +99,5 @@ int main() {
   std::get<std::shared_ptr<Graphics>>(Engine::modules) =
       std::make_shared<Graphics>();
   Engine::GetModule<Graphics>()->instance = wgpu::CreateInstance();
-  Engine::GetModule<Graphics>()->initialize();
-  start();
+  Engine::GetModule<Graphics>()->initialize([]() { start(); });
 }

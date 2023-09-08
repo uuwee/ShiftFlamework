@@ -5,7 +5,6 @@
 using namespace ShiftFlamework;
 
 void get_device(wgpu::Instance instance, void (*callback)(wgpu::Device)) {
-  std::cout << "get device" << std::endl;
   instance.RequestAdapter(
       nullptr,
       [](WGPURequestAdapterStatus status, WGPUAdapter c_adapter,
@@ -28,16 +27,12 @@ void get_device(wgpu::Instance instance, void (*callback)(wgpu::Device)) {
 }
 
 void on_device_request_ended(wgpu::Device device) {
-  std::cout << "set device" << std::endl;
   Engine::GetModule<Graphics>()->device = device;
+  Engine::GetModule<Graphics>()->on_initialize_end();
 }
 
-void Graphics::initialize() {
+void Graphics::initialize(std::function<void()> on_initialize_end) {
   instance = wgpu::CreateInstance();
+  this->on_initialize_end = on_initialize_end;
   get_device(instance, on_device_request_ended);
-
-  while (Engine::GetModule<Graphics>()->device == nullptr) {
-    // wait
-  }
-  std::cout << "end initialize" << std::endl;
 }
