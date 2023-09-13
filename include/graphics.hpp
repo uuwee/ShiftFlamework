@@ -23,5 +23,8 @@ class Graphics {
 
   void initialize(std::function<void()> on_initialize_end);
   std::function<void()> on_initialize_end;
+
+  void create_render_pipeline();
+  void render(wgpu::TextureView current_texture_view);
 };
 }  // namespace ShiftFlamework
