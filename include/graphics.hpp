@@ -20,11 +20,14 @@ class Graphics {
   wgpu::Device device = nullptr;
   wgpu::SwapChain swap_chain = nullptr;
   wgpu::RenderPipeline pipeline = nullptr;
+  wgpu::Buffer vertex_buffer;
+  std::vector<float> vertex_data;
 
   void initialize(std::function<void()> on_initialize_end);
   std::function<void()> on_initialize_end;
 
   void create_render_pipeline();
   void render(wgpu::TextureView current_texture_view);
+  void terminate() { device.Destroy(); }
 };
 }  // namespace ShiftFlamework
