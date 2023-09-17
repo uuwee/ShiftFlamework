@@ -25,6 +25,7 @@ namespace ShiftFlamework::math{
 
     };
 
+
     template<typename T>
     class Vector<T, 3>
     {
