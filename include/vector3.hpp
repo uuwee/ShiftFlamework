@@ -15,15 +15,32 @@ namespace ShiftFlamework::math{
         {
             internal_data = init_value;
         }
+
+        private:
         std::array<T, dimension> internal_data;
 
-        /* 使わなくなった機能
-        double Length();
-        Vector<T, dimension> GetNormalized();
-        T Dot(const Vector<T, dimension>& rhs);
-        Vector<T, 3> Cross(const Vector<T, 3>& rhs);
-        void Display();
-        */
+        public:
+        void setVector(int i, T n);
+        T getVector(int i) const;
+
+    };
+
+    template<typename T>
+    class Vector<T, 3>
+    {
+        public:
+        Vector(std::array<T, 3> init_value)
+        {
+            x = init_value.at(0);
+            y = init_value.at(1);
+            z = init_value.at(2);
+        }
+
+        void setVector(int i, T n);
+        T getVector(int i) const;
+        T x;
+        T y;
+        T z;
 
     };
 
@@ -33,11 +50,47 @@ namespace ShiftFlamework::math{
 	using Vector4d = Vector<double, 4>;
 
     template<typename T, int dimension>
+    inline void Vector<T, dimension>::setVector(int i, T n)
+    {
+        internal_data.at(i)=n;
+    }
+
+    template<typename T>
+    inline void Vector<T, 3>::setVector(int i, T n)
+    {
+        if(i == 0){
+            x = n;
+        }else if(i == 1){
+            y = n;
+        }else if(i == 2){
+            z = n;
+        }
+    }
+
+    template<typename T, int dimension>
+    inline T Vector<T, dimension>::getVector(int i) const
+    {
+        return internal_data.at(i);
+    }
+
+    template<typename T>
+    inline T Vector<T, 3>::getVector(int i) const
+    {
+        if(i == 0){
+            return x;
+        }else if(i == 1){
+            return y;
+        }else if(i == 2){
+            return z;
+        }
+    }
+
+    template<typename T, int dimension>
     inline Vector<T, dimension> operator + (const Vector<T, dimension>& rhs)
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) = v.internal_data.at(i);
+            v.setVector(i, v.getVector(i));
         }
         return v;
     }
@@ -47,7 +100,8 @@ namespace ShiftFlamework::math{
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) = - v.internal_data.at(i);
+            std::cout << i<< " : " << -v.getVector(i) << std::endl;
+            v.setVector(i, -v.getVector(i));
         }
         return v;
     }
@@ -57,7 +111,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) += rhs;
+            v.setVector(i, v.getVector(i) + rhs);
         }
         return v;
     }
@@ -67,7 +121,7 @@ namespace ShiftFlamework::math{
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) += lhs;
+            v.setVector(i, v.getVector(i) + lhs);
         }
         return v;
     }
@@ -77,7 +131,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) -= rhs;
+            v.setVector(i, v.getVector(i) - rhs);
         }
         return v;
     }
@@ -87,7 +141,7 @@ namespace ShiftFlamework::math{
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) -= lhs;
+            v.setVector(i, lhs - v.getVector(i));
         }
         return v;
     }
@@ -97,7 +151,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) *= rhs;
+            v.setVector(i, v.getVector(i) * rhs);
         }
         return v;
     }
@@ -107,7 +161,7 @@ namespace ShiftFlamework::math{
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) *= lhs;
+            v.setVector(i, v.getVector(i) * lhs);
         }
         return v;
     }
@@ -117,7 +171,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) /= rhs;
+            v.setVector(i, v.getVector(i) / rhs);
         }
         return v;
     }
@@ -127,7 +181,7 @@ namespace ShiftFlamework::math{
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) = lhs / v.internal_data.at(i);
+            v.setVector(i, lhs / v.getVector(i));
         }
         return v;
     }
@@ -137,7 +191,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) += rhs.internal_data.at(i);
+            v.setVector(i, v.getVector(i) + rhs.getVector(i));
         }
         return v;
     }
@@ -147,7 +201,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) -= rhs.internal_data.at(i);
+            v.setVector(i, v.getVector(i) - rhs.getVector(i));
         }
         return v;
     }
@@ -157,7 +211,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) *= rhs.internal_data.at(i);
+            v.setVector(i, v.getVector(i) * rhs.getVector(i));
         }
         return v;
     }
@@ -167,7 +221,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) /= rhs.internal_data.at(i);
+            v.setVector(i, v.getVector(i) / rhs.getVector(i));
         }
         return v;
     }
@@ -177,7 +231,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) += rhs.internal_data.at(i);
+            v.setVector(i, v.getVector(i) + rhs.getVector(i));
         }
         return v;
     }
@@ -187,7 +241,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) -= rhs.internal_data.at(i);
+            v.setVector(i, v.getVector(i) - rhs.getVector(i));
         }
         return v;
     }
@@ -197,7 +251,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) *= rhs.internal_data.at(i);
+            v.setVector(i, v.getVector(i) * rhs.getVector(i));
         }
         return v;
     }
@@ -207,13 +261,23 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.internal_data.at(i) /= rhs.internal_data.at(i);
+            v.setVector(i, v.getVector(i) / rhs.getVector(i));
         }
         return v;
     }
 
     template<typename T, int dimension>
-    inline Vector<T, dimension> GetNormalized(const Vector<T, dimension>& v)
+    inline Vector<float, dimension> Length(const Vector<T, dimension>& v)
+    {
+        float n = 0;
+        for(int i = 0; i < dimension; i++){
+            n = v.getVector(i) * v.getVector(i);
+        }
+        return std::sqrt(n);
+    }
+
+    template<typename T, int dimension>
+    inline Vector<float, dimension> GetNormalized(const Vector<T, dimension>& v)
     {
         return v / Length(v);
     }
@@ -223,7 +287,7 @@ namespace ShiftFlamework::math{
     {
         int val=0;
         for(int i = 0; i < dimension; i++){
-            val += lhs.internal_data.at(i) * rhs.internal_data.at(i);
+            val += lhs.getVector(i) * rhs.getVector(i);
         }
         return val;
     }
@@ -231,7 +295,7 @@ namespace ShiftFlamework::math{
     template<typename T>
     inline Vector<T, 3> Cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs)
     {
-        return Vector<T, 3>({lhs.internal_data.at(1) * rhs.internal_data.at(2) - lhs.internal_data.at(2) * rhs.internal_data.at(1), lhs.internal_data.at(2) * rhs.internal_data.at(0) - lhs.internal_data.at(0) * rhs.internal_data.at(2), lhs.internal_data.at(0) * rhs.internal_data.at(1) - lhs.internal_data.at(1) * rhs.internal_data.at(0)});
+        return Vector<T, 3>({lhs.getVector(1) * rhs.getVector(2) - lhs.getVector(2) * rhs.getVector(1), lhs.getVector(2) * rhs.getVector(0) - lhs.getVector(0) * rhs.getVector(2), lhs.getVector(0) * rhs.getVector(1) - lhs.getVector(1) * rhs.getVector(0)});
     }
 
     template<typename T, int dimension>
@@ -240,66 +304,10 @@ namespace ShiftFlamework::math{
         std::cout << "{ ";
         
         for (int i = 0; i < dimension; i++){
-                std::cout << v.internal_data.at(i) << " ";
+                std::cout << v.getVector(i) << " ";
         }
 
         std::cout << "}" << std::endl;
     }
-
-    /*使わなくなった機能
-    template<typename T, int dimension>
-    inline double Vector<T, dimension>::Length()
-    {
-        int val=0;
-        for(int i = 0; i < dimension; i++){
-            val += internal_data.at(i) * internal_data.at(i);
-        }
-        return std::sqrt(val);
-    }
-
-    template<typename T, int dimension>
-    inline Vector<T, dimension> Vector<T, dimension>::GetNormalized()
-    {
-        return *this / this->Length();
-    }
-
-    template<typename T, int dimension>
-    inline T Vector<T, dimension>::Dot(const Vector<T, dimension>& rhs)
-    {
-        int val=0;
-        for(int i = 0; i < dimension; i++){
-            val += internal_data.at(i) * rhs.internal_data.at(i);
-        }
-        return val;
-    }
-
-    template<typename T, int dimension>
-    inline Vector<T, 3> Vector<T, dimension>::Cross(const Vector<T, 3>& rhs)
-    {
-        return Vector<T, 3>({internal_data.at(1) * rhs.internal_data.at(2) - internal_data.at(2) * rhs.internal_data.at(1), internal_data.at(2) * rhs.internal_data.at(0) - internal_data.at(0) * rhs.internal_data.at(2), internal_data.at(0) * rhs.internal_data.at(1) - internal_data.at(1) * rhs.internal_data.at(0)});
-    }
-    
-    template<typename T, int dimension>
-    inline double Length(const Vector<T, dimension>& v)
-    {
-        int val=0;
-        for(int i = 0; i < dimension; i++){
-            val += v.internal_data.at(i) * v.internal_data.at(i);
-        }
-        return std::sqrt(val);
-    }
-
-    template<typename T, int dimension>
-    inline void Vector<T, dimension>::Display()
-    {
-        std::cout << "{ ";
-        
-        for (int i = 0; i < dimension; i++){
-                std::cout <<internal_data.at(i) << " ";
-        }
-
-        std::cout << "}" << std::endl;
-    }
-    */
 
 }
