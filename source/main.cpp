@@ -25,7 +25,9 @@ void start() {
   Engine::GetModule<Window>()->start_main_loop(main_loop);
 }
 
-std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>> Engine::modules;
+std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>,
+           std::shared_ptr<Input>>
+    Engine::modules = std::make_tuple(nullptr, nullptr, nullptr);
 
 int main() {
   std::get<std::shared_ptr<Graphics>>(Engine::modules) =

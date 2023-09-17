@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "graphics.hpp"
+#include "input.hpp"
 #include "window.hpp"
 
 namespace ShiftFlamework {
@@ -11,7 +12,9 @@ class Engine {
   Engine();
 
  public:
-  static std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>> modules;
+  static std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>,
+                    std::shared_ptr<Input>>
+      modules;
 
   template <typename T>
   [[nodiscard]] static std::shared_ptr<T> GetModule() noexcept {
