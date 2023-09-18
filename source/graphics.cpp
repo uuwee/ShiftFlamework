@@ -39,11 +39,6 @@ void Graphics::initialize(std::function<void()> on_initialize_end) {
 }
 
 void Graphics::create_render_pipeline() {
-  wgpu::SupportedLimits limits{};
-  device.GetLimits(&limits);
-  std::cout << "vertex attribute" << limits.limits.maxVertexAttributes
-            << std::endl;
-
   vertex_data = {
       -0.5, -0.5, +0.5, -0.5, +0.0, +0.5,
   };
