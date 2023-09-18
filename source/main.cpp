@@ -8,11 +8,6 @@ using namespace ShiftFlamework;
 
 void main_loop() {
   // user script
-  if (Engine::GetModule<Input>()->get_keyboard_state(Keyboard::A) ==
-      ButtonState::DOWN) {
-    std::cout << "A down" << std::endl;
-  }
-
   Engine::GetModule<Input>()->update();
   Engine::GetModule<Graphics>()->render(
       Engine::GetModule<Window>()->get_swap_chain().GetCurrentTextureView());
