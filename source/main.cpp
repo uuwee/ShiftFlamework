@@ -7,14 +7,13 @@
 using namespace ShiftFlamework;
 
 void main_loop() {
-  Engine::GetModule<Input>()->update();
-
   // user script
   if (Engine::GetModule<Input>()->get_keyboard_state(Keyboard::A) ==
       ButtonState::DOWN) {
     std::cout << "A down" << std::endl;
   }
 
+  Engine::GetModule<Input>()->update();
   Engine::GetModule<Graphics>()->render(
       Engine::GetModule<Window>()->get_swap_chain().GetCurrentTextureView());
 }
@@ -41,5 +40,6 @@ int main() {
   std::get<std::shared_ptr<Graphics>>(Engine::modules) =
       std::make_shared<Graphics>();
   std::get<std::shared_ptr<Input>>(Engine::modules) = std::make_shared<Input>();
+  Engine::GetModule<Input>()->initialize();
   Engine::GetModule<Graphics>()->initialize([]() { start(); });
 }

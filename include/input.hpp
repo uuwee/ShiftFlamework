@@ -5,7 +5,8 @@
 #if defined(_MSC_VER)
 #include <windows.h>
 #elif defined(__EMSCRIPTEN__)
-
+#include <emscripten/emscripten.h>
+#include <emscripten/html5.h>
 #endif
 
 namespace ShiftFlamework {
@@ -53,38 +54,16 @@ class Input {
  private:
 #if defined(_MSC_VER)
   BYTE key_state_before[256];
-  std::array<ButtonState, 256> state;
 #endif
 
  public:
-  void update() {
-#if defined(_MSC_VER)
-    BYTE key_state_current[256];
-    GetKeyboardState(key_state_current);
-    for (int i = 0; i < 256; i++) {
-      if ((key_state_current[i] & 0x80) && (key_state_before[i] & 0x80)) {
-        state.at(i) = ButtonState::HOLD;
-      } else if ((key_state_current[i] & 0x80) &&
-                 !(key_state_before[i] & 0x80)) {
-        state.at(i) = ButtonState::DOWN;
-      } else if (!(key_state_current[i] & 0x80) &&
-                 (key_state_before[i] & 0x80)) {
-        state.at(i) = ButtonState::UP;
-      } else {
-        state.at(i) = ButtonState::NEUTRAL;
-      }
+  std::array<ButtonState, 256> state;
+  void initialize();
 
-      key_state_before[i] = key_state_current[i];
-    }
-#endif
-  }
+  void update();
 
   ButtonState get_keyboard_state(Keyboard button) {
-#if defined(_MSC_VER)
     return state.at(static_cast<int>(button));
-#else
-    return ButtonState::NEUTRAL;
-#endif
   }
 };
 }  // namespace ShiftFlamework
