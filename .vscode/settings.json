@@ -107,6 +107,9 @@
         "__tree": "cpp",
         "__verbose_abort": "cpp",
         "string_view": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "barrier": "cpp",
+        "latch": "cpp",
+        "semaphore": "cpp"
     }
 }

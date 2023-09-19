@@ -3,7 +3,6 @@
 #include <array>
 #include <iostream>
 #include <ostream>
-#include<vector>
 
 namespace ShiftFlamework::math{
 
@@ -268,7 +267,7 @@ namespace ShiftFlamework::math{
     }
 
     template<typename T, int dimension>
-    inline Vector<float, dimension> Length(const Vector<T, dimension>& v)
+    inline Vector<float, dimension> length(const Vector<T, dimension>& v)
     {
         float n = 0;
         for(int i = 0; i < dimension; i++){
@@ -278,13 +277,13 @@ namespace ShiftFlamework::math{
     }
 
     template<typename T, int dimension>
-    inline Vector<float, dimension> GetNormalized(const Vector<T, dimension>& v)
+    inline Vector<float, dimension> normalized(const Vector<T, dimension>& v)
     {
-        return v / Length(v);
+        return v / length(v);
     }
 
     template<typename T, int dimension>
-    inline T Dot(const Vector<T, dimension>& lhs, const Vector<T, dimension>& rhs)
+    inline T dot(const Vector<T, dimension>& lhs, const Vector<T, dimension>& rhs)
     {
         int val=0;
         for(int i = 0; i < dimension; i++){
@@ -294,9 +293,91 @@ namespace ShiftFlamework::math{
     }
 
     template<typename T>
-    inline Vector<T, 3> Cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs)
+    inline Vector<T, 3> cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs)
     {
         return Vector<T, 3>({lhs.getVector(1) * rhs.getVector(2) - lhs.getVector(2) * rhs.getVector(1), lhs.getVector(2) * rhs.getVector(0) - lhs.getVector(0) * rhs.getVector(2), lhs.getVector(0) * rhs.getVector(1) - lhs.getVector(1) * rhs.getVector(0)});
+    }
+
+    template<typename T, int dimension>
+    inline Vector<T, dimension> one()
+    {
+        auto v = Vector<T, dimension>{{}};
+        for(int i = 0; i < dimension; i++){
+            v.setVector(i, 1);
+        }
+        return v;
+    }
+
+    template<typename T, int dimension>
+    inline Vector<T, dimension> zero()
+    {
+        auto v = Vector<T, dimension>{{}};
+        for(int i = 0; i < dimension; i++){
+            v.setVector(i, 0);
+        }
+        return v;
+    }
+
+    template<typename T>
+    inline Vector<T, 3> forward()
+    {
+        return Vector<T, 3>({0,1,0});
+    }
+
+    template<typename T>
+    inline Vector<T, 3> back()
+    {
+        return Vector<T, 3>({0,-1,0});
+    }
+
+    template<typename T>
+    inline Vector<T, 3> right()
+    {
+        return Vector<T, 3>({1,0,0});
+    }
+
+    template<typename T>
+    inline Vector<T, 3> left()
+    {
+        return Vector<T, 3>({-1,0,0});
+    }
+
+    template<typename T>
+    inline Vector<T, 3> up()
+    {
+        return Vector<T, 3>({0,0,1});
+    }
+
+    template<typename T>
+    inline Vector<T, 3> down()
+    {
+        return Vector<T, 3>({0,0,-1});
+    }
+
+    template<typename T, int dimension, typename U>
+    inline Vector<T, dimension> distance(const Vector<T, dimension>& v1, const Vector<U, dimension>& v2)
+    {
+        return length(v1 - v2);
+    }
+
+    template<typename T, int dimension, typename U>
+    inline Vector<float, dimension> movetoword(const Vector<T, dimension>& from, const Vector<U, dimension>& to, float per)
+    {
+        auto v = Vector<float, dimension>{{}};
+        for(int i = 0; i < dimension; i++){
+            v.setVector(i, from.getVector(i) + to.getVector(i)*per);
+        }
+        return v;
+    }
+
+    template<typename T, int dimension, typename U>
+    inline Vector<float, dimension> lerp(const Vector<T, dimension>& from, const Vector<U, dimension>& to, float per)
+    {
+        auto v = Vector<float, dimension>{{}};
+        for(int i = 0; i < dimension; i++){
+            v.setVector(i, from.getVector(i)*(1-per) + to.getVector(i)*per);
+        }
+        return v;
     }
 
     template<typename T, int dimension>
