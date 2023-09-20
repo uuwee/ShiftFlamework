@@ -4,7 +4,7 @@
 #include <iostream>
 #include <ostream>
 
-namespace ShiftFlamework::math{
+namespace ShiftFlamework::Math{
 
     template<typename T, int dimension>
     class Vector
@@ -19,8 +19,8 @@ namespace ShiftFlamework::math{
         std::array<T, dimension> internal_data;
 
         public:
-        void setVector(int i, T n);
-        T getVector(int i) const;
+        void setvector(int i, T n);
+        T getvector(int i) const;
 
     };
 
@@ -36,8 +36,8 @@ namespace ShiftFlamework::math{
             z = init_value.at(2);
         }
 
-        void setVector(int i, T n);
-        T getVector(int i) const;
+        void setvector(int i, T n);
+        T getvector(int i) const;
         T x;
         T y;
         T z;
@@ -50,13 +50,13 @@ namespace ShiftFlamework::math{
 	using Vector4d = Vector<double, 4>;
 
     template<typename T, int dimension>
-    inline void Vector<T, dimension>::setVector(int i, T n)
+    inline void Vector<T, dimension>::setvector(int i, T n)
     {
         internal_data.at(i)=n;
     }
 
     template<typename T>
-    inline void Vector<T, 3>::setVector(int i, T n)
+    inline void Vector<T, 3>::setvector(int i, T n)
     {
         if(i == 0){
             x = n;
@@ -68,13 +68,13 @@ namespace ShiftFlamework::math{
     }
 
     template<typename T, int dimension>
-    inline T Vector<T, dimension>::getVector(int i) const
+    inline T Vector<T, dimension>::getvector(int i) const
     {
         return internal_data.at(i);
     }
 
     template<typename T>
-    inline T Vector<T, 3>::getVector(int i) const
+    inline T Vector<T, 3>::getvector(int i) const
     {
         if(i == 0){
             return x;
@@ -90,7 +90,7 @@ namespace ShiftFlamework::math{
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i));
+            v.setvector(i, v.getvector(i));
         }
         return v;
     }
@@ -100,8 +100,8 @@ namespace ShiftFlamework::math{
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            std::cout << i<< " : " << -v.getVector(i) << std::endl;
-            v.setVector(i, -v.getVector(i));
+            std::cout << i<< " : " << -v.getvector(i) << std::endl;
+            v.setvector(i, -v.getvector(i));
         }
         return v;
     }
@@ -111,7 +111,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) + rhs);
+            v.setvector(i, v.getvector(i) + rhs);
         }
         return v;
     }
@@ -121,7 +121,7 @@ namespace ShiftFlamework::math{
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) + lhs);
+            v.setvector(i, v.getvector(i) + lhs);
         }
         return v;
     }
@@ -131,7 +131,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) - rhs);
+            v.setvector(i, v.getvector(i) - rhs);
         }
         return v;
     }
@@ -141,7 +141,7 @@ namespace ShiftFlamework::math{
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, lhs - v.getVector(i));
+            v.setvector(i, lhs - v.getvector(i));
         }
         return v;
     }
@@ -151,7 +151,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) * rhs);
+            v.setvector(i, v.getvector(i) * rhs);
         }
         return v;
     }
@@ -161,7 +161,7 @@ namespace ShiftFlamework::math{
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) * lhs);
+            v.setvector(i, v.getvector(i) * lhs);
         }
         return v;
     }
@@ -171,7 +171,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) / rhs);
+            v.setvector(i, v.getvector(i) / rhs);
         }
         return v;
     }
@@ -181,7 +181,7 @@ namespace ShiftFlamework::math{
     {
         auto v = rhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, lhs / v.getVector(i));
+            v.setvector(i, lhs / v.getvector(i));
         }
         return v;
     }
@@ -191,7 +191,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) + rhs.getVector(i));
+            v.setvector(i, v.getvector(i) + rhs.getvector(i));
         }
         return v;
     }
@@ -201,7 +201,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) - rhs.getVector(i));
+            v.setvector(i, v.getvector(i) - rhs.getvector(i));
         }
         return v;
     }
@@ -211,7 +211,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) * rhs.getVector(i));
+            v.setvector(i, v.getvector(i) * rhs.getvector(i));
         }
         return v;
     }
@@ -221,7 +221,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) / rhs.getVector(i));
+            v.setvector(i, v.getvector(i) / rhs.getvector(i));
         }
         return v;
     }
@@ -231,7 +231,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) + rhs.getVector(i));
+            v.setvector(i, v.getvector(i) + rhs.getvector(i));
         }
         return v;
     }
@@ -241,7 +241,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) - rhs.getVector(i));
+            v.setvector(i, v.getvector(i) - rhs.getvector(i));
         }
         return v;
     }
@@ -251,7 +251,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) * rhs.getVector(i));
+            v.setvector(i, v.getvector(i) * rhs.getvector(i));
         }
         return v;
     }
@@ -261,7 +261,7 @@ namespace ShiftFlamework::math{
     {
         auto v = lhs;
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, v.getVector(i) / rhs.getVector(i));
+            v.setvector(i, v.getvector(i) / rhs.getvector(i));
         }
         return v;
     }
@@ -271,7 +271,7 @@ namespace ShiftFlamework::math{
     {
         float n = 0;
         for(int i = 0; i < dimension; i++){
-            n = v.getVector(i) * v.getVector(i);
+            n = v.getvector(i) * v.getvector(i);
         }
         return std::sqrt(n);
     }
@@ -287,7 +287,7 @@ namespace ShiftFlamework::math{
     {
         int val=0;
         for(int i = 0; i < dimension; i++){
-            val += lhs.getVector(i) * rhs.getVector(i);
+            val += lhs.getvector(i) * rhs.getvector(i);
         }
         return val;
     }
@@ -295,7 +295,7 @@ namespace ShiftFlamework::math{
     template<typename T>
     inline Vector<T, 3> cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs)
     {
-        return Vector<T, 3>({lhs.getVector(1) * rhs.getVector(2) - lhs.getVector(2) * rhs.getVector(1), lhs.getVector(2) * rhs.getVector(0) - lhs.getVector(0) * rhs.getVector(2), lhs.getVector(0) * rhs.getVector(1) - lhs.getVector(1) * rhs.getVector(0)});
+        return Vector<T, 3>({lhs.getvector(1) * rhs.getvector(2) - lhs.getvector(2) * rhs.getvector(1), lhs.getvector(2) * rhs.getvector(0) - lhs.getvector(0) * rhs.getvector(2), lhs.getvector(0) * rhs.getvector(1) - lhs.getvector(1) * rhs.getvector(0)});
     }
 
     template<typename T, int dimension>
@@ -303,7 +303,7 @@ namespace ShiftFlamework::math{
     {
         auto v = Vector<T, dimension>{{}};
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, 1);
+            v.setvector(i, 1);
         }
         return v;
     }
@@ -313,7 +313,7 @@ namespace ShiftFlamework::math{
     {
         auto v = Vector<T, dimension>{{}};
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, 0);
+            v.setvector(i, 0);
         }
         return v;
     }
@@ -365,7 +365,7 @@ namespace ShiftFlamework::math{
     {
         auto v = Vector<float, dimension>{{}};
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, from.getVector(i) + to.getVector(i)*per);
+            v.setvector(i, from.getvector(i) + to.getvector(i)*per);
         }
         return v;
     }
@@ -375,7 +375,7 @@ namespace ShiftFlamework::math{
     {
         auto v = Vector<float, dimension>{{}};
         for(int i = 0; i < dimension; i++){
-            v.setVector(i, from.getVector(i)*(1-per) + to.getVector(i)*per);
+            v.setvector(i, from.getvector(i)*(1-per) + to.getvector(i)*per);
         }
         return v;
     }
@@ -386,7 +386,7 @@ namespace ShiftFlamework::math{
         std::cout << "{ ";
         
         for (int i = 0; i < dimension; i++){
-                std::cout << v.getVector(i) << " ";
+                std::cout << v.getvector(i) << " ";
         }
 
         std::cout << "}" << std::endl;
