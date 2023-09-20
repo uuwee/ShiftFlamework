@@ -3,6 +3,7 @@
 #include <tuple>
 
 #include "engine.hpp"
+#include "entity.hpp"
 
 using namespace ShiftFlamework;
 
@@ -24,6 +25,9 @@ void start() {
       Engine::GetModule<Graphics>()->instance,
       Engine::GetModule<Graphics>()->device);
   Engine::GetModule<Graphics>()->create_render_pipeline();
+
+  // initialize
+
   Engine::GetModule<Window>()->start_main_loop(main_loop);
 }
 
