@@ -29,9 +29,6 @@ void start() {
   Engine::GetModule<Graphics>()->create_render_pipeline();
 
   // game initialize
-  auto e0 = std::make_shared<Entity>();
-  auto script = e0->add_component<Script>();
-  script->load_dll();
 
   // start main loop
   Engine::GetModule<Window>()->start_main_loop(main_loop);
