@@ -4,11 +4,13 @@
 
 #include "engine.hpp"
 #include "entity.hpp"
+#include "script.hpp"
 
 using namespace ShiftFlamework;
 
 void main_loop() {
   // user script
+
   Engine::GetModule<Input>()->update();
   Engine::GetModule<Graphics>()->render(
       Engine::GetModule<Window>()->get_swap_chain().GetCurrentTextureView());
@@ -26,16 +28,22 @@ void start() {
       Engine::GetModule<Graphics>()->device);
   Engine::GetModule<Graphics>()->create_render_pipeline();
 
-  // initialize
+  // game initialize
+  auto e0 = std::make_shared<Entity>();
+  auto script = e0->add_component<Script>();
+  script->load_dll();
 
+  // start main loop
   Engine::GetModule<Window>()->start_main_loop(main_loop);
 }
 
+// pointer to modules
 std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>,
            std::shared_ptr<Input>>
     Engine::modules = std::make_tuple(nullptr, nullptr, nullptr);
 
 int main() {
+  // initialize modules
   std::get<std::shared_ptr<Graphics>>(Engine::modules) =
       std::make_shared<Graphics>();
   std::get<std::shared_ptr<Input>>(Engine::modules) = std::make_shared<Input>();
