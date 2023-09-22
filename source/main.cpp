@@ -11,9 +11,9 @@ using namespace ShiftFlamework;
 void main_loop() {
   // user script
 
-  Engine::GetModule<Input>()->update();
-  Engine::GetModule<Graphics>()->render(
-      Engine::GetModule<Window>()->get_swap_chain().GetCurrentTextureView());
+  Engine::get_module<Input>()->update();
+  Engine::get_module<Graphics>()->render(
+      Engine::get_module<Window>()->get_swap_chain().GetCurrentTextureView());
 }
 
 void start() {
@@ -23,15 +23,15 @@ void start() {
         std::make_shared<Window>(window);
   }
 
-  Engine::GetModule<Window>()->initialize_swap_chain(
-      Engine::GetModule<Graphics>()->instance,
-      Engine::GetModule<Graphics>()->device);
-  Engine::GetModule<Graphics>()->create_render_pipeline();
+  Engine::get_module<Window>()->initialize_swap_chain(
+      Engine::get_module<Graphics>()->instance,
+      Engine::get_module<Graphics>()->device);
+  Engine::get_module<Graphics>()->create_render_pipeline();
 
   // game initialize
 
   // start main loop
-  Engine::GetModule<Window>()->start_main_loop(main_loop);
+  Engine::get_module<Window>()->start_main_loop(main_loop);
 }
 
 // pointer to modules
@@ -44,6 +44,6 @@ int main() {
   std::get<std::shared_ptr<Graphics>>(Engine::modules) =
       std::make_shared<Graphics>();
   std::get<std::shared_ptr<Input>>(Engine::modules) = std::make_shared<Input>();
-  Engine::GetModule<Input>()->initialize();
-  Engine::GetModule<Graphics>()->initialize([]() { start(); });
+  Engine::get_module<Input>()->initialize();
+  Engine::get_module<Graphics>()->initialize([]() { start(); });
 }

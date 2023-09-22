@@ -17,7 +17,8 @@ class Script : public Component {
   Script(std::shared_ptr<Entity> parent) : Component(parent) {}
 
   void load_dll() {
-    HMODULE module = LoadLibrary("test_script.dll");
+    HMODULE module = LoadLibrary(
+        "../../../sample/script_import/out/win/Debug/test_script.dll");
     if (module == NULL) return;
 
     action func1 = (action)GetProcAddress(module, "on_update");

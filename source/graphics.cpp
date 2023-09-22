@@ -14,7 +14,7 @@ void get_device(wgpu::Instance instance, void (*callback)(wgpu::Device)) {
           return;
         }
         wgpu::Adapter adapter = wgpu::Adapter::Acquire(c_adapter);
-        Engine::GetModule<Graphics>()->adapter = adapter;
+        Engine::get_module<Graphics>()->adapter = adapter;
         adapter.RequestDevice(
             nullptr,
             [](WGPURequestDeviceStatus status, WGPUDevice c_device,
@@ -28,8 +28,8 @@ void get_device(wgpu::Instance instance, void (*callback)(wgpu::Device)) {
 }
 
 void on_device_request_ended(wgpu::Device device) {
-  Engine::GetModule<Graphics>()->device = device;
-  Engine::GetModule<Graphics>()->on_initialize_end();
+  Engine::get_module<Graphics>()->device = device;
+  Engine::get_module<Graphics>()->on_initialize_end();
 }
 
 void Graphics::initialize(std::function<void()> on_initialize_end) {

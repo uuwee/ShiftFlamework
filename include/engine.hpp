@@ -17,7 +17,7 @@ class Engine {
       modules;
 
   template <typename T>
-  [[nodiscard]] static std::shared_ptr<T> GetModule() noexcept {
+  [[nodiscard]] static std::shared_ptr<T> get_module() noexcept {
     return std::get<std::shared_ptr<T>>(Engine::modules);
   }
 };
