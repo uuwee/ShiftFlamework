@@ -55,3 +55,13 @@ https://emscripten.org/docs/getting_started/downloads.html
 
 #### cmake
 https://cmake.org/download/#latest のWindows x64 Installerをダウンロードして実行する。
+
+## コード規約
+### 命名
+- 関数、変数名はスネークケース (例: snake_case)
+
+- 名前空間名・クラス名はパスカルケース(アッパーキャメルケース) (例: PascalCase)
+
+で命名する
+
+### メモリ管理
