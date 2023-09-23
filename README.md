@@ -65,3 +65,9 @@ https://cmake.org/download/#latest のWindows x64 Installerをダウンロード
 で命名する
 
 ### メモリ管理
+new/destroy及び生ポインタによるメモリの管理は禁止。`std::shared_ptr, std::unique_ptr, std::weak_ptr`などのスマートポインタを使う。
+
+### Gitのコミットログ・プルリクエスト
+日本語の命令形で変更内容を簡潔に記述する。
+
+例: READMEにコード規約を追加する
