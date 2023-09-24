@@ -107,6 +107,18 @@
         "__tree": "cpp",
         "__verbose_abort": "cpp",
         "string_view": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "any": "cpp",
+        "barrier": "cpp",
+        "cfenv": "cpp",
+        "execution": "cpp",
+        "numbers": "cpp",
+        "regex": "cpp",
+        "scoped_allocator": "cpp",
+        "semaphore": "cpp",
+        "shared_mutex": "cpp",
+        "source_location": "cpp",
+        "propagate_const": "cpp",
+        "*.ipp": "cpp"
     }
 }
