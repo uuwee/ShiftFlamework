@@ -14,7 +14,7 @@ typedef void (*action)();
 namespace ShiftFlamework {
 class Script : public Component {
  public:
-  Script(std::shared_ptr<Entity> parent) : Component(parent) {}
+  Script(std::shared_ptr<Entity> parent) : Component() {}
 
   void load_dll() {
 #if defined(_MSC_VER)

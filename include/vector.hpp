@@ -5,7 +5,7 @@
 #include <ostream>
 #include <vector>
 
-namespace ShiftFlamework::math {
+namespace ShiftFlamework::Math {
 
 template <typename T, int dimension>
 class Vector {
@@ -300,4 +300,4 @@ inline void Vector<T, dimension>::Display()
 }
 */
 
-}  // namespace ShiftFlamework::math
+}  // namespace ShiftFlamework::Math
