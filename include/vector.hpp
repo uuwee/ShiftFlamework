@@ -12,16 +12,10 @@ class Vector {
  public:
   Vector(std::array<T, dimension> init_value) { internal_data = init_value; }
   std::array<T, dimension> internal_data;
-
-  /* 使わなくなった機能
-  double Length();
-  Vector<T, dimension> GetNormalized();
-  T Dot(const Vector<T, dimension>& rhs);
-  Vector<T, 3> Cross(const Vector<T, 3>& rhs);
-  void Display();
-  */
 };
 
+using Vector2f = Vector<float, 2>;
+using Vector2d = Vector<double, 3>;
 using Vector3f = Vector<float, 3>;
 using Vector3d = Vector<double, 3>;
 using Vector4f = Vector<float, 4>;
