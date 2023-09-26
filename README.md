@@ -56,6 +56,12 @@ https://emscripten.org/docs/getting_started/downloads.html
 #### cmake
 https://cmake.org/download/#latest のWindows x64 Installerをダウンロードして実行する。
 
+#### VisualStudio
+
+https://visualstudio.microsoft.com/ja/
+
+からVisual Studioをインストールする。Visual Studio Installer内のワークロードを選択する画面で"C++によるデスクトップ開発"にチェックマークを入れる。
+
 ## コード規約
 ### 命名
 - 関数、変数名はスネークケース (例: snake_case)
