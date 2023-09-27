@@ -40,37 +40,66 @@ void Graphics::initialize(std::function<void()> on_initialize_end) {
 
 void Graphics::create_render_pipeline() {
   vertex_data = {
-      -0.5, -0.5, +0.5, -0.5, +0.0, +0.5,
+      // x, y, r, g, b
+      -0.5, -0.5, 1.0, 0.0, 0.0, +0.5, -0.5, 0.0, 1.0, 0.0,
+      +0.5, +0.5, 0.0, 0.0, 1.0, -0.5, +0.5, 1.0, 1.0, 0.0,
   };
-  int vertex_count = static_cast<int>(vertex_data.size() / 2);
+  index_data = {0, 1, 2, 0, 2, 3};
+
+  // initialize vertex buffer
   wgpu::BufferDescriptor buffer_desc{
       .nextInChain = nullptr,
       .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
       .size = vertex_data.size() * sizeof(float),
       .mappedAtCreation = false};
   vertex_buffer = device.CreateBuffer(&buffer_desc);
-
   device.GetQueue().WriteBuffer(vertex_buffer, 0, vertex_data.data(),
                                 buffer_desc.size);
 
-  wgpu::VertexAttribute vertex_attribute{
-      .format = wgpu::VertexFormat::Float32x2,
-      .offset = 0,
-      .shaderLocation = 0};
+  // initialize index buffer
+  buffer_desc.size = index_data.size() * sizeof(uint16_t);
+  buffer_desc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Index;
+  index_buffer = device.CreateBuffer(&buffer_desc);
+  device.GetQueue().WriteBuffer(index_buffer, 0, index_data.data(),
+                                buffer_desc.size);
+
+  std::vector<wgpu::VertexAttribute> vertex_attributes(2);
+  vertex_attributes.at(0).format = wgpu::VertexFormat::Float32x2,
+  vertex_attributes.at(0).offset = 0,
+  vertex_attributes.at(0).shaderLocation = 0;
+
+  vertex_attributes.at(1).format = wgpu::VertexFormat::Float32x3,
+  vertex_attributes.at(1).offset = 2 * sizeof(float),
+  vertex_attributes.at(1).shaderLocation = 1;
+
   wgpu::VertexBufferLayout vertex_buffer_layout{
-      .arrayStride = 2 * sizeof(float),
+      .arrayStride = 5 * sizeof(float),
       .stepMode = wgpu::VertexStepMode::Vertex,
-      .attributeCount = 1,
-      .attributes = &vertex_attribute,
+      .attributeCount = static_cast<uint32_t>(vertex_attributes.size()),
+      .attributes = vertex_attributes.data(),
   };
 
   wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
   wgsl_desc.code = R"(
-      @vertex fn vertexMain(@location(0) in_vertex_position: vec2f) -> @builtin(position) vec4f {
-        return vec4f(in_vertex_position, 0.0, 1.0);
+      struct VertexInput{
+        @location(0) position: vec2f,
+        @location(1) color: vec3f,
       }
-      @fragment fn fragmentMain() -> @location(0) vec4f {
-        return vec4f(1, 0, 0, 1);
+
+      struct VertexOutput{
+        @builtin(position) position: vec4f,
+        @location(0) color: vec3f,
+      }
+
+      @vertex fn vertexMain(in: VertexInput) -> VertexOutput {
+        var out: VertexOutput;
+        out.position = vec4f(in.position, 0.0, 1.0);
+        out.color = in.color; 
+        return out;
+      }
+
+      @fragment fn fragmentMain(in: VertexOutput) -> @location(0) vec4f {
+        return vec4f(in.color, 1.0);
       }
     )";
 
@@ -107,7 +136,9 @@ void Graphics::render(wgpu::TextureView current_texture_view) {
   wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass);
   pass.SetPipeline(pipeline);
   pass.SetVertexBuffer(0, vertex_buffer, 0, vertex_data.size() * sizeof(float));
-  pass.Draw(vertex_data.size() / 2, 1, 0, 0);
+  pass.SetIndexBuffer(index_buffer, wgpu::IndexFormat::Uint16, 0,
+                      index_data.size() * sizeof(uint16_t));
+  pass.DrawIndexed(index_data.size(), 1, 0, 0);
   pass.End();
   wgpu::CommandBuffer commands = encoder.Finish();
   device.GetQueue().Submit(1, &commands);
