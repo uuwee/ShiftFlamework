@@ -49,8 +49,8 @@ void Graphics::create_render_pipeline() {
   // initialize vertex buffer
   {
     const wgpu::BufferDescriptor buffer_desc{
-        .label = "vertex buffer",
         .nextInChain = nullptr,
+        .label = "vertex buffer",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
         .size = vertex_data.size() * sizeof(float),
         .mappedAtCreation = false};
@@ -62,8 +62,8 @@ void Graphics::create_render_pipeline() {
   // initialize index buffer
   {
     const wgpu::BufferDescriptor buffer_desc{
-        .label = "index buffer",
         .nextInChain = nullptr,
+        .label = "index buffer",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Index,
         .size = index_data.size() * sizeof(uint16_t),
         .mappedAtCreation = false};
@@ -74,7 +74,7 @@ void Graphics::create_render_pipeline() {
 
   // initialize constant buffer
   {
-    const wgpu::BufferDescriptor buffer_desc{
+    const wgpu::BufferDescriptor buffer_desc {
       .nextInChain = nullptr,
       .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::
     }
