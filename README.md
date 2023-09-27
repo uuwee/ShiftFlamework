@@ -1,7 +1,8 @@
 # ShiftFlamework
 ## 必要なソフトウェア
-- git 
+- git
 - google depot tools
+- ninja (wasm向けのビルドをする場合)
 - emscripten (wasm向けのビルドをする場合)
 - cmake
 ## クローン
@@ -45,13 +46,19 @@ python -m http.server 8080
 
 https://www.chromium.org/developers/how-tos/depottools/#installing
 
-に従ってdepot toolをインストールし、PATHを通しておく。
+に従ってdepot toolをインストールし、Pathを通しておく。
 
 #### emscripten
 
 https://emscripten.org/docs/getting_started/downloads.html
 
-に従ってインストールする。
+に従ってインストールし、Pathを通す。
+
+#### ninja
+
+https://ninja-build.org/
+
+のGetting Startedに従ってダウンロードし、Pathを通す。depot toolsをインストールしている場合、depot tools内のninjaが使われてしまう場合があるため、Path内でdepot toolsより前に記述して、こちらが使われるようにしておく。
 
 #### cmake
 https://cmake.org/download/#latest のWindows x64 Installerをダウンロードして実行する。
