@@ -47,21 +47,38 @@ void Graphics::create_render_pipeline() {
   index_data = {0, 1, 2, 0, 2, 3};
 
   // initialize vertex buffer
-  wgpu::BufferDescriptor buffer_desc{
-      .nextInChain = nullptr,
-      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
-      .size = vertex_data.size() * sizeof(float),
-      .mappedAtCreation = false};
-  vertex_buffer = device.CreateBuffer(&buffer_desc);
-  device.GetQueue().WriteBuffer(vertex_buffer, 0, vertex_data.data(),
-                                buffer_desc.size);
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+        .label = "vertex buffer",
+        .nextInChain = nullptr,
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
+        .size = vertex_data.size() * sizeof(float),
+        .mappedAtCreation = false};
+    vertex_buffer = device.CreateBuffer(&buffer_desc);
+    device.GetQueue().WriteBuffer(vertex_buffer, 0, vertex_data.data(),
+                                  buffer_desc.size);
+  }
 
   // initialize index buffer
-  buffer_desc.size = index_data.size() * sizeof(uint16_t);
-  buffer_desc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Index;
-  index_buffer = device.CreateBuffer(&buffer_desc);
-  device.GetQueue().WriteBuffer(index_buffer, 0, index_data.data(),
-                                buffer_desc.size);
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+        .label = "index buffer",
+        .nextInChain = nullptr,
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Index,
+        .size = index_data.size() * sizeof(uint16_t),
+        .mappedAtCreation = false};
+    index_buffer = device.CreateBuffer(&buffer_desc);
+    device.GetQueue().WriteBuffer(index_buffer, 0, index_data.data(),
+                                  buffer_desc.size);
+  }
+
+  // initialize constant buffer
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+      .nextInChain = nullptr,
+      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::
+    }
+  }
 
   std::vector<wgpu::VertexAttribute> vertex_attributes(2);
   vertex_attributes.at(0).format = wgpu::VertexFormat::Float32x2,
