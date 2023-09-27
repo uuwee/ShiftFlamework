@@ -21,7 +21,9 @@ class Graphics {
   wgpu::SwapChain swap_chain = nullptr;
   wgpu::RenderPipeline pipeline = nullptr;
   wgpu::Buffer vertex_buffer;
+  wgpu::Buffer index_buffer;
   std::vector<float> vertex_data;
+  std::vector<uint16_t> index_data;
 
   void initialize(std::function<void()> on_initialize_end);
   std::function<void()> on_initialize_end;
