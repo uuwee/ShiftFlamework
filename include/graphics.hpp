@@ -27,6 +27,7 @@ class Graphics {
   std::vector<uint16_t> index_data;
   float time_data = 0.0f;
   wgpu::BindGroup bind_group;
+  uint32_t bind_stride;
 
   void initialize(std::function<void()> on_initialize_end);
   std::function<void()> on_initialize_end;
