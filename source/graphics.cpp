@@ -40,7 +40,16 @@ void Graphics::initialize(std::function<void()> on_initialize_end) {
   get_device(instance, on_device_request_ended);
 }
 
+uint32_t ceil_to_next_multiple(uint32_t value, uint32_t step) {
+  uint32_t divide_and_ceil = value / step + (value % step == 0 ? 0 : 1);
+  return step * divide_and_ceil;
+}
+
 void Graphics::create_render_pipeline() {
+  wgpu::SupportedLimits supported_limits;
+  device.GetLimits(&supported_limits);
+  wgpu::Limits limits = supported_limits.limits;
+
   vertex_data = {
       // x, y, r, g, b
       -0.5, -0.5, 1.0, 0.0, 0.0, +0.5, -0.5, 0.0, 1.0, 0.0,
@@ -74,12 +83,15 @@ void Graphics::create_render_pipeline() {
                                   buffer_desc.size);
   }
 
+  bind_stride = ceil_to_next_multiple(sizeof(Math::Matrix4x4f),
+                                      limits.minUniformBufferOffsetAlignment);
+
   {
     wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
         .label = "uTime",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
-        .size = sizeof(Math::Matrix4x4f),
+        .size = bind_stride * 2,
         .mappedAtCreation = false,
     };
     time_buffer = device.CreateBuffer(&buffer_desc);
@@ -106,6 +118,7 @@ void Graphics::create_render_pipeline() {
       .visibility = wgpu::ShaderStage::Vertex,
       .buffer = wgpu::BufferBindingLayout{
           .type = wgpu::BufferBindingType::Uniform,
+          .hasDynamicOffset = true,
           .minBindingSize = sizeof(Math::Matrix4x4f),
       }};
 
@@ -189,10 +202,14 @@ void Graphics::create_render_pipeline() {
 void Graphics::render(wgpu::TextureView current_texture_view) {
   // updata constant
   time_data += 0.1f;
-  const auto matrix =
-      Math::Matrix4x4f({1.0f, 0.0f, 0.0f, 0, 0, 1, 0, 0, 0, 0, 1, 0,
-                        0.3f * std::cosf(time_data), 0, 0, 1});
+  auto matrix = Math::Matrix4x4f({1.0f, 0.0f, 0.0f, 0, 0, 1, 0, 0, 0, 0, 1, 0,
+                                  0.3f * std::cosf(time_data), 0, 0, 1});
   device.GetQueue().WriteBuffer(time_buffer, 0,
+                                reinterpret_cast<const uint8_t*>(&matrix),
+                                sizeof(Math::Matrix4x4f));
+  matrix = Math::Matrix4x4f({1.0f, 0.0f, 0.0f, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
+                             0.3f * std::cosf(time_data), 0, 1});
+  device.GetQueue().WriteBuffer(time_buffer, bind_stride,
                                 reinterpret_cast<const uint8_t*>(&matrix),
                                 sizeof(Math::Matrix4x4f));
 
@@ -211,8 +228,15 @@ void Graphics::render(wgpu::TextureView current_texture_view) {
   pass.SetVertexBuffer(0, vertex_buffer, 0, vertex_data.size() * sizeof(float));
   pass.SetIndexBuffer(index_buffer, wgpu::IndexFormat::Uint16, 0,
                       index_data.size() * sizeof(uint16_t));
-  pass.SetBindGroup(0, bind_group, 0, nullptr);
-  pass.DrawIndexed(index_data.size(), 1, 0, 0);
+
+  uint32_t dynamic_offset = 0;
+  pass.SetBindGroup(0, bind_group, 1, &dynamic_offset);
+  pass.DrawIndexed(index_data.size(), 1, 0, 0, 0);
+
+  dynamic_offset = 1 * bind_stride;
+  pass.SetBindGroup(0, bind_group, 1, &dynamic_offset);
+  pass.DrawIndexed(index_data.size(), 1, 0, 0, 0);
+
   pass.End();
   wgpu::CommandBuffer commands = encoder.Finish();
   device.GetQueue().Submit(1, &commands);
