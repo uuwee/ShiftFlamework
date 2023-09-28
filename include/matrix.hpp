@@ -257,7 +257,7 @@ inline Matrix<T, 4, 4> inverse_matrix4(const Matrix<T, 4, 4>& mat) {
 }
 
 template <typename T, int row, int column>
-inline void Display_Matrix(const Matrix<T, row, column>& m) {
+inline void display_matrix(const Matrix<T, row, column>& m) {
   std::cout << "{ ";
 
   for (int i = 0; i < row; i++) {
