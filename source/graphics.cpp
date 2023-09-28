@@ -72,12 +72,15 @@ void Graphics::create_render_pipeline() {
                                   buffer_desc.size);
   }
 
-  // initialize constant buffer
   {
-    const wgpu::BufferDescriptor buffer_desc {
-      .nextInChain = nullptr,
-      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::
-    }
+    wgpu::BufferDescriptor buffer_desc{
+        .nextInChain = nullptr,
+        .label = "uTime",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+        .size = sizeof(float),
+        .mappedAtCreation = false,
+    };
+    time_buffer = device.CreateBuffer(&buffer_desc);
   }
 
   std::vector<wgpu::VertexAttribute> vertex_attributes(2);
@@ -96,8 +99,45 @@ void Graphics::create_render_pipeline() {
       .attributes = vertex_attributes.data(),
   };
 
+  wgpu::BindGroupLayoutEntry binding_layout{
+      .binding = 0,
+      .visibility = wgpu::ShaderStage::Vertex,
+      .buffer = wgpu::BufferBindingLayout{
+          .type = wgpu::BufferBindingType::Uniform,
+          .minBindingSize = sizeof(float),
+      }};
+
+  wgpu::BindGroupLayoutDescriptor bind_group_layout_desc{
+      .entryCount = 1, .entries = &binding_layout};
+
+  wgpu::BindGroupLayout bind_group_layout =
+      device.CreateBindGroupLayout(&bind_group_layout_desc);
+
+  wgpu::PipelineLayoutDescriptor layout_desc{
+      .bindGroupLayoutCount = 1, .bindGroupLayouts = &bind_group_layout};
+
+  wgpu::PipelineLayout pipeline_layout =
+      device.CreatePipelineLayout(&layout_desc);
+
+  wgpu::BindGroupEntry binding{
+      .binding = 0,
+      .buffer = time_buffer,
+      .offset = 0,
+      .size = sizeof(float),
+  };
+
+  wgpu::BindGroupDescriptor bind_group_desc{
+      .layout = bind_group_layout,
+      .entryCount = bind_group_layout_desc.entryCount,
+      .entries = &binding,
+  };
+
+  bind_group = device.CreateBindGroup(&bind_group_desc);
+
   wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
   wgsl_desc.code = R"(
+      @group(0) @binding(0) var<uniform> uTime: f32;
+
       struct VertexInput{
         @location(0) position: vec2f,
         @location(1) color: vec3f,
@@ -110,7 +150,7 @@ void Graphics::create_render_pipeline() {
 
       @vertex fn vertexMain(in: VertexInput) -> VertexOutput {
         var out: VertexOutput;
-        out.position = vec4f(in.position, 0.0, 1.0);
+        out.position = vec4f(in.position + 0.3 * vec2f(cos(uTime), sin(uTime)), 0.0, 1.0);
         out.color = in.color; 
         return out;
       }
@@ -150,11 +190,20 @@ void Graphics::render(wgpu::TextureView current_texture_view) {
                                         .colorAttachments = &attachment};
 
   wgpu::CommandEncoder encoder = device.CreateCommandEncoder();
+
+  // updata constant
+  time_data += 0.1f;
+  encoder.WriteBuffer(time_buffer, 0,
+                      reinterpret_cast<const uint8_t*>(&time_data),
+                      sizeof(float));
+
+  // render pass
   wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass);
   pass.SetPipeline(pipeline);
   pass.SetVertexBuffer(0, vertex_buffer, 0, vertex_data.size() * sizeof(float));
   pass.SetIndexBuffer(index_buffer, wgpu::IndexFormat::Uint16, 0,
                       index_data.size() * sizeof(uint16_t));
+  pass.SetBindGroup(0, bind_group, 0, nullptr);
   pass.DrawIndexed(index_data.size(), 1, 0, 0);
   pass.End();
   wgpu::CommandBuffer commands = encoder.Finish();
