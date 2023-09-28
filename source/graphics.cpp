@@ -1,6 +1,8 @@
 #include "graphics.hpp"
 
 #include "engine.hpp"
+#include "matrix.hpp"
+#include "vector.hpp"
 
 using namespace ShiftFlamework;
 
@@ -77,7 +79,7 @@ void Graphics::create_render_pipeline() {
         .nextInChain = nullptr,
         .label = "uTime",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
-        .size = sizeof(float),
+        .size = sizeof(Math::Matrix4x4f),
         .mappedAtCreation = false,
     };
     time_buffer = device.CreateBuffer(&buffer_desc);
@@ -104,7 +106,7 @@ void Graphics::create_render_pipeline() {
       .visibility = wgpu::ShaderStage::Vertex,
       .buffer = wgpu::BufferBindingLayout{
           .type = wgpu::BufferBindingType::Uniform,
-          .minBindingSize = sizeof(float),
+          .minBindingSize = sizeof(Math::Matrix4x4f),
       }};
 
   wgpu::BindGroupLayoutDescriptor bind_group_layout_desc{
@@ -123,7 +125,7 @@ void Graphics::create_render_pipeline() {
       .binding = 0,
       .buffer = time_buffer,
       .offset = 0,
-      .size = sizeof(float),
+      .size = sizeof(Math::Matrix4x4f),
   };
 
   wgpu::BindGroupDescriptor bind_group_desc{
@@ -136,7 +138,7 @@ void Graphics::create_render_pipeline() {
 
   wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
   wgsl_desc.code = R"(
-      @group(0) @binding(0) var<uniform> uTime: f32;
+      @group(0) @binding(0) var<uniform> uTime: mat4x4f;
 
       struct VertexInput{
         @location(0) position: vec2f,
@@ -150,7 +152,8 @@ void Graphics::create_render_pipeline() {
 
       @vertex fn vertexMain(in: VertexInput) -> VertexOutput {
         var out: VertexOutput;
-        out.position = vec4f(in.position + 0.3 * vec2f(cos(uTime), sin(uTime)), 0.0, 1.0);
+        out.position = uTime * vec4f(in.position, 0.0, 1.0);
+        out.position /= out.position.w;
         out.color = in.color; 
         return out;
       }
@@ -172,16 +175,27 @@ void Graphics::create_render_pipeline() {
                                      .targets = &color_target_state};
 
   wgpu::RenderPipelineDescriptor render_pipeline_desc{
+      .layout = pipeline_layout,
       .vertex = {.module = shader_module,
                  .entryPoint = "vertexMain",
                  .bufferCount = 1,
                  .buffers = &vertex_buffer_layout},
-      .fragment = &fragment_state};
+      .fragment = &fragment_state,
+  };
 
   pipeline = device.CreateRenderPipeline(&render_pipeline_desc);
 }
 
 void Graphics::render(wgpu::TextureView current_texture_view) {
+  // updata constant
+  time_data += 0.1f;
+  const auto matrix =
+      Math::Matrix4x4f({1.0f, 0.0f, 0.0f, 0, 0, 1, 0, 0, 0, 0, 1, 0,
+                        0.3f * std::cosf(time_data), 0, 0, 1});
+  device.GetQueue().WriteBuffer(time_buffer, 0,
+                                reinterpret_cast<const uint8_t*>(&matrix),
+                                sizeof(Math::Matrix4x4f));
+
   wgpu::RenderPassColorAttachment attachment{.view = current_texture_view,
                                              .loadOp = wgpu::LoadOp::Clear,
                                              .storeOp = wgpu::StoreOp::Store};
@@ -190,12 +204,6 @@ void Graphics::render(wgpu::TextureView current_texture_view) {
                                         .colorAttachments = &attachment};
 
   wgpu::CommandEncoder encoder = device.CreateCommandEncoder();
-
-  // updata constant
-  time_data += 0.1f;
-  encoder.WriteBuffer(time_buffer, 0,
-                      reinterpret_cast<const uint8_t*>(&time_data),
-                      sizeof(float));
 
   // render pass
   wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass);
