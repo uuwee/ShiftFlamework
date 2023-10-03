@@ -44,6 +44,27 @@ namespace ShiftFlamework::Math{
 
     };
 
+    template<typename T>
+    class Vector<T, 4>
+    {
+        public:
+        Vector(std::array<T, 4> init_value)
+        {
+            x = init_value.at(0);
+            y = init_value.at(1);
+            z = init_value.at(2);
+            w = init_value.at(3);
+        }
+
+        void setvector(int i, T n);
+        T getvector(int i) const;
+        T x;
+        T y;
+        T z;
+        T w;
+
+    };
+
 	using Vector3f = Vector<float, 3>;
 	using Vector3d = Vector<double, 3>;
 	using Vector4f = Vector<float, 4>;
@@ -67,6 +88,20 @@ namespace ShiftFlamework::Math{
         }
     }
 
+    template<typename T>
+    inline void Vector<T, 4>::setvector(int i, T n)
+    {
+        if(i == 0){
+            x = n;
+        }else if(i == 1){
+            y = n;
+        }else if(i == 2){
+            z = n;
+        }else if(i == 3){
+            w = n;
+        }
+    }
+
     template<typename T, int dimension>
     inline T Vector<T, dimension>::getvector(int i) const
     {
@@ -82,6 +117,20 @@ namespace ShiftFlamework::Math{
             return y;
         }else if(i == 2){
             return z;
+        }
+    }
+
+    template<typename T>
+    inline T Vector<T, 4>::getvector(int i) const
+    {
+        if(i == 0){
+            return x;
+        }else if(i == 1){
+            return y;
+        }else if(i == 2){
+            return z;
+        }else if(i == 3){
+            return w;
         }
     }
 
@@ -267,11 +316,11 @@ namespace ShiftFlamework::Math{
     }
 
     template<typename T, int dimension>
-    inline Vector<float, dimension> length(const Vector<T, dimension>& v)
+    inline float length(const Vector<T, dimension>& v)
     {
         float n = 0;
         for(int i = 0; i < dimension; i++){
-            n = v.getvector(i) * v.getvector(i);
+            n += v.getvector(i) * v.getvector(i);
         }
         return std::sqrt(n);
     }
@@ -321,13 +370,13 @@ namespace ShiftFlamework::Math{
     template<typename T>
     inline Vector<T, 3> forward()
     {
-        return Vector<T, 3>({0,1,0});
+        return Vector<T, 3>({0,-1,0});
     }
 
     template<typename T>
     inline Vector<T, 3> back()
     {
-        return Vector<T, 3>({0,-1,0});
+        return Vector<T, 3>({0,1,0});
     }
 
     template<typename T>
