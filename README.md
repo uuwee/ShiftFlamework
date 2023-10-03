@@ -35,10 +35,11 @@ gclient sync
 ```
 emcmake cmake -B out\web
 cmake --build .\out\web
+cp .\resource\index.html .\out\web\index.html
 cd .\out\web
 python -m http.server 8080
 ```
-ブラウザで http://localhost:8080/game.html 
+ブラウザで http://localhost:8080/index.html 
 
 ## 必要ツール類のインストール（参考）
 ### windows

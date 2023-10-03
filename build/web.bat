@@ -1,2 +1,2 @@
-emcmake cmake -B out\web
+emcmake cmake -B out\web\
 cmake --build .\out\web\
