@@ -1,6 +1,0 @@
-# ninja log v5
-31	3264	7180545226744270	CMakeFiles/game.dir/source/input.cpp.o	b17de57df983cbbf
-40	3293	7180545227095692	CMakeFiles/game.dir/source/window.cpp.o	6adca6cfdb827f6b
-12	3349	7180545227671439	CMakeFiles/game.dir/source/graphics.cpp.o	17c7fd3e8edeb377
-35	3510	7180545229284667	CMakeFiles/game.dir/source/main.cpp.o	e72d5f0afd64458b
-3511	5734	7180545250785075	game.js	87f9fb641b59f1a
