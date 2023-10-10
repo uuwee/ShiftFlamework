@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vector3.hpp"
+#include "matrix.hpp"
 
 namespace ShiftFlamework::Math
 {
@@ -29,7 +30,7 @@ namespace ShiftFlamework::Math
 		return p * Quaternionf({-q.x, -q.y, -q.z, q.w});
 	}
 
-	inline Quaternionf getinverse(const Quaternionf& p)
+	inline Quaternionf get_inverse(const Quaternionf& p)
 	{
 		float dir_len = length(Vector3f({p.x, p.y, p.z}));
 		return Quaternionf({-p.x / dir_len, -p.y / dir_len, -p.z / dir_len, p.w / dir_len});
@@ -42,9 +43,6 @@ namespace ShiftFlamework::Math
 	
 	inline Vector3f get_dirVector(const Quaternionf& p)
 	{
-		//ZYX
-		//algorithm (https://qiita.com/aa_debdeb/items/3d02e28fb9ebfa357eaf#%E5%9B%9E%E8%BB%A2%E8%A1%8C%E5%88%97%E3%81%8B%E3%82%89%E3%82%AF%E3%82%A9%E3%83%BC%E3%82%BF%E3%83%8B%E3%82%AA%E3%83%B3)
-
 		const auto q = p * Quaternionf({0, -1, 0, 0}) * get_conjugate(p);
 		return Vector3f({q.x, q.y, q.z});
 
@@ -59,12 +57,31 @@ namespace ShiftFlamework::Math
 		auto x_rot = angleaxis(x, Vector3f({1,0,0}));
 		auto y_rot = angleaxis(y, Vector3f({0,1,0}));
 		auto z_rot = angleaxis(z, Vector3f({0,0,1}));
-
-		auto vec = normalized(Vector3f({0,-1,0}));
-		auto m = y_rot * vec;
-		m = x_rot * m;
-		m = z_rot * m;
 		
-		return m;
+		return z_rot * x_rot * y_rot;
+	}
+
+	inline Matrix<float, 4, 4> transMatrix(Vector3f position_xyz, Quaternionf rotation, Vector3f size_xyz) { 
+        auto pos = Matrix<float, 4, 4>({{{0, 0, 0, position_xyz.x},
+                                           {0, 0, 0, position_xyz.y},
+                                           {0, 0, 0, position_xyz.z},
+                                           {0, 0, 0, 1}}});
+		float q0 = rotation.x;
+        float q1 = rotation.y;
+        float q2 = rotation.z;
+        float q3 = rotation.w;
+        auto rot = Matrix<float, 4, 4>(
+            {{{q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3, 2 * (q1 * q2 - q0 * q3),
+               2 * (q0 * q2 + q1 * q3), 0},
+              {2 * (q0 * q3 + q1 * q2), q0 * q0 - q1 * q1 + q2 * q2 - q3 * q3,
+               2 * (-q0 * q1 + q2 * q3), 0},
+              {2 * (q1 * q3 - q0 * q2), 2 * (q2 * q3 + q0 * q1),
+               q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3, 0},
+              {0, 0, 0, 1}}});
+        auto siz = Matrix<float, 4, 4>({{{size_xyz.x, 0, 0, 0},
+                                         {0, size_xyz.y, 0, 0},
+                                         {0, 0, size_xyz.z, 0},
+                                         {0, 0, 0, 1}}});
+        return pos * rot * siz;
 	}
 }
