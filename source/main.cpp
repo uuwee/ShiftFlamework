@@ -32,13 +32,7 @@ std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>> Engine::modules;
 
 int main() {
   // テスト始め
-  auto p = ShiftFlamework::Math::Vector3f({1, 0, 0});
-  auto rot = ShiftFlamework::Math::angleaxis(std::acos(1 / std::sqrt(2)), ShiftFlamework::Math::Vector3f({0,-1,0}));
-  ShiftFlamework::Math::Display_Vector(rot);
-  ShiftFlamework::Math::Display_Vector(rot * p);
-  rot = ShiftFlamework::Math::euler_yxz(std::acos(1/std::sqrt(2)),0 ,0);
-  ShiftFlamework::Math::Display_Vector(rot);
-  ShiftFlamework::Math::Display_Vector(rot * p);
+
   //　テスト終わり
   std::get<std::shared_ptr<Graphics>>(Engine::modules) =
       std::make_shared<Graphics>();

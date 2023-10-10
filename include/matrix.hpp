@@ -17,18 +17,18 @@ namespace ShiftFlamework::Math{
         private:
         std::array<std::array <T, column>, row> internal_data;
         public:
-        void setmatrix(int r, int c, T n);
-        T getmatrix(int r, int c) const;
+        void set_matrix(int r, int c, T n);
+        T get_matrix(int r, int c) const;
 
     };
 
     template<typename T, int row , int column>
-    inline void Matrix<T, row, column>::setmatrix(int r, int c, T n){
+    inline void Matrix<T, row, column>::set_matrix(int r, int c, T n){
         internal_data.at(r).at(c) = n;
     };
 
     template<typename T, int row , int column>
-    inline T Matrix<T, row, column>::getmatrix(int r, int c) const
+    inline T Matrix<T, row, column>::get_matrix(int r, int c) const
     {
         return internal_data.at(r).at(c);
     };
@@ -159,7 +159,7 @@ namespace ShiftFlamework::Math{
         auto v = lhs;
         for(int i = 0; i < row; i++){
             for(int j = 0; j < column; j++){
-                v.setmatrix(i, j, lhs.getmatrix(i, j) + rhs.getmatrix(i, j));
+                v.setmatrix(i, j, lhs.get_matrix(i, j) + rhs.get_matrix(i, j));
             }
         }
         return v;
@@ -171,7 +171,7 @@ namespace ShiftFlamework::Math{
         auto v = lhs;
         for(int i = 0; i < row; i++){
             for(int j = 0; j < column; j++){
-                v.setmatrix(i, j, lhs.getmatrix(i, j) - rhs.getmatrix(i, j));
+                v.setmatrix(i, j, lhs.get_matrix(i, j) - rhs.get_matrix(i, j));
             }
         }
         return v;
@@ -188,7 +188,7 @@ namespace ShiftFlamework::Math{
                     if(k==0){
                         v.setmatrix(i, j, 0);
                     }
-                    v.setmatrix(i, j, v.getmatrix(i, j) + lhs.getmatrix(i, k) * rhs.getmatrix(k, j));
+                    v.setmatrix(i, j, v.getmatrix(i, j) + lhs.get_matrix(i, k) * rhs.get_matrix(k, j));
                 }
             }
         }
@@ -252,11 +252,11 @@ namespace ShiftFlamework::Math{
     template<typename T>
     inline Matrix<float, 2, 2> inverse_matrix2(const Matrix<T, 2, 2>& mat){
         auto m = Matrix<float, 2, 2> {{}};
-        float dat = mat.getmatrix(0, 0) * mat.getmatrix(1, 1) - mat.getmatrix(0, 1) * mat.getmatrix(1, 0);
-        m.setmatrix(0, 0, mat.getmatrix(1, 1) / dat);
-        m.setmatrix(0, 1, -mat.getmatrix(0, 1) / dat);
-        m.setmatrix(1, 0, -mat.getmatrix(1, 0) / dat);
-        m.setmatrix(1, 1, mat.getmatrix(0, 0) / dat);
+        float dat = mat.get_matrix(0, 0) * mat.get_matrix(1, 1) - mat.get_matrix(0, 1) * mat.get_matrix(1, 0);
+        m.set_matrix(0, 0, mat.get_matrix(1, 1) / dat);
+        m.set_matrix(0, 1, -mat.get_matrix(0, 1) / dat);
+        m.set_matrix(1, 0, -mat.get_matrix(1, 0) / dat);
+        m.set_matrix(1, 1, mat.get_matrix(0, 0) / dat);
 
         return m;
     }
@@ -264,22 +264,22 @@ namespace ShiftFlamework::Math{
     template<typename T>
     inline Matrix<float, 3, 3> inverse_matrix3(const Matrix<T, 3, 3>& mat){
         auto m = Matrix<float, 3, 3> {{}};
-        float dat = mat.getmatrix(0, 0) * mat.getmatrix(1, 1) * mat.getmatrix(2, 2)
-        + mat.getmatrix(0, 1) * mat.getmatrix(1, 2) * mat.getmatrix(2, 0)
-        + mat.getmatrix(0, 2) * mat.getmatrix(1, 0) * mat.getmatrix(2, 1)
-        - mat.getmatrix(0, 2) * mat.getmatrix(1, 1) * mat.getmatrix(2, 0)
-        - mat.getmatrix(0, 1) * mat.getmatrix(1, 0) * mat.getmatrix(2, 2)
-        - mat.getmatrix(0, 0) * mat.getmatrix(1, 2) * mat.getmatrix(2, 1);
+        float dat = mat.get_matrix(0, 0) * mat.get_matrix(1, 1) * mat.get_matrix(2, 2)
+        + mat.get_matrix(0, 1) * mat.get_matrix(1, 2) * mat.get_matrix(2, 0)
+        + mat.get_matrix(0, 2) * mat.get_matrix(1, 0) * mat.get_matrix(2, 1)
+        - mat.get_matrix(0, 2) * mat.get_matrix(1, 1) * mat.get_matrix(2, 0)
+        - mat.get_matrix(0, 1) * mat.get_matrix(1, 0) * mat.get_matrix(2, 2)
+        - mat.get_matrix(0, 0) * mat.get_matrix(1, 2) * mat.get_matrix(2, 1);
 
-        m.setmatrix(0, 0, (mat.getmatrix(1, 1) * mat.getmatrix(2, 2) - mat.getmatrix(1, 2) * mat.getmatrix(2, 1)) / dat);
-        m.setmatrix(0, 1, (mat.getmatrix(0, 2) * mat.getmatrix(2, 1) - mat.getmatrix(0, 1) * mat.getmatrix(2, 2)) / dat);
-        m.setmatrix(0, 2, (mat.getmatrix(0, 1) * mat.getmatrix(1, 2) - mat.getmatrix(0, 2) * mat.getmatrix(1, 1)) / dat);
-        m.setmatrix(1, 0, (mat.getmatrix(1, 2) * mat.getmatrix(2, 0) - mat.getmatrix(1, 0) * mat.getmatrix(2, 2)) / dat);
-        m.setmatrix(1, 1, (mat.getmatrix(0, 0) * mat.getmatrix(2, 2) - mat.getmatrix(0, 2) * mat.getmatrix(2, 0)) / dat);
-        m.setmatrix(1, 2, (mat.getmatrix(0, 2) * mat.getmatrix(1, 0) - mat.getmatrix(0, 0) * mat.getmatrix(1, 2)) / dat);
-        m.setmatrix(2, 0, (mat.getmatrix(1, 0) * mat.getmatrix(2, 1) - mat.getmatrix(1, 1) * mat.getmatrix(2, 0)) / dat);
-        m.setmatrix(2, 1, (mat.getmatrix(0, 1) * mat.getmatrix(2, 0) - mat.getmatrix(0, 0) * mat.getmatrix(2, 1)) / dat);
-        m.setmatrix(2, 2, (mat.getmatrix(0, 0) * mat.getmatrix(1, 1) - mat.getmatrix(0, 1) * mat.getmatrix(1, 0)) / dat);
+        m.set_matrix(0, 0, (mat.get_matrix(1, 1) * mat.get_matrix(2, 2) - mat.get_matrix(1, 2) * mat.get_matrix(2, 1)) / dat);
+        m.set_matrix(0, 1, (mat.get_matrix(0, 2) * mat.get_matrix(2, 1) - mat.get_matrix(0, 1) * mat.get_matrix(2, 2)) / dat);
+        m.set_matrix(0, 2, (mat.get_matrix(0, 1) * mat.get_matrix(1, 2) - mat.get_matrix(0, 2) * mat.get_matrix(1, 1)) / dat);
+        m.set_matrix(1, 0, (mat.get_matrix(1, 2) * mat.get_matrix(2, 0) - mat.get_matrix(1, 0) * mat.get_matrix(2, 2)) / dat);
+        m.set_matrix(1, 1, (mat.get_matrix(0, 0) * mat.get_matrix(2, 2) - mat.get_matrix(0, 2) * mat.get_matrix(2, 0)) / dat);
+        m.set_matrix(1, 2, (mat.get_matrix(0, 2) * mat.get_matrix(1, 0) - mat.get_matrix(0, 0) * mat.get_matrix(1, 2)) / dat);
+        m.set_matrix(2, 0, (mat.get_matrix(1, 0) * mat.get_matrix(2, 1) - mat.get_matrix(1, 1) * mat.get_matrix(2, 0)) / dat);
+        m.set_matrix(2, 1, (mat.get_matrix(0, 1) * mat.get_matrix(2, 0) - mat.get_matrix(0, 0) * mat.get_matrix(2, 1)) / dat);
+        m.set_matrix(2, 2, (mat.get_matrix(0, 0) * mat.get_matrix(1, 1) - mat.get_matrix(0, 1) * mat.get_matrix(1, 0)) / dat);
 
         return m;
     }
@@ -287,127 +287,127 @@ namespace ShiftFlamework::Math{
     template<typename T>
     inline Matrix<float, 4, 4> inverse_matrix4(const Matrix<T, 4 , 4>& mat){
         auto m = Matrix<float, 4 , 4> {{}};
-        float dat = mat.getmatrix(0, 0) * mat.getmatrix(1, 1) * mat.getmatrix(2, 2) * mat.getmatrix(3, 3)
-        +mat.getmatrix(0, 0) * mat.getmatrix(1, 2) * mat.getmatrix(2, 3) * mat.getmatrix(3, 1)
-        +mat.getmatrix(0, 0) * mat.getmatrix(1, 3) * mat.getmatrix(2, 1) * mat.getmatrix(3, 2)
-        -mat.getmatrix(0, 0) * mat.getmatrix(1, 3) * mat.getmatrix(2, 2) * mat.getmatrix(3, 1)
-        -mat.getmatrix(0, 0) * mat.getmatrix(1, 2) * mat.getmatrix(2, 1) * mat.getmatrix(3, 3)
-        -mat.getmatrix(0, 0) * mat.getmatrix(1, 1) * mat.getmatrix(2, 3) * mat.getmatrix(3, 2)
-        -mat.getmatrix(0, 1) * mat.getmatrix(1, 0) * mat.getmatrix(2, 2) * mat.getmatrix(3, 3)
-        -mat.getmatrix(0, 2) * mat.getmatrix(1, 0) * mat.getmatrix(2, 3) * mat.getmatrix(3, 1)
-        -mat.getmatrix(0, 3) * mat.getmatrix(1, 0) * mat.getmatrix(2, 1) * mat.getmatrix(3, 2)
-        +mat.getmatrix(0, 3) * mat.getmatrix(1, 0) * mat.getmatrix(2, 2) * mat.getmatrix(3, 1)
-        +mat.getmatrix(0, 2) * mat.getmatrix(1, 0) * mat.getmatrix(2, 1) * mat.getmatrix(3, 3)
-        +mat.getmatrix(0, 1) * mat.getmatrix(1, 0) * mat.getmatrix(2, 3) * mat.getmatrix(3, 2)
-        +mat.getmatrix(0, 1) * mat.getmatrix(1, 2) * mat.getmatrix(2, 0) * mat.getmatrix(3, 3)
-        +mat.getmatrix(0, 2) * mat.getmatrix(1, 3) * mat.getmatrix(2, 0) * mat.getmatrix(3, 1)
-        +mat.getmatrix(0, 3) * mat.getmatrix(1, 1) * mat.getmatrix(2, 0) * mat.getmatrix(3, 2)
-        -mat.getmatrix(0, 3) * mat.getmatrix(1, 2) * mat.getmatrix(2, 0) * mat.getmatrix(3, 1)
-        -mat.getmatrix(0, 2) * mat.getmatrix(1, 1) * mat.getmatrix(2, 0) * mat.getmatrix(3, 3)
-        -mat.getmatrix(0, 1) * mat.getmatrix(1, 3) * mat.getmatrix(2, 0) * mat.getmatrix(3, 2)
-        -mat.getmatrix(0, 1) * mat.getmatrix(1, 2) * mat.getmatrix(2, 3) * mat.getmatrix(3, 0)
-        -mat.getmatrix(0, 2) * mat.getmatrix(1, 3) * mat.getmatrix(2, 1) * mat.getmatrix(3, 0)
-        -mat.getmatrix(0, 3) * mat.getmatrix(1, 1) * mat.getmatrix(2, 2) * mat.getmatrix(3, 0)
-        +mat.getmatrix(0, 3) * mat.getmatrix(1, 2) * mat.getmatrix(2, 1) * mat.getmatrix(3, 0)
-        +mat.getmatrix(0, 2) * mat.getmatrix(1, 1) * mat.getmatrix(2, 3) * mat.getmatrix(3, 0)
-        +mat.getmatrix(0, 1) * mat.getmatrix(1, 3) * mat.getmatrix(2, 2) * mat.getmatrix(3, 0);
+        float dat = mat.get_matrix(0, 0) * mat.get_matrix(1, 1) * mat.get_matrix(2, 2) * mat.get_matrix(3, 3)
+        +mat.get_matrix(0, 0) * mat.get_matrix(1, 2) * mat.get_matrix(2, 3) * mat.get_matrix(3, 1)
+        +mat.get_matrix(0, 0) * mat.get_matrix(1, 3) * mat.get_matrix(2, 1) * mat.get_matrix(3, 2)
+        -mat.get_matrix(0, 0) * mat.get_matrix(1, 3) * mat.get_matrix(2, 2) * mat.get_matrix(3, 1)
+        -mat.get_matrix(0, 0) * mat.get_matrix(1, 2) * mat.get_matrix(2, 1) * mat.get_matrix(3, 3)
+        -mat.get_matrix(0, 0) * mat.get_matrix(1, 1) * mat.get_matrix(2, 3) * mat.get_matrix(3, 2)
+        -mat.get_matrix(0, 1) * mat.get_matrix(1, 0) * mat.get_matrix(2, 2) * mat.get_matrix(3, 3)
+        -mat.get_matrix(0, 2) * mat.get_matrix(1, 0) * mat.get_matrix(2, 3) * mat.get_matrix(3, 1)
+        -mat.get_matrix(0, 3) * mat.get_matrix(1, 0) * mat.get_matrix(2, 1) * mat.get_matrix(3, 2)
+        +mat.get_matrix(0, 3) * mat.get_matrix(1, 0) * mat.get_matrix(2, 2) * mat.get_matrix(3, 1)
+        +mat.get_matrix(0, 2) * mat.get_matrix(1, 0) * mat.get_matrix(2, 1) * mat.get_matrix(3, 3)
+        +mat.get_matrix(0, 1) * mat.get_matrix(1, 0) * mat.get_matrix(2, 3) * mat.get_matrix(3, 2)
+        +mat.get_matrix(0, 1) * mat.get_matrix(1, 2) * mat.get_matrix(2, 0) * mat.get_matrix(3, 3)
+        +mat.get_matrix(0, 2) * mat.get_matrix(1, 3) * mat.get_matrix(2, 0) * mat.get_matrix(3, 1)
+        +mat.get_matrix(0, 3) * mat.get_matrix(1, 1) * mat.get_matrix(2, 0) * mat.get_matrix(3, 2)
+        -mat.get_matrix(0, 3) * mat.get_matrix(1, 2) * mat.get_matrix(2, 0) * mat.get_matrix(3, 1)
+        -mat.get_matrix(0, 2) * mat.get_matrix(1, 1) * mat.get_matrix(2, 0) * mat.get_matrix(3, 3)
+        -mat.get_matrix(0, 1) * mat.get_matrix(1, 3) * mat.get_matrix(2, 0) * mat.get_matrix(3, 2)
+        -mat.get_matrix(0, 1) * mat.get_matrix(1, 2) * mat.get_matrix(2, 3) * mat.get_matrix(3, 0)
+        -mat.get_matrix(0, 2) * mat.get_matrix(1, 3) * mat.get_matrix(2, 1) * mat.get_matrix(3, 0)
+        -mat.get_matrix(0, 3) * mat.get_matrix(1, 1) * mat.get_matrix(2, 2) * mat.get_matrix(3, 0)
+        +mat.get_matrix(0, 3) * mat.get_matrix(1, 2) * mat.get_matrix(2, 1) * mat.get_matrix(3, 0)
+        +mat.get_matrix(0, 2) * mat.get_matrix(1, 1) * mat.get_matrix(2, 3) * mat.get_matrix(3, 0)
+        +mat.get_matrix(0, 1) * mat.get_matrix(1, 3) * mat.get_matrix(2, 2) * mat.get_matrix(3, 0);
 
-        m.setmatrix(0, 0, (mat.getmatrix(1, 1) * mat.getmatrix(2, 2) * mat.getmatrix(3, 3) 
-        + mat.getmatrix(1, 2) * mat.getmatrix(2, 3) * mat.getmatrix(3, 1)
-        + mat.getmatrix(1, 3) * mat.getmatrix(2, 1) * mat.getmatrix(3, 2)
-        - mat.getmatrix(1, 3) * mat.getmatrix(2, 2) * mat.getmatrix(3, 1)
-        - mat.getmatrix(1, 2) * mat.getmatrix(2, 1) * mat.getmatrix(3, 3)
-        - mat.getmatrix(1, 1) * mat.getmatrix(2, 3) * mat.getmatrix(3, 2)) / dat);
-        m.setmatrix(0, 1, (mat.getmatrix(0, 3) * mat.getmatrix(2, 2) * mat.getmatrix(3, 1) 
-        + mat.getmatrix(0, 2) * mat.getmatrix(2, 1) * mat.getmatrix(3, 3)
-        + mat.getmatrix(0, 1) * mat.getmatrix(2, 3) * mat.getmatrix(3, 2)
-        - mat.getmatrix(0, 1) * mat.getmatrix(2, 2) * mat.getmatrix(3, 3)
-        - mat.getmatrix(0, 2) * mat.getmatrix(2, 3) * mat.getmatrix(3, 1)
-        - mat.getmatrix(0, 3) * mat.getmatrix(2, 1) * mat.getmatrix(3, 2)) / dat);
-        m.setmatrix(0, 2, (mat.getmatrix(0, 1) * mat.getmatrix(1, 2) * mat.getmatrix(3, 3) 
-        + mat.getmatrix(0, 2) * mat.getmatrix(1, 3) * mat.getmatrix(3, 1)
-        + mat.getmatrix(0, 3) * mat.getmatrix(1, 1) * mat.getmatrix(3, 2)
-        - mat.getmatrix(0, 3) * mat.getmatrix(1, 2) * mat.getmatrix(3, 1)
-        - mat.getmatrix(0, 2) * mat.getmatrix(1, 1) * mat.getmatrix(3, 3)
-        - mat.getmatrix(0, 1) * mat.getmatrix(1, 3) * mat.getmatrix(3, 2)) / dat);
-        m.setmatrix(0, 3, (mat.getmatrix(0, 3) * mat.getmatrix(1, 2) * mat.getmatrix(2, 1) 
-        + mat.getmatrix(0, 2) * mat.getmatrix(1, 1) * mat.getmatrix(2, 3)
-        + mat.getmatrix(0, 1) * mat.getmatrix(1, 3) * mat.getmatrix(2, 2)
-        - mat.getmatrix(0, 1) * mat.getmatrix(1, 2) * mat.getmatrix(2, 3)
-        - mat.getmatrix(0, 2) * mat.getmatrix(1, 3) * mat.getmatrix(2, 1)
-        - mat.getmatrix(0, 3) * mat.getmatrix(1, 1) * mat.getmatrix(2, 2)) / dat);
-        m.setmatrix(1, 0, (mat.getmatrix(1, 3) * mat.getmatrix(2, 2) * mat.getmatrix(3, 0) 
-        + mat.getmatrix(1, 2) * mat.getmatrix(2, 0) * mat.getmatrix(3, 3)
-        + mat.getmatrix(1, 0) * mat.getmatrix(2, 3) * mat.getmatrix(3, 2)
-        - mat.getmatrix(1, 0) * mat.getmatrix(2, 2) * mat.getmatrix(3, 3)
-        - mat.getmatrix(1, 2) * mat.getmatrix(2, 3) * mat.getmatrix(3, 0)
-        - mat.getmatrix(1, 3) * mat.getmatrix(2, 0) * mat.getmatrix(3, 2)) / dat);
-        m.setmatrix(1, 1, (mat.getmatrix(0, 0) * mat.getmatrix(2, 2) * mat.getmatrix(3, 3) 
-        + mat.getmatrix(0, 2) * mat.getmatrix(2, 3) * mat.getmatrix(3, 0)
-        + mat.getmatrix(0, 3) * mat.getmatrix(2, 0) * mat.getmatrix(3, 2)
-        - mat.getmatrix(0, 3) * mat.getmatrix(2, 2) * mat.getmatrix(3, 0)
-        - mat.getmatrix(0, 2) * mat.getmatrix(2, 0) * mat.getmatrix(3, 3)
-        - mat.getmatrix(0, 0) * mat.getmatrix(2, 3) * mat.getmatrix(3, 2)) / dat);
-        m.setmatrix(1, 2, (mat.getmatrix(0, 3) * mat.getmatrix(1, 2) * mat.getmatrix(3, 0) 
-        + mat.getmatrix(0, 2) * mat.getmatrix(1, 0) * mat.getmatrix(3, 3)
-        + mat.getmatrix(0, 0) * mat.getmatrix(1, 3) * mat.getmatrix(3, 2)
-        - mat.getmatrix(0, 0) * mat.getmatrix(1, 2) * mat.getmatrix(3, 3)
-        - mat.getmatrix(0, 2) * mat.getmatrix(1, 3) * mat.getmatrix(3, 0)
-        - mat.getmatrix(0, 3) * mat.getmatrix(1, 0) * mat.getmatrix(3, 2)) / dat);
-        m.setmatrix(1, 3, (mat.getmatrix(0, 0) * mat.getmatrix(1, 2) * mat.getmatrix(2, 3) 
-        + mat.getmatrix(0, 2) * mat.getmatrix(1, 3) * mat.getmatrix(2, 0)
-        + mat.getmatrix(0, 3) * mat.getmatrix(1, 0) * mat.getmatrix(2, 2)
-        - mat.getmatrix(0, 3) * mat.getmatrix(1, 2) * mat.getmatrix(2, 0)
-        - mat.getmatrix(0, 2) * mat.getmatrix(1, 0) * mat.getmatrix(2, 3)
-        - mat.getmatrix(0, 0) * mat.getmatrix(1, 3) * mat.getmatrix(2, 2)) / dat);
-        m.setmatrix(2, 0, (mat.getmatrix(1, 0) * mat.getmatrix(2, 1) * mat.getmatrix(3, 3) 
-        + mat.getmatrix(1, 1) * mat.getmatrix(2, 3) * mat.getmatrix(3, 0)
-        + mat.getmatrix(1, 3) * mat.getmatrix(2, 0) * mat.getmatrix(3, 1)
-        - mat.getmatrix(1, 3) * mat.getmatrix(2, 1) * mat.getmatrix(3, 0)
-        - mat.getmatrix(1, 1) * mat.getmatrix(2, 0) * mat.getmatrix(3, 3)
-        - mat.getmatrix(1, 0) * mat.getmatrix(2, 3) * mat.getmatrix(3, 1)) / dat);
-        m.setmatrix(2, 1, (mat.getmatrix(0, 3) * mat.getmatrix(2, 1) * mat.getmatrix(3, 0) 
-        + mat.getmatrix(0, 1) * mat.getmatrix(2, 0) * mat.getmatrix(3, 3)
-        + mat.getmatrix(0, 0) * mat.getmatrix(2, 3) * mat.getmatrix(3, 1)
-        - mat.getmatrix(0, 0) * mat.getmatrix(2, 1) * mat.getmatrix(3, 3)
-        - mat.getmatrix(0, 1) * mat.getmatrix(2, 3) * mat.getmatrix(3, 0)
-        - mat.getmatrix(0, 3) * mat.getmatrix(2, 0) * mat.getmatrix(3, 1)) / dat);
-        m.setmatrix(2, 2, (mat.getmatrix(0, 0) * mat.getmatrix(1, 1) * mat.getmatrix(3, 3) 
-        + mat.getmatrix(0, 1) * mat.getmatrix(1, 3) * mat.getmatrix(3, 0)
-        + mat.getmatrix(0, 3) * mat.getmatrix(1, 0) * mat.getmatrix(3, 1)
-        - mat.getmatrix(0, 3) * mat.getmatrix(1, 1) * mat.getmatrix(3, 0)
-        - mat.getmatrix(0, 1) * mat.getmatrix(1, 0) * mat.getmatrix(3, 3)
-        - mat.getmatrix(0, 0) * mat.getmatrix(1, 3) * mat.getmatrix(3, 1)) / dat);
-        m.setmatrix(2, 3, (mat.getmatrix(0, 3) * mat.getmatrix(1, 1) * mat.getmatrix(2, 0) 
-        + mat.getmatrix(0, 1) * mat.getmatrix(1, 0) * mat.getmatrix(2, 3)
-        + mat.getmatrix(0, 0) * mat.getmatrix(1, 3) * mat.getmatrix(2, 1)
-        - mat.getmatrix(0, 0) * mat.getmatrix(1, 1) * mat.getmatrix(2, 3)
-        - mat.getmatrix(0, 1) * mat.getmatrix(1, 3) * mat.getmatrix(2, 0)
-        - mat.getmatrix(0, 3) * mat.getmatrix(1, 0) * mat.getmatrix(2, 1)) / dat);
-        m.setmatrix(3, 0, (mat.getmatrix(1, 2) * mat.getmatrix(2, 1) * mat.getmatrix(3, 0) 
-        + mat.getmatrix(1, 1) * mat.getmatrix(2, 0) * mat.getmatrix(3, 2)
-        + mat.getmatrix(1, 0) * mat.getmatrix(2, 2) * mat.getmatrix(3, 1)
-        - mat.getmatrix(1, 0) * mat.getmatrix(2, 1) * mat.getmatrix(3, 2)
-        - mat.getmatrix(1, 1) * mat.getmatrix(2, 2) * mat.getmatrix(3, 0)
-        - mat.getmatrix(1, 2) * mat.getmatrix(2, 0) * mat.getmatrix(3, 1)) / dat);
-        m.setmatrix(3, 1, (mat.getmatrix(0, 0) * mat.getmatrix(2, 1) * mat.getmatrix(3, 2) 
-        + mat.getmatrix(0, 1) * mat.getmatrix(2, 2) * mat.getmatrix(3, 0)
-        + mat.getmatrix(0, 2) * mat.getmatrix(2, 0) * mat.getmatrix(3, 1)
-        - mat.getmatrix(0, 2) * mat.getmatrix(2, 1) * mat.getmatrix(3, 0)
-        - mat.getmatrix(0, 1) * mat.getmatrix(2, 0) * mat.getmatrix(3, 2)
-        - mat.getmatrix(0, 0) * mat.getmatrix(2, 2) * mat.getmatrix(3, 1)) / dat);
-        m.setmatrix(3, 2, (mat.getmatrix(0, 2) * mat.getmatrix(1, 1) * mat.getmatrix(3, 0) 
-        + mat.getmatrix(0, 1) * mat.getmatrix(1, 0) * mat.getmatrix(3, 2)
-        + mat.getmatrix(0, 0) * mat.getmatrix(1, 2) * mat.getmatrix(3, 1)
-        - mat.getmatrix(0, 0) * mat.getmatrix(1, 1) * mat.getmatrix(3, 2)
-        - mat.getmatrix(0, 1) * mat.getmatrix(1, 2) * mat.getmatrix(3, 0)
-        - mat.getmatrix(0, 2) * mat.getmatrix(1, 0) * mat.getmatrix(3, 1)) / dat);
-        m.setmatrix(3, 3, (mat.getmatrix(0, 0) * mat.getmatrix(1, 1) * mat.getmatrix(2, 2) 
-        + mat.getmatrix(0, 1) * mat.getmatrix(1, 2) * mat.getmatrix(2, 0)
-        + mat.getmatrix(0, 2) * mat.getmatrix(1, 0) * mat.getmatrix(2, 1)
-        - mat.getmatrix(0, 2) * mat.getmatrix(1, 1) * mat.getmatrix(2, 0)
-        - mat.getmatrix(0, 1) * mat.getmatrix(1, 0) * mat.getmatrix(2, 2)
-        - mat.getmatrix(0, 0) * mat.getmatrix(1, 2) * mat.getmatrix(2, 1)) / dat);
+        m.set_matrix(0, 0, (mat.get_matrix(1, 1) * mat.get_matrix(2, 2) * mat.get_matrix(3, 3) 
+        + mat.get_matrix(1, 2) * mat.get_matrix(2, 3) * mat.get_matrix(3, 1)
+        + mat.get_matrix(1, 3) * mat.get_matrix(2, 1) * mat.get_matrix(3, 2)
+        - mat.get_matrix(1, 3) * mat.get_matrix(2, 2) * mat.get_matrix(3, 1)
+        - mat.get_matrix(1, 2) * mat.get_matrix(2, 1) * mat.get_matrix(3, 3)
+        - mat.get_matrix(1, 1) * mat.get_matrix(2, 3) * mat.get_matrix(3, 2)) / dat);
+        m.set_matrix(0, 1, (mat.get_matrix(0, 3) * mat.get_matrix(2, 2) * mat.get_matrix(3, 1) 
+        + mat.get_matrix(0, 2) * mat.get_matrix(2, 1) * mat.get_matrix(3, 3)
+        + mat.get_matrix(0, 1) * mat.get_matrix(2, 3) * mat.get_matrix(3, 2)
+        - mat.get_matrix(0, 1) * mat.get_matrix(2, 2) * mat.get_matrix(3, 3)
+        - mat.get_matrix(0, 2) * mat.get_matrix(2, 3) * mat.get_matrix(3, 1)
+        - mat.get_matrix(0, 3) * mat.get_matrix(2, 1) * mat.get_matrix(3, 2)) / dat);
+        m.set_matrix(0, 2, (mat.get_matrix(0, 1) * mat.get_matrix(1, 2) * mat.get_matrix(3, 3) 
+        + mat.get_matrix(0, 2) * mat.get_matrix(1, 3) * mat.get_matrix(3, 1)
+        + mat.get_matrix(0, 3) * mat.get_matrix(1, 1) * mat.get_matrix(3, 2)
+        - mat.get_matrix(0, 3) * mat.get_matrix(1, 2) * mat.get_matrix(3, 1)
+        - mat.get_matrix(0, 2) * mat.get_matrix(1, 1) * mat.get_matrix(3, 3)
+        - mat.get_matrix(0, 1) * mat.get_matrix(1, 3) * mat.get_matrix(3, 2)) / dat);
+        m.set_matrix(0, 3, (mat.get_matrix(0, 3) * mat.get_matrix(1, 2) * mat.get_matrix(2, 1) 
+        + mat.get_matrix(0, 2) * mat.get_matrix(1, 1) * mat.get_matrix(2, 3)
+        + mat.get_matrix(0, 1) * mat.get_matrix(1, 3) * mat.get_matrix(2, 2)
+        - mat.get_matrix(0, 1) * mat.get_matrix(1, 2) * mat.get_matrix(2, 3)
+        - mat.get_matrix(0, 2) * mat.get_matrix(1, 3) * mat.get_matrix(2, 1)
+        - mat.get_matrix(0, 3) * mat.get_matrix(1, 1) * mat.get_matrix(2, 2)) / dat);
+        m.set_matrix(1, 0, (mat.get_matrix(1, 3) * mat.get_matrix(2, 2) * mat.get_matrix(3, 0) 
+        + mat.get_matrix(1, 2) * mat.get_matrix(2, 0) * mat.get_matrix(3, 3)
+        + mat.get_matrix(1, 0) * mat.get_matrix(2, 3) * mat.get_matrix(3, 2)
+        - mat.get_matrix(1, 0) * mat.get_matrix(2, 2) * mat.get_matrix(3, 3)
+        - mat.get_matrix(1, 2) * mat.get_matrix(2, 3) * mat.get_matrix(3, 0)
+        - mat.get_matrix(1, 3) * mat.get_matrix(2, 0) * mat.get_matrix(3, 2)) / dat);
+        m.set_matrix(1, 1, (mat.get_matrix(0, 0) * mat.get_matrix(2, 2) * mat.get_matrix(3, 3) 
+        + mat.get_matrix(0, 2) * mat.get_matrix(2, 3) * mat.get_matrix(3, 0)
+        + mat.get_matrix(0, 3) * mat.get_matrix(2, 0) * mat.get_matrix(3, 2)
+        - mat.get_matrix(0, 3) * mat.get_matrix(2, 2) * mat.get_matrix(3, 0)
+        - mat.get_matrix(0, 2) * mat.get_matrix(2, 0) * mat.get_matrix(3, 3)
+        - mat.get_matrix(0, 0) * mat.get_matrix(2, 3) * mat.get_matrix(3, 2)) / dat);
+        m.set_matrix(1, 2, (mat.get_matrix(0, 3) * mat.get_matrix(1, 2) * mat.get_matrix(3, 0) 
+        + mat.get_matrix(0, 2) * mat.get_matrix(1, 0) * mat.get_matrix(3, 3)
+        + mat.get_matrix(0, 0) * mat.get_matrix(1, 3) * mat.get_matrix(3, 2)
+        - mat.get_matrix(0, 0) * mat.get_matrix(1, 2) * mat.get_matrix(3, 3)
+        - mat.get_matrix(0, 2) * mat.get_matrix(1, 3) * mat.get_matrix(3, 0)
+        - mat.get_matrix(0, 3) * mat.get_matrix(1, 0) * mat.get_matrix(3, 2)) / dat);
+        m.set_matrix(1, 3, (mat.get_matrix(0, 0) * mat.get_matrix(1, 2) * mat.get_matrix(2, 3) 
+        + mat.get_matrix(0, 2) * mat.get_matrix(1, 3) * mat.get_matrix(2, 0)
+        + mat.get_matrix(0, 3) * mat.get_matrix(1, 0) * mat.get_matrix(2, 2)
+        - mat.get_matrix(0, 3) * mat.get_matrix(1, 2) * mat.get_matrix(2, 0)
+        - mat.get_matrix(0, 2) * mat.get_matrix(1, 0) * mat.get_matrix(2, 3)
+        - mat.get_matrix(0, 0) * mat.get_matrix(1, 3) * mat.get_matrix(2, 2)) / dat);
+        m.set_matrix(2, 0, (mat.get_matrix(1, 0) * mat.get_matrix(2, 1) * mat.get_matrix(3, 3) 
+        + mat.get_matrix(1, 1) * mat.get_matrix(2, 3) * mat.get_matrix(3, 0)
+        + mat.get_matrix(1, 3) * mat.get_matrix(2, 0) * mat.get_matrix(3, 1)
+        - mat.get_matrix(1, 3) * mat.get_matrix(2, 1) * mat.get_matrix(3, 0)
+        - mat.get_matrix(1, 1) * mat.get_matrix(2, 0) * mat.get_matrix(3, 3)
+        - mat.get_matrix(1, 0) * mat.get_matrix(2, 3) * mat.get_matrix(3, 1)) / dat);
+        m.set_matrix(2, 1, (mat.get_matrix(0, 3) * mat.get_matrix(2, 1) * mat.get_matrix(3, 0) 
+        + mat.get_matrix(0, 1) * mat.get_matrix(2, 0) * mat.get_matrix(3, 3)
+        + mat.get_matrix(0, 0) * mat.get_matrix(2, 3) * mat.get_matrix(3, 1)
+        - mat.get_matrix(0, 0) * mat.get_matrix(2, 1) * mat.get_matrix(3, 3)
+        - mat.get_matrix(0, 1) * mat.get_matrix(2, 3) * mat.get_matrix(3, 0)
+        - mat.get_matrix(0, 3) * mat.get_matrix(2, 0) * mat.get_matrix(3, 1)) / dat);
+        m.set_matrix(2, 2, (mat.get_matrix(0, 0) * mat.get_matrix(1, 1) * mat.get_matrix(3, 3) 
+        + mat.get_matrix(0, 1) * mat.get_matrix(1, 3) * mat.get_matrix(3, 0)
+        + mat.get_matrix(0, 3) * mat.get_matrix(1, 0) * mat.get_matrix(3, 1)
+        - mat.get_matrix(0, 3) * mat.get_matrix(1, 1) * mat.get_matrix(3, 0)
+        - mat.get_matrix(0, 1) * mat.get_matrix(1, 0) * mat.get_matrix(3, 3)
+        - mat.get_matrix(0, 0) * mat.get_matrix(1, 3) * mat.get_matrix(3, 1)) / dat);
+        m.set_matrix(2, 3, (mat.get_matrix(0, 3) * mat.get_matrix(1, 1) * mat.get_matrix(2, 0) 
+        + mat.get_matrix(0, 1) * mat.get_matrix(1, 0) * mat.get_matrix(2, 3)
+        + mat.get_matrix(0, 0) * mat.get_matrix(1, 3) * mat.get_matrix(2, 1)
+        - mat.get_matrix(0, 0) * mat.get_matrix(1, 1) * mat.get_matrix(2, 3)
+        - mat.get_matrix(0, 1) * mat.get_matrix(1, 3) * mat.get_matrix(2, 0)
+        - mat.get_matrix(0, 3) * mat.get_matrix(1, 0) * mat.get_matrix(2, 1)) / dat);
+        m.set_matrix(3, 0, (mat.get_matrix(1, 2) * mat.get_matrix(2, 1) * mat.get_matrix(3, 0) 
+        + mat.get_matrix(1, 1) * mat.get_matrix(2, 0) * mat.get_matrix(3, 2)
+        + mat.get_matrix(1, 0) * mat.get_matrix(2, 2) * mat.get_matrix(3, 1)
+        - mat.get_matrix(1, 0) * mat.get_matrix(2, 1) * mat.get_matrix(3, 2)
+        - mat.get_matrix(1, 1) * mat.get_matrix(2, 2) * mat.get_matrix(3, 0)
+        - mat.get_matrix(1, 2) * mat.get_matrix(2, 0) * mat.get_matrix(3, 1)) / dat);
+        m.set_matrix(3, 1, (mat.get_matrix(0, 0) * mat.get_matrix(2, 1) * mat.get_matrix(3, 2) 
+        + mat.get_matrix(0, 1) * mat.get_matrix(2, 2) * mat.get_matrix(3, 0)
+        + mat.get_matrix(0, 2) * mat.get_matrix(2, 0) * mat.get_matrix(3, 1)
+        - mat.get_matrix(0, 2) * mat.get_matrix(2, 1) * mat.get_matrix(3, 0)
+        - mat.get_matrix(0, 1) * mat.get_matrix(2, 0) * mat.get_matrix(3, 2)
+        - mat.get_matrix(0, 0) * mat.get_matrix(2, 2) * mat.get_matrix(3, 1)) / dat);
+        m.set_matrix(3, 2, (mat.get_matrix(0, 2) * mat.get_matrix(1, 1) * mat.get_matrix(3, 0) 
+        + mat.get_matrix(0, 1) * mat.get_matrix(1, 0) * mat.get_matrix(3, 2)
+        + mat.get_matrix(0, 0) * mat.get_matrix(1, 2) * mat.get_matrix(3, 1)
+        - mat.get_matrix(0, 0) * mat.get_matrix(1, 1) * mat.get_matrix(3, 2)
+        - mat.get_matrix(0, 1) * mat.get_matrix(1, 2) * mat.get_matrix(3, 0)
+        - mat.get_matrix(0, 2) * mat.get_matrix(1, 0) * mat.get_matrix(3, 1)) / dat);
+        m.set_matrix(3, 3, (mat.get_matrix(0, 0) * mat.get_matrix(1, 1) * mat.get_matrix(2, 2) 
+        + mat.get_matrix(0, 1) * mat.get_matrix(1, 2) * mat.get_matrix(2, 0)
+        + mat.get_matrix(0, 2) * mat.get_matrix(1, 0) * mat.get_matrix(2, 1)
+        - mat.get_matrix(0, 2) * mat.get_matrix(1, 1) * mat.get_matrix(2, 0)
+        - mat.get_matrix(0, 1) * mat.get_matrix(1, 0) * mat.get_matrix(2, 2)
+        - mat.get_matrix(0, 0) * mat.get_matrix(1, 2) * mat.get_matrix(2, 1)) / dat);
 
         return m;
     }
@@ -418,7 +418,7 @@ namespace ShiftFlamework::Math{
         auto v = Matrix<T, column , row> {{}};
         for(int i = 0; i < row; i++){
             for(int j = 0; j < column; j++){
-                v.setmatrix(j, i, m.getmatrix(i, j));
+                v.setmatrix(j, i, m.get_matrix(i, j));
             }
         }
 
@@ -437,7 +437,7 @@ namespace ShiftFlamework::Math{
                 std::cout << "  ";
             }
             for (int j = 0; j < column; j++){
-                std::cout << m.getmatrix(i, j) << " ";
+                std::cout << m.get_matrix(i, j) << " ";
             }
             if(i!=row-1){
                 std::cout << std::endl;
