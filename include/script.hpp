@@ -8,24 +8,26 @@
 #endif
 
 #include "entity.hpp"
+#include "entity_script.hpp"
 
-typedef void (*action)();
+typedef EntityScript* (*action)(void);
 
 namespace ShiftFlamework {
 class Script : public Component {
  public:
-  Script(std::shared_ptr<Entity> parent) : Component() {}
-
+  Script() : Component() {}
+  EntityScript* script = nullptr;
   void load_dll() {
 #if defined(_MSC_VER)
     HMODULE module = LoadLibrary(
         "../../../sample/script_import/out/win/Debug/test_script.dll");
     if (module == NULL) return;
 
-    action func1 = (action)GetProcAddress(module, "on_update");
-    func1();
+    action func1 = (action)GetProcAddress(module, "create_instance");
+    script = func1();
+    script->on_spawn();
 #endif
   }
-  void run() {}
+  void run() { script->on_update(); }
 };
 }  // namespace ShiftFlamework
