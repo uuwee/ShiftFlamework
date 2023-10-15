@@ -36,14 +36,16 @@ void start() {
 
 // pointer to modules
 std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>,
-           std::shared_ptr<Input>>
-    Engine::modules = std::make_tuple(nullptr, nullptr, nullptr);
+           std::shared_ptr<Input>, std::shared_ptr<ScreenSpaceMeshRenderer>>
+    Engine::modules = std::make_tuple(nullptr, nullptr, nullptr, nullptr);
 
 int main() {
   // initialize modules
   std::get<std::shared_ptr<Graphics>>(Engine::modules) =
       std::make_shared<Graphics>();
   std::get<std::shared_ptr<Input>>(Engine::modules) = std::make_shared<Input>();
+  std::get<std::shared_ptr<ScreenSpaceMeshRenderer>>(Engine::modules) =
+      std::make_shared<ScreenSpaceMeshRenderer>();
   Engine::get_module<Input>()->initialize();
   Engine::get_module<Graphics>()->initialize([]() { start(); });
 }
