@@ -13,7 +13,7 @@ void main_loop() {
   // user script
 
   Engine::get_module<Input>()->update();
-  Engine::get_module<Graphics>()->render(
+  Engine::get_module<ScreenSpaceMeshRenderer>()->render(
       Engine::get_module<Window>()->get_swap_chain().GetCurrentTextureView());
 }
 
@@ -24,14 +24,20 @@ void start() {
         std::make_shared<Window>(window);
   }
 
+  wgpu::SupportedLimits supported_limits;
+  Engine::get_module<Graphics>()->device.GetLimits(&supported_limits);
+  Engine::get_module<Graphics>()->limits = supported_limits.limits;
+
   Engine::get_module<Window>()->initialize_swap_chain(
       Engine::get_module<Graphics>()->instance,
       Engine::get_module<Graphics>()->device);
-  Engine::get_module<Graphics>()->create_render_pipeline();
+  // Engine::get_module<Graphics>()->create_render_pipeline();
+  Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
   // game initialize
   auto e = std::make_shared<Entity>();
   e->add_component<ScreenSpaceMesh>();
+  auto s = e->get_component<ScreenSpaceMesh>()->indices.size();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);

@@ -38,14 +38,6 @@ void Graphics::initialize(std::function<void()> on_initialize_end) {
   instance = wgpu::CreateInstance();
   this->on_initialize_end = on_initialize_end;
   get_device(instance, on_device_request_ended);
-  wgpu::SupportedLimits supported_limits;
-  device.GetLimits(&supported_limits);
-  limits = supported_limits.limits;
-}
-
-uint32_t ceil_to_next_multiple(uint32_t value, uint32_t step) {
-  uint32_t divide_and_ceil = value / step + (value % step == 0 ? 0 : 1);
-  return step * divide_and_ceil;
 }
 
 void Graphics::create_render_pipeline() {
@@ -86,8 +78,8 @@ void Graphics::create_render_pipeline() {
                                   buffer_desc.size);
   }
 
-  bind_stride = ceil_to_next_multiple(sizeof(Math::Matrix4x4f),
-                                      limits.minUniformBufferOffsetAlignment);
+  bind_stride =
+      256;  // ceil_to_next_multiple(sizeof(Math::Matrix4x4f),limits.minUniformBufferOffsetAlignment);
 
   {
     wgpu::BufferDescriptor buffer_desc{
@@ -203,6 +195,7 @@ void Graphics::create_render_pipeline() {
 }
 
 void Graphics::render(wgpu::TextureView current_texture_view) {
+  return;
   // updata constant
   time_data += 0.1f;
   auto matrix = Math::Matrix4x4f({1.0f, 0.0f, 0.0f, 0, 0, 1, 0, 0, 0, 0, 1, 0,

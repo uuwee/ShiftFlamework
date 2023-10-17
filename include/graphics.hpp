@@ -42,7 +42,8 @@ class Graphics {
 
   template <typename T>
   void update_buffer(wgpu::Buffer& buffer, std::vector<T> data) {
-    device.GetQueue().WriteBuffer(buffer, 0, data.data(),
+    device.GetQueue().WriteBuffer(buffer, 0,
+                                  reinterpret_cast<const uint8_t*>(data.data()),
                                   data.size() * sizeof(T));
   }
 };
