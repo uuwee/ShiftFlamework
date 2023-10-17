@@ -38,6 +38,9 @@ void Graphics::initialize(std::function<void()> on_initialize_end) {
   instance = wgpu::CreateInstance();
   this->on_initialize_end = on_initialize_end;
   get_device(instance, on_device_request_ended);
+  wgpu::SupportedLimits supported_limits;
+  device.GetLimits(&supported_limits);
+  limits = supported_limits.limits;
 }
 
 uint32_t ceil_to_next_multiple(uint32_t value, uint32_t step) {

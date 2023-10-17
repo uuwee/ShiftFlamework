@@ -4,6 +4,7 @@
 
 #include "engine.hpp"
 #include "entity.hpp"
+#include "screenspace_mesh.hpp"
 #include "script.hpp"
 
 using namespace ShiftFlamework;
@@ -29,6 +30,8 @@ void start() {
   Engine::get_module<Graphics>()->create_render_pipeline();
 
   // game initialize
+  auto e = std::make_shared<Entity>();
+  e->add_component<ScreenSpaceMesh>();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);

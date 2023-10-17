@@ -28,6 +28,7 @@ class Graphics {
   float time_data = 0.0f;
   wgpu::BindGroup bind_group;
   uint32_t bind_stride;
+  wgpu::Limits limits{};
 
   void initialize(std::function<void()> on_initialize_end);
   std::function<void()> on_initialize_end;
@@ -35,5 +36,14 @@ class Graphics {
   void create_render_pipeline();
   void render(wgpu::TextureView current_texture_view);
   void terminate() { device.Destroy(); }
+  wgpu::Buffer create_buffer(const wgpu::BufferDescriptor& descriptor) {
+    return device.CreateBuffer(&descriptor);
+  }
+
+  template <typename T>
+  void update_buffer(wgpu::Buffer& buffer, std::vector<T> data) {
+    device.GetQueue().WriteBuffer(buffer, 0, data.data(),
+                                  data.size() * sizeof(T));
+  }
 };
 }  // namespace ShiftFlamework

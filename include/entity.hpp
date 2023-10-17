@@ -11,6 +11,7 @@ class Component {
  public:
   Component(){};
   std::shared_ptr<Entity> entity = nullptr;
+  virtual void on_register(){};
 };
 
 class Mesh : public Component {
@@ -39,6 +40,7 @@ class Entity : public std::enable_shared_from_this<Entity> {
   std::shared_ptr<T> add_component() {
     std::shared_ptr<T> ptr = std::make_shared<T>();
     ptr->entity = shared_from_this();
+    ptr->on_register();
     std::shared_ptr<Component> casted =
         std::static_pointer_cast<Component>(ptr);
     component.push_back(casted);
