@@ -10,14 +10,18 @@
 namespace ShiftFlamework {
 class ScreenSpaceMeshRenderer {
  public:
-  static constexpr size_t max_instance_count = 1024;
+ uint32_t max_instance_count = 1024;
 
  private:
   std::vector<std::weak_ptr<ScreenSpaceMesh>> mesh_list{};
   wgpu::RenderPipeline render_pipeline = nullptr;
+  wgpu::Buffer constant_buffer_heap = nullptr;
+  wgpu::BindGroup constant_buffer_bind_group = nullptr;
 
  public:
-  void initialize();
+  void initialize(uint32_t max_mesh_count = 1024){
+    max_instance_count = max_mesh_count;
+  };
   void register_mesh(std::shared_ptr<ScreenSpaceMesh> mesh_component) {
     mesh_list.push_back(mesh_component);
   };
@@ -29,6 +33,6 @@ class ScreenSpaceMeshRenderer {
     while (ptr->lock() != mesh_component && ptr != std::end(mesh_list)) ptr++;
     mesh_list.erase(ptr);
   };
-  void update();
+  void render(wgpu::TextureView render_target);
 };
 }  // namespace ShiftFlamework
