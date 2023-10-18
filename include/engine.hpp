@@ -4,6 +4,7 @@
 
 #include "graphics.hpp"
 #include "input.hpp"
+#include "screenspace_mesh_renderer.hpp"
 #include "window.hpp"
 
 namespace ShiftFlamework {
@@ -13,7 +14,8 @@ class Engine {
 
  public:
   static std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>,
-                    std::shared_ptr<Input>>
+                    std::shared_ptr<Input>,
+                    std::shared_ptr<ScreenSpaceMeshRenderer>>
       modules;
 
   template <typename T>

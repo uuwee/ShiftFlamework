@@ -276,4 +276,5 @@ inline void display_matrix(const Matrix<T, row, column>& m) {
 }
 
 using Matrix4x4f = Matrix<float, 4, 4>;
+using Matrix3x3f = Matrix<float, 3, 3>;
 }  // namespace ShiftFlamework::Math

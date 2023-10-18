@@ -119,6 +119,7 @@
                 "shared_mutex": "cpp",
                 "source_location": "cpp",
                 "propagate_const": "cpp",
-                "*.ipp": "cpp"
+                "*.ipp": "cpp",
+                "latch": "cpp"
         }
 }
