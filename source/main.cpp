@@ -31,13 +31,9 @@ void start() {
   Engine::get_module<Window>()->initialize_swap_chain(
       Engine::get_module<Graphics>()->instance,
       Engine::get_module<Graphics>()->device);
-  // Engine::get_module<Graphics>()->create_render_pipeline();
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
   // game initialize
-  auto e = std::make_shared<Entity>();
-  e->add_component<ScreenSpaceMesh>();
-  auto s = e->get_component<ScreenSpaceMesh>()->indices.size();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
