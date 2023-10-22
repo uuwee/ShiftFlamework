@@ -109,7 +109,7 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
   // constant buffer heap
   {
     auto bind_stride = ceil_to_next_multiple(
-        sizeof(Math::Matrix3x3f),
+        sizeof(Math::Matrix4x4f),
         Engine::get_module<Graphics>()->limits.minUniformBufferOffsetAlignment);
 
     wgpu::BufferDescriptor buffer_desc{
@@ -122,13 +122,6 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
 
     constant_buffer_heap =
         Engine::get_module<Graphics>()->create_buffer(buffer_desc);
-
-    Engine::get_module<Graphics>()->update_buffer(
-        constant_buffer_heap,
-        std::vector(1, Math::Matrix4x4f({{{1.f, 0.f, 0.f, 0.f},
-                                          {0.f, 1.f, 0.f, 0.f},
-                                          {0.f, 0.f, 1.f, 0.f},
-                                          {0.f, 0.f, 0.f, 1.0f}}})));
   }
 
   wgpu::BindGroupEntry binding{.binding = 0,
@@ -147,6 +140,17 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
 }
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
+  // update constant
+  auto transform =
+      mesh_list.at(0).lock()->entity->get_component<ScreenSpaceTransform>();
+  Engine::get_module<Graphics>()->update_buffer(
+      constant_buffer_heap,
+      std::vector(1, Math::Matrix4x4f({{{1.f, 0.f, 0.f, 0.f},
+                                        {0.f, 1.f, 0.f, 0.f},
+                                        {0.f, 0.f, 1.f, 0.f},
+                                        {0.f, 0.f, 0.f, 1.0f}}})));
+
+  // render
   wgpu::RenderPassColorAttachment attachment{.view = render_target,
                                              .loadOp = wgpu::LoadOp::Clear,
                                              .storeOp = wgpu::StoreOp::Store};
@@ -172,6 +176,10 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
       uint32_t dynamic_offset = 0;
       pass.SetBindGroup(0, constant_buffer_bind_group, 1, &dynamic_offset);
       pass.DrawIndexed(mesh_wptr.lock()->indices.size(), 1, 0, 0, 0);
+      dynamic_offset +=
+          ceil_to_next_multiple(sizeof(Math::Matrix4x4f),
+                                Engine::get_module<Graphics>()
+                                    ->limits.minUniformBufferOffsetAlignment);
     }
   }
   pass.End();
