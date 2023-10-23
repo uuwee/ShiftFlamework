@@ -160,15 +160,7 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
                              {0, transform->scale.internal_data.at(1), 0, 0},
                              {0, 0, 1, 0},
                              {0, 0, 0, 1}}});
-      const auto matrix = Math::Matrix4x4f(
-          {{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}});
-      // std::cout << "display transform" << std::endl;
-      // display_vector(transform->position);
-      // std::cout << "display matrix" << std::endl;
-      //  display_matrix(rotate);
-      // display_matrix(translate);
-      //  display_matrix(scale);
-      // display_matrix(matrix);
+      const auto matrix = translate * rotate * scale;
       Engine::get_module<Graphics>()->update_buffer(
           constant_buffer_heap, std::vector(1, transposed(matrix)),
           count * 256);

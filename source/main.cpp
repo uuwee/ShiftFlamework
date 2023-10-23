@@ -34,18 +34,6 @@ void start() {
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
   // game initialize
-  auto e1 = std::make_shared<Entity>();
-  auto c1 = e1->add_component<ScreenSpaceMesh>();
-  auto c2 = e1->add_component<ScreenSpaceTransform>();
-  // e1->get_component<ScreenSpaceTransform>()->position = Math::Vector2f({0,
-  // 0}); e1->get_component<ScreenSpaceTransform>()->scale = Math::Vector2f({1,
-  // 1}); e1->get_component<ScreenSpaceTransform>()->angle = 0;
-  auto e2 = std::make_shared<Entity>();
-  e2->add_component<ScreenSpaceMesh>();
-  e2->add_component<ScreenSpaceTransform>();
-  // e2->get_component<ScreenSpaceTransform>()->position = Math::Vector2f({0,
-  // 0}); e2->get_component<ScreenSpaceTransform>()->scale = Math::Vector2f({1,
-  // 1}); e2->get_component<ScreenSpaceTransform>()->angle = 0;
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
