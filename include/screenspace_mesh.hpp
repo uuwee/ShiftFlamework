@@ -15,7 +15,6 @@ struct ScreenSpaceVertex {
 class ScreenSpaceMesh : public Component {
  public:
   ScreenSpaceMesh() : Component(){};
-  ScreenSpaceTransform transform;
   std::vector<ScreenSpaceVertex> vertices;
   std::vector<uint32_t> indices;
   wgpu::Buffer vertex_buffer = nullptr;

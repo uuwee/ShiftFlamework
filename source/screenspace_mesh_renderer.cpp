@@ -141,14 +141,40 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   // update constant
-  auto transform =
-      mesh_list.at(0).lock()->entity->get_component<ScreenSpaceTransform>();
-  Engine::get_module<Graphics>()->update_buffer(
-      constant_buffer_heap,
-      std::vector(1, Math::Matrix4x4f({{{1.f, 0.f, 0.f, 0.f},
-                                        {0.f, 1.f, 0.f, 0.f},
-                                        {0.f, 0.f, 1.f, 0.f},
-                                        {0.f, 0.f, 0.f, 1.0f}}})));
+  int count = 0;
+  for (const auto& mesh_wptr : mesh_list) {
+    if (const auto& transform =
+            mesh_wptr.lock()->entity->get_component<ScreenSpaceTransform>()) {
+      const auto rotate = Math::Matrix4x4f(
+          {{{std::cos(transform->angle), -std::sin(transform->angle), 0, 0},
+            {std::sin(transform->angle), std::cos(transform->angle), 0, 0},
+            {0, 0, 1, 0},
+            {0, 0, 0, 1}}});
+      const auto translate =
+          Math::Matrix4x4f({{{1, 0, 0, transform->position.internal_data.at(0)},
+                             {0, 1, 0, transform->position.internal_data.at(1)},
+                             {0, 0, 1, 0},
+                             {0, 0, 0, 1}}});
+      const auto scale =
+          Math::Matrix4x4f({{{transform->scale.internal_data.at(0), 0, 0, 0},
+                             {0, transform->scale.internal_data.at(1), 0, 0},
+                             {0, 0, 1, 0},
+                             {0, 0, 0, 1}}});
+      const auto matrix = Math::Matrix4x4f(
+          {{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}});
+      // std::cout << "display transform" << std::endl;
+      // display_vector(transform->position);
+      // std::cout << "display matrix" << std::endl;
+      //  display_matrix(rotate);
+      // display_matrix(translate);
+      //  display_matrix(scale);
+      // display_matrix(matrix);
+      Engine::get_module<Graphics>()->update_buffer(
+          constant_buffer_heap, std::vector(1, transposed(matrix)),
+          count * 256);
+      count++;
+    }
+  }
 
   // render
   wgpu::RenderPassColorAttachment attachment{.view = render_target,
@@ -163,23 +189,23 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
   pass.SetPipeline(render_pipeline);
 
+  count = 0;
   for (const auto& mesh_wptr : mesh_list) {
-    if (!mesh_wptr.expired()) {
-      pass.SetVertexBuffer(
-          0, mesh_wptr.lock()->vertex_buffer, 0,
-          mesh_wptr.lock()->vertices.size() * sizeof(ScreenSpaceVertex));
+    if (const auto& mesh = mesh_wptr.lock()) {
+      pass.SetVertexBuffer(0, mesh->vertex_buffer, 0,
+                           mesh->vertices.size() * sizeof(ScreenSpaceVertex));
 
-      pass.SetIndexBuffer(mesh_wptr.lock()->index_buffer,
-                          wgpu::IndexFormat::Uint32, 0,
-                          mesh_wptr.lock()->indices.size() * sizeof(uint32_t));
+      pass.SetIndexBuffer(mesh->index_buffer, wgpu::IndexFormat::Uint32, 0,
+                          mesh->indices.size() * sizeof(uint32_t));
 
-      uint32_t dynamic_offset = 0;
-      pass.SetBindGroup(0, constant_buffer_bind_group, 1, &dynamic_offset);
-      pass.DrawIndexed(mesh_wptr.lock()->indices.size(), 1, 0, 0, 0);
-      dynamic_offset +=
+      uint32_t dynamic_offset =
+          count *
           ceil_to_next_multiple(sizeof(Math::Matrix4x4f),
                                 Engine::get_module<Graphics>()
                                     ->limits.minUniformBufferOffsetAlignment);
+      pass.SetBindGroup(0, constant_buffer_bind_group, 1, &dynamic_offset);
+      pass.DrawIndexed(mesh->indices.size(), 1, 0, 0, 0);
+      count++;
     }
   }
   pass.End();

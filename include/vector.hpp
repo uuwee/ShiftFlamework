@@ -224,7 +224,7 @@ inline Vector<T, 3> Cross(const Vector<T, 3>& lhs, const Vector<T, 3>& rhs) {
 }
 
 template <typename T, int dimension>
-inline void Display_Vector(const Vector<T, dimension>& v) {
+inline void display_vector(const Vector<T, dimension>& v) {
   std::cout << "{ ";
 
   for (int i = 0; i < dimension; i++) {
