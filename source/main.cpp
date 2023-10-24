@@ -36,7 +36,7 @@ void start() {
   // game initialize
   auto e = std::make_shared<Entity>();
   e->add_component<ScreenSpaceMesh>();
-  auto s = e->get_component<ScreenSpaceMesh>()->indices.size();
+  e->add_component<ScreenSpaceTransform>();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
