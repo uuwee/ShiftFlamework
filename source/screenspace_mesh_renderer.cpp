@@ -137,6 +137,49 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
 
   constant_buffer_bind_group =
       Engine::get_module<Graphics>()->device.CreateBindGroup(&bind_group_desc);
+
+  // test texture gen
+  wgpu::TextureDescriptor texture_desc{
+      .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst,
+      .dimension = wgpu::TextureDimension::e2D,
+      .size = {256, 256, 1},
+      .format = wgpu::TextureFormat::RGBA8Unorm,
+      .mipLevelCount = 1,
+      .sampleCount = 1,
+      .viewFormatCount = 0,
+      .viewFormats = nullptr,
+  };
+
+  test_texture =
+      Engine::get_module<Graphics>()->device.CreateTexture(&texture_desc);
+
+  std::vector<uint8_t> pixels(4 * texture_desc.size.width *
+                              texture_desc.size.height);
+  for (uint32_t i = 0; i < texture_desc.size.width; i++) {
+    for (uint32_t j = 0; j < texture_desc.size.height; j++) {
+      uint32_t idx = 4 * (j * texture_desc.size.width + 1);
+      pixels.at(idx + 0) = (uint8_t)i;
+      pixels.at(idx + 1) = (uint8_t)j;
+      pixels.at(idx + 2) = 128;
+      pixels.at(idx + 3) = 255;
+    }
+  }
+
+  wgpu::ImageCopyTexture destination{
+      .texture = test_texture,
+      .mipLevel = 0,
+      .origin = {0, 0, 0},
+      .aspect = wgpu::TextureAspect::All,
+  };
+
+  wgpu::TextureDataLayout source{
+      .offset = 0,
+      .bytesPerRow = 4 * texture_desc.size.width,
+      .rowsPerImage = texture_desc.size.height,
+  };
+
+  Engine::get_module<Graphics>()->device.GetQueue().WriteTexture(
+      &destination, pixels.data(), pixels.size(), &source, &texture_desc.size);
 }
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {

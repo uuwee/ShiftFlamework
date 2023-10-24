@@ -18,6 +18,8 @@ class ScreenSpaceMeshRenderer {
   wgpu::Buffer constant_buffer_heap = nullptr;
   wgpu::BindGroup constant_buffer_bind_group = nullptr;
 
+  wgpu::Texture test_texture;
+
  public:
   void initialize(uint32_t max_mesh_count = 8);
 

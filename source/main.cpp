@@ -34,6 +34,9 @@ void start() {
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
   // game initialize
+  auto e1 = std::make_shared<Entity>();
+  e1->add_component<ScreenSpaceMesh>();
+  auto transform = e1->add_component<ScreenSpaceTransform>();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
