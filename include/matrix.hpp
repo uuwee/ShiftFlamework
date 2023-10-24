@@ -257,6 +257,17 @@ inline Matrix<T, 4, 4> inverse_matrix4(const Matrix<T, 4, 4>& mat) {
 }
 
 template <typename T, int row, int column>
+inline Matrix<T, column, row> transposed(const Matrix<T, row, column>& mat) {
+  Matrix<T, column, row> transposed = Matrix<T, column, row>{{}};
+  for (int i = 0; i < row; i++)
+    for (int j = 0; j < column; j++) {
+      transposed.internal_data.at(j).at(i) = mat.internal_data.at(i).at(j);
+    }
+
+  return transposed;
+}
+
+template <typename T, int row, int column>
 inline void display_matrix(const Matrix<T, row, column>& m) {
   std::cout << "{ ";
 

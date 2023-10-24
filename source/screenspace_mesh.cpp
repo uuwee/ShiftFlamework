@@ -5,7 +5,6 @@
 using namespace ShiftFlamework;
 
 void ScreenSpaceMesh::on_register() {
-  std::cout << "ssmesh add!" << std::endl;
   vertices = {
       ScreenSpaceVertex{.position = Math::Vector2f({-0.5, -0.5}),
                         .texture_coord = Math::Vector2f({0, 0})},
@@ -19,7 +18,8 @@ void ScreenSpaceMesh::on_register() {
 
   indices = {0, 1, 2, 0, 2, 3};
   create_gpu_buffer();
-  Engine::get_module<ScreenSpaceMeshRenderer>()->register_mesh(entity->get_component<ScreenSpaceMesh>());
+  Engine::get_module<ScreenSpaceMeshRenderer>()->register_mesh(
+      entity->get_component<ScreenSpaceMesh>());
 }
 
 void ScreenSpaceMesh::create_gpu_buffer() {

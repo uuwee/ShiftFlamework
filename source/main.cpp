@@ -6,9 +6,9 @@
 #include "entity.hpp"
 #include "screenspace_mesh.hpp"
 #include "script.hpp"
+#include "test_image.h"
 
 using namespace ShiftFlamework;
-
 void main_loop() {
   // user script
 
@@ -31,7 +31,6 @@ void start() {
   Engine::get_module<Window>()->initialize_swap_chain(
       Engine::get_module<Graphics>()->instance,
       Engine::get_module<Graphics>()->device);
-  // Engine::get_module<Graphics>()->create_render_pipeline();
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
   // game initialize
