@@ -33,6 +33,7 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
   wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
   wgsl_desc.code = R"(
       @group(0) @binding(0) var<uniform> world_mat: mat4x4f;
+      @group(0) @binding(1) var gradientTexture: texture_2d<f32>;
 
       struct VertexInput{
         @location(0) position: vec2f,
@@ -55,7 +56,8 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
       }
 
       @fragment fn fragmentMain(in: VertexOutput) -> @location(0) vec4f {
-        return vec4f(in.color, 1.0);
+        //return vec4f((in.position.xy / (512.0 * 2.0)), 0.0, 1.0);
+        return vec4f(textureLoad(gradientTexture, vec2i(in.position.xy), 0).rgb, 1.0);
       }
     )";
   wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
@@ -73,17 +75,28 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
       .targets = &color_target_state,
   };
 
-  wgpu::BindGroupLayoutEntry binding_layout_entry{
-      .binding = 0,
-      .visibility = wgpu::ShaderStage::Vertex,
-      .buffer = wgpu::BufferBindingLayout{
-          .type = wgpu::BufferBindingType::Uniform,
-          .hasDynamicOffset = true,
-          .minBindingSize = sizeof(Math::Matrix4x4f),
-      }};
+  auto binding_layout_entries = std::vector<wgpu::BindGroupLayoutEntry>(2);
+  binding_layout_entries.at(0) =
+      wgpu::BindGroupLayoutEntry{.binding = 0,
+                                 .visibility = wgpu::ShaderStage::Vertex,
+                                 .buffer = wgpu::BufferBindingLayout{
+                                     .type = wgpu::BufferBindingType::Uniform,
+                                     .hasDynamicOffset = true,
+                                     .minBindingSize = sizeof(Math::Matrix4x4f),
+                                 }};
+
+  binding_layout_entries.at(1) = wgpu::BindGroupLayoutEntry{
+      .binding = 1,
+      .visibility = wgpu::ShaderStage::Fragment,
+      .texture =
+          wgpu::TextureBindingLayout{
+              .sampleType = wgpu::TextureSampleType::Float,
+              .viewDimension = wgpu::TextureViewDimension::e2D},
+  };
 
   wgpu::BindGroupLayoutDescriptor bind_group_layout_desc{
-      .entryCount = 1, .entries = &binding_layout_entry};
+      .entryCount = (uint32_t)binding_layout_entries.size(),
+      .entries = binding_layout_entries.data()};
 
   wgpu::BindGroupLayout bind_group_layout =
       Engine::get_module<Graphics>()->device.CreateBindGroupLayout(
@@ -124,20 +137,6 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
         Engine::get_module<Graphics>()->create_buffer(buffer_desc);
   }
 
-  wgpu::BindGroupEntry binding{.binding = 0,
-                               .buffer = constant_buffer_heap,
-                               .offset = 0,
-                               .size = sizeof(Math::Matrix4x4f)};
-
-  wgpu::BindGroupDescriptor bind_group_desc{
-      .layout = bind_group_layout,
-      .entryCount = bind_group_layout_desc.entryCount,
-      .entries = &binding,
-  };
-
-  constant_buffer_bind_group =
-      Engine::get_module<Graphics>()->device.CreateBindGroup(&bind_group_desc);
-
   // test texture gen
   wgpu::TextureDescriptor texture_desc{
       .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst,
@@ -154,13 +153,13 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
       Engine::get_module<Graphics>()->device.CreateTexture(&texture_desc);
 
   std::vector<uint8_t> pixels(4 * texture_desc.size.width *
-                              texture_desc.size.height);
+                              texture_desc.size.height, 0);
   for (uint32_t i = 0; i < texture_desc.size.width; i++) {
     for (uint32_t j = 0; j < texture_desc.size.height; j++) {
-      uint32_t idx = 4 * (j * texture_desc.size.width + 1);
-      pixels.at(idx + 0) = (uint8_t)i;
-      pixels.at(idx + 1) = (uint8_t)j;
-      pixels.at(idx + 2) = 128;
+      uint32_t idx = 4 * (j * texture_desc.size.width + i);
+      pixels.at(idx + 0) = (i / 16) % 2 == (j / 16) % 2 ? 255 : 0;
+      pixels.at(idx + 1) = ((i - j) / 16) % 2 == 0 ? 255 : 0;
+      pixels.at(idx + 2) = ((i + j) / 16) % 2 == 0 ? 255 : 0;
       pixels.at(idx + 3) = 255;
     }
   }
@@ -180,6 +179,37 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
 
   Engine::get_module<Graphics>()->device.GetQueue().WriteTexture(
       &destination, pixels.data(), pixels.size(), &source, &texture_desc.size);
+
+  auto texture_view_desc = wgpu::TextureViewDescriptor{
+      .format = texture_desc.format,
+      .dimension = wgpu::TextureViewDimension::e2D,
+      .baseMipLevel = 0,
+      .mipLevelCount = 1,
+      .baseArrayLayer = 0,
+      .arrayLayerCount = 1,
+      .aspect = wgpu::TextureAspect::All,
+  };
+  auto texture_view = test_texture.CreateView(&texture_view_desc);
+
+  // bindings
+  auto bindings = std::vector<wgpu::BindGroupEntry>(2);
+  bindings.at(0) = wgpu::BindGroupEntry{.binding = 0,
+                                        .buffer = constant_buffer_heap,
+                                        .offset = 0,
+                                        .size = sizeof(Math::Matrix4x4f)};
+  bindings.at(1) = wgpu::BindGroupEntry{
+      .binding = 1,
+      .textureView = texture_view,
+  };
+
+  wgpu::BindGroupDescriptor bind_group_desc{
+      .layout = bind_group_layout,
+      .entryCount = bind_group_layout_desc.entryCount,
+      .entries = bindings.data(),
+  };
+
+  constant_buffer_bind_group =
+      Engine::get_module<Graphics>()->device.CreateBindGroup(&bind_group_desc);
 }
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
