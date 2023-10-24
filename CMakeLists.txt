@@ -9,7 +9,7 @@ add_executable(game ${sources} ${includes})
 target_include_directories(game PUBLIC include)
 
 if(EMSCRIPTEN)
-    set_target_properties(game PROPERTIES SUFFIX ".js")
+    set_target_properties(game PROPERTIES SUFFIX ".html")
     target_link_options(game PRIVATE "-sUSE_WEBGPU=1" "-sUSE_GLFW=3" "-sALLOW_MEMORY_GROWTH")
 else()
     set(DAWN_FETCH_DEPENDENCIES ON)

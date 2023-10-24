@@ -14,4 +14,6 @@ class EntityScript {
   virtual void on_update(void) = 0;
 };
 
+#if defined(_MSC_VER)
 DLL EntityScript* create_instance(void);
+#endif
