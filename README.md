@@ -91,3 +91,36 @@ new/destroy及び生ポインタによるメモリの管理は禁止。`std::sha
 2. まだ早い
 3. 本当にそこが原因で遅いのかちゃんと調べる
 4. コードの可読性を損なわないように、広範囲に変更の影響が出ないように最適化してもよい
+
+## 使い方
+### テスクチャの追加
+1. GIMPで.hにエクスポートする
+2. `static char* header_data = ...` を`static uint8_t header_data[] = ...`に書き換える
+3. 
+```
+#include "テクスチャの名前.h"
+
+std::vector<uint8_t> pixels(
+    4 * texture_desc.size.width * texture_desc.size.height, 0);
+
+{
+    uint32_t idx = 0;
+    for (uint32_t i = 0; i < width; i++) {
+        for (uint32_t j = 0; j < height; j++) {
+            std::array<uint8_t, 4> data = {};
+            data.at(0) = (uint8_t)header_data[idx];
+            data.at(1) = (uint8_t)header_data[idx + 1];
+            data.at(2) = (uint8_t)header_data[idx + 2];
+            data.at(3) = (uint8_t)header_data[idx + 3];
+            idx += 4;
+
+            pixels.at(4 * ((width - 1 - i) * height + j) + 0) =
+                (((data.at(0) - 33) << 2) | ((data.at(1) - 33) >> 4));
+            pixels.at(4 * ((width - 1 - i) * height + j) + 1) =
+                ((((data.at(1) - 33) & 0xF) << 4) | ((data.at(2) - 33) >> 2));
+            pixels.at(4 * ((width - 1 - i) * height + j) + 2) =
+                ((((data.at(2) - 33) & 0x3) << 6) | ((data.at(3) - 33)));
+        }
+    }
+}
+```

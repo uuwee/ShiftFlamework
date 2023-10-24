@@ -3,6 +3,7 @@
 #include "engine.hpp"
 #include "graphics.hpp"
 #include "matrix.hpp"
+#include "test_image.h"
 
 using namespace ShiftFlamework;
 
@@ -52,7 +53,7 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
         p = world_mat * vec4f(in.position, 0.0, 1.0);
         p /= p.w;
         out.position = p;
-        out.texture_coord = in.texture_coord * 2.0 - 0.5; 
+        out.texture_coord = in.texture_coord;
         return out;
       }
 
@@ -161,13 +162,25 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
 
   std::vector<uint8_t> pixels(
       4 * texture_desc.size.width * texture_desc.size.height, 0);
-  for (uint32_t i = 0; i < texture_desc.size.width; i++) {
-    for (uint32_t j = 0; j < texture_desc.size.height; j++) {
-      uint32_t idx = 4 * (j * texture_desc.size.width + i);
-      pixels.at(idx + 0) = (i / 16) % 2 == (j / 16) % 2 ? 255 : 0;
-      pixels.at(idx + 1) = ((i - j) / 16) % 2 == 0 ? 255 : 0;
-      pixels.at(idx + 2) = ((i + j) / 16) % 2 == 0 ? 255 : 0;
-      pixels.at(idx + 3) = 255;
+
+  {
+    uint32_t idx = 0;
+    for (uint32_t i = 0; i < width; i++) {
+      for (uint32_t j = 0; j < height; j++) {
+        std::array<uint8_t, 4> data = {};
+        data.at(0) = (uint8_t)header_data[idx];
+        data.at(1) = (uint8_t)header_data[idx + 1];
+        data.at(2) = (uint8_t)header_data[idx + 2];
+        data.at(3) = (uint8_t)header_data[idx + 3];
+        idx += 4;
+
+        pixels.at(4 * ((width - 1 - i) * height + j) + 0) =
+            (((data.at(0) - 33) << 2) | ((data.at(1) - 33) >> 4));
+        pixels.at(4 * ((width - 1 - i) * height + j) + 1) =
+            ((((data.at(1) - 33) & 0xF) << 4) | ((data.at(2) - 33) >> 2));
+        pixels.at(4 * ((width - 1 - i) * height + j) + 2) =
+            ((((data.at(2) - 33) & 0x3) << 6) | ((data.at(3) - 33)));
+      }
     }
   }
 

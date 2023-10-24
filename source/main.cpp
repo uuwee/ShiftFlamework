@@ -6,9 +6,10 @@
 #include "entity.hpp"
 #include "screenspace_mesh.hpp"
 #include "script.hpp"
+#include "test_image.h"
 
 using namespace ShiftFlamework;
-
+std::array<int, 256 * 256 * 4> tex = {};
 std::shared_ptr<Entity> e1;
 void main_loop() {
   // user script
