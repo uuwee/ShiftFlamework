@@ -70,6 +70,9 @@ void main_loop() {
       restart_flappy();
     }
 
+    player->get_component<ScreenSpaceTransform>()->angle =
+        (player_a <= -0.03) ? -0.4f : 0.0f;
+
     // respawn pipe
     flame_sinse_last_pipe++;
     if (flame_sinse_last_pipe > pipe_interval / pipe_speed) {
