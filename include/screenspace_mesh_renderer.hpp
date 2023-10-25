@@ -21,7 +21,7 @@ class ScreenSpaceMeshRenderer {
   wgpu::Texture test_texture;
 
  public:
-  void initialize(uint32_t max_mesh_count = 8);
+  void initialize(uint32_t max_mesh_count = 128);
 
   void register_mesh(std::shared_ptr<ScreenSpaceMesh> mesh_component) {
     mesh_list.push_back(mesh_component);
