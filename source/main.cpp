@@ -9,8 +9,29 @@
 #include "test_image.h"
 
 using namespace ShiftFlamework;
+
+// flappy bird
+std::shared_ptr<Entity> player;
+std::vector<std::shared_ptr<Entity>> pipes{};
+float player_a = 0;
+
 void main_loop() {
   // user script
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::W) ==
+      ButtonState::DOWN) {
+    player_a = 0.1f;
+  } else {
+    player_a -= 0.01f;
+  }
+  player->get_component<ScreenSpaceTransform>()->position =
+      player->get_component<ScreenSpaceTransform>()->position +
+      Math::Vector2f({0, player_a});
+  float current_y =
+      player->get_component<ScreenSpaceTransform>()->position.internal_data[1];
+  player->get_component<ScreenSpaceTransform>()->position.internal_data[1] =
+      (current_y <= 1.0f ? current_y : 1.0f) >= -1.0f
+          ? (current_y <= 1.0f ? current_y : 1.0f)
+          : -1.0f;
 
   Engine::get_module<Input>()->update();
   Engine::get_module<ScreenSpaceMeshRenderer>()->render(
@@ -19,7 +40,7 @@ void main_loop() {
 
 void start() {
   {
-    Window window("game window", 512, 512);
+    Window window("game window", 1080, 1080);
     std::get<std::shared_ptr<Window>>(Engine::modules) =
         std::make_shared<Window>(window);
   }
@@ -34,9 +55,12 @@ void start() {
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
   // game initialize
-  auto e = std::make_shared<Entity>();
-  e->add_component<ScreenSpaceMesh>();
-  e->add_component<ScreenSpaceTransform>();
+  player = std::make_shared<Entity>();
+  player->add_component<ScreenSpaceMesh>();
+  player->add_component<ScreenSpaceTransform>();
+  auto p_transform = player->get_component<ScreenSpaceTransform>();
+  p_transform->scale = Math::Vector2f({0.4f, 0.4f});
+  p_transform->position = Math::Vector2f({-0.3, 0});
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
