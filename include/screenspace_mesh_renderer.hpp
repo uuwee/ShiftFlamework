@@ -9,9 +9,6 @@
 
 namespace ShiftFlamework {
 class ScreenSpaceMeshRenderer {
- public:
-  uint32_t max_instance_count = 1024;
-
  private:
   std::vector<std::weak_ptr<ScreenSpaceMesh>> mesh_list{};
   wgpu::RenderPipeline render_pipeline = nullptr;
@@ -22,7 +19,7 @@ class ScreenSpaceMeshRenderer {
   wgpu::Texture test_texture;
 
  public:
-  void initialize(uint32_t max_mesh_count = 8);
+  void initialize();
 
   void register_mesh(std::shared_ptr<ScreenSpaceMesh> mesh_component) {
     mesh_list.push_back(mesh_component);
