@@ -12,9 +12,7 @@ uint32_t ceil_to_next_multiple(uint32_t value, uint32_t step) {
   return step * divide_and_ceil;
 }
 
-void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
-  max_instance_count = max_mesh_count;
-
+void ScreenSpaceMeshRenderer::initialize() {
   std::vector<wgpu::VertexAttribute> vertex_attributes(2);
   vertex_attributes.at(0).format = wgpu::VertexFormat::Float32x2;
   vertex_attributes.at(0).offset = 0;
@@ -84,7 +82,7 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
                                  .visibility = wgpu::ShaderStage::Vertex,
                                  .buffer = wgpu::BufferBindingLayout{
                                      .type = wgpu::BufferBindingType::Uniform,
-                                     .hasDynamicOffset = true,
+                                     .hasDynamicOffset = false,
                                      .minBindingSize = sizeof(Math::Matrix4x4f),
                                  }};
 
@@ -151,7 +149,7 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
         .nextInChain = nullptr,
         .label = "constant buffer heap",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
-        .size = bind_stride * max_instance_count,
+        .size = bind_stride,
         .mappedAtCreation = false,
     };
 
@@ -278,7 +276,6 @@ void ScreenSpaceMeshRenderer::initialize(uint32_t max_mesh_count) {
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   // update constant
-  int count = 0;
   for (const auto& mesh_wptr : mesh_list) {
     if (const auto& transform =
             mesh_wptr.lock()->entity->get_component<ScreenSpaceTransform>()) {
@@ -299,9 +296,7 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
                              {0, 0, 0, 1}}});
       const auto matrix = translate * rotate * scale;
       Engine::get_module<Graphics>()->update_buffer(
-          constant_buffer_heap, std::vector(1, transposed(matrix)),
-          count * 256);
-      count++;
+          constant_buffer_heap, std::vector(1, transposed(matrix)));
     }
   }
 
@@ -318,7 +313,6 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
   pass.SetPipeline(render_pipeline);
 
-  count = 0;
   for (const auto& mesh_wptr : mesh_list) {
     if (const auto& mesh = mesh_wptr.lock()) {
       pass.SetVertexBuffer(0, mesh->vertex_buffer, 0,
@@ -327,15 +321,9 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
       pass.SetIndexBuffer(mesh->index_buffer, wgpu::IndexFormat::Uint32, 0,
                           mesh->indices.size() * sizeof(uint32_t));
 
-      uint32_t dynamic_offset =
-          count *
-          ceil_to_next_multiple(sizeof(Math::Matrix4x4f),
-                                Engine::get_module<Graphics>()
-                                    ->limits.minUniformBufferOffsetAlignment);
-      pass.SetBindGroup(0, constant_buffer_bind_group, 1, &dynamic_offset);
+      pass.SetBindGroup(0, constant_buffer_bind_group, 0, nullptr);
       pass.SetBindGroup(1, texture_bind_group, 0, nullptr);
       pass.DrawIndexed(mesh->indices.size(), 1, 0, 0, 0);
-      count++;
     }
   }
   pass.End();
