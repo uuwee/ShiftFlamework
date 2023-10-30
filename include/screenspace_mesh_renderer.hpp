@@ -17,6 +17,7 @@ class ScreenSpaceMeshRenderer {
   wgpu::RenderPipeline render_pipeline = nullptr;
   wgpu::Buffer constant_buffer_heap = nullptr;
   wgpu::BindGroup constant_buffer_bind_group = nullptr;
+  wgpu::BindGroup texture_bind_group = nullptr;
 
   wgpu::Texture test_texture;
 
