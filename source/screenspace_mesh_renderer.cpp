@@ -74,10 +74,10 @@ void ScreenSpaceMeshRenderer::initialize() {
       .targets = &color_target_state,
   };
 
-  auto constant_binding_layout_entries =
-      std::vector<wgpu::BindGroupLayoutEntry>(1);
+  auto binding_layout_entries =
+      std::vector<wgpu::BindGroupLayoutEntry>(3);
   // constant
-  constant_binding_layout_entries.at(0) =
+  binding_layout_entries.at(0) =
       wgpu::BindGroupLayoutEntry{.binding = 0,
                                  .visibility = wgpu::ShaderStage::Vertex,
                                  .buffer = wgpu::BufferBindingLayout{
@@ -86,10 +86,8 @@ void ScreenSpaceMeshRenderer::initialize() {
                                      .minBindingSize = sizeof(Math::Matrix4x4f),
                                  }};
 
-  auto texture_binding_layout_entries =
-      std::vector<wgpu::BindGroupLayoutEntry>(2);
   // texture
-  texture_binding_layout_entries.at(0) = wgpu::BindGroupLayoutEntry{
+  binding_layout_entries.at(1) = wgpu::BindGroupLayoutEntry{
       .binding = 0,
       .visibility = wgpu::ShaderStage::Fragment,
       .texture =
@@ -98,26 +96,28 @@ void ScreenSpaceMeshRenderer::initialize() {
               .viewDimension = wgpu::TextureViewDimension::e2D},
   };
   // sampler
-  texture_binding_layout_entries.at(1) = wgpu::BindGroupLayoutEntry{
+  binding_layout_entries.at(2) = wgpu::BindGroupLayoutEntry{
       .binding = 1,
       .visibility = wgpu::ShaderStage::Fragment,
       .sampler = wgpu::SamplerBindingLayout{
           .type = wgpu::SamplerBindingType::Filtering}};
 
-  wgpu::BindGroupLayoutDescriptor constant_bind_group_layout_desc{
-      .entryCount = (uint32_t)constant_binding_layout_entries.size(),
-      .entries = constant_binding_layout_entries.data()};
-
-  wgpu::BindGroupLayoutDescriptor texture_bind_group_layout_desc{
-      .entryCount = (uint32_t)texture_binding_layout_entries.size(),
-      .entries = texture_binding_layout_entries.data(),
-  };
-
-  wgpu::BindGroupLayout constant_bind_group_layout =
+  std::vector<wgpu::BindGroupLayoutEntry> constant_layout_entries(
+      binding_layout_entries.begin(), binding_layout_entries.begin() + 1);
+  wgpu::BindGroupLayoutDescriptor constant_bind_group_layout_desc = {
+      .entryCount = 1, .entries = constant_layout_entries.data()};
+  constant_bind_group_layout =
       Engine::get_module<Graphics>()->device.CreateBindGroupLayout(
           &constant_bind_group_layout_desc);
 
-  wgpu::BindGroupLayout texture_bind_group_layout =
+  std::vector<wgpu::BindGroupLayoutEntry> texture_layout_entries(binding_layout_entries.begin() + 1,
+                              binding_layout_entries.end());
+  wgpu::BindGroupLayoutDescriptor texture_bind_group_layout_desc = {
+      .entryCount = 2,
+      .entries = texture_layout_entries.data(),
+  };
+
+  texture_bind_group_layout =
       Engine::get_module<Graphics>()->device.CreateBindGroupLayout(
           &texture_bind_group_layout_desc);
   std::vector<wgpu::BindGroupLayout> layouts = {constant_bind_group_layout,
@@ -239,39 +239,8 @@ void ScreenSpaceMeshRenderer::initialize() {
       Engine::get_module<Graphics>()->device.CreateSampler(&sampler_desc);
 
   // bindings
-  auto constant_bindings = std::vector<wgpu::BindGroupEntry>(1);
-  constant_bindings.at(0) =
-      wgpu::BindGroupEntry{.binding = 0,
-                           .buffer = constant_buffer_heap,
-                           .offset = 0,
-                           .size = sizeof(Math::Matrix4x4f)};
-  auto texture_bindings = std::vector<wgpu::BindGroupEntry>(2);
-  texture_bindings.at(0) = wgpu::BindGroupEntry{
-      .binding = 0,
-      .textureView = texture_view,
-  };
-  texture_bindings.at(1) = wgpu::BindGroupEntry{
-      .binding = 1,
-      .sampler = sampler,
-  };
-
-  wgpu::BindGroupDescriptor constant_bind_group_desc{
-      .layout = constant_bind_group_layout,
-      .entryCount = constant_bind_group_layout_desc.entryCount,
-      .entries = constant_bindings.data(),
-  };
-
-  constant_buffer_bind_group =
-      Engine::get_module<Graphics>()->device.CreateBindGroup(
-          &constant_bind_group_desc);
-
-  wgpu::BindGroupDescriptor texture_bind_group_desc{
-      .layout = texture_bind_group_layout,
-      .entryCount = texture_bind_group_layout_desc.entryCount,
-      .entries = texture_bindings.data(),
-  };
-  texture_bind_group = Engine::get_module<Graphics>()->device.CreateBindGroup(
-      &texture_bind_group_desc);
+  constant_buffer_bind_group = create_constant_bind_group(constant_buffer_heap);
+  texture_bind_group = create_texture_bind_group(texture_view, sampler);
 }
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
@@ -329,4 +298,42 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   pass.End();
   wgpu::CommandBuffer commands = encoder.Finish();
   Engine::get_module<Graphics>()->device.GetQueue().Submit(1, &commands);
+}
+
+wgpu::BindGroup ScreenSpaceMeshRenderer::create_constant_bind_group(
+    const wgpu::Buffer& constant_buffer) {
+  auto constant_binding =
+      wgpu::BindGroupEntry{.binding = 0,
+                           .buffer = constant_buffer,
+                           .offset = 0,
+                           .size = sizeof(Math::Matrix4x4f)};
+
+  wgpu::BindGroupDescriptor bind_group_desc{
+      .layout = constant_bind_group_layout,
+      .entryCount = 1,
+      .entries = &constant_binding};
+
+  return Engine::get_module<Graphics>()->device.CreateBindGroup(
+      &bind_group_desc);
+}
+
+wgpu::BindGroup ScreenSpaceMeshRenderer::create_texture_bind_group(
+    const wgpu::TextureView& texture_view, const wgpu::Sampler& sampler) {
+  auto texture_bindings = std::vector<wgpu::BindGroupEntry>(2);
+  texture_bindings.at(0) = wgpu::BindGroupEntry{
+      .binding = 0,
+      .textureView = texture_view,
+  };
+  texture_bindings.at(1) = wgpu::BindGroupEntry{
+      .binding = 1,
+      .sampler = sampler,
+  };
+
+  wgpu::BindGroupDescriptor texture_bind_group_desc{
+      .layout = texture_bind_group_layout,
+      .entryCount = 2,
+      .entries = texture_bindings.data(),
+  };
+  return Engine::get_module<Graphics>()->device.CreateBindGroup(
+      &texture_bind_group_desc);
 }
