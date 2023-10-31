@@ -18,6 +18,9 @@ class ScreenSpaceMeshRenderer {
 
   wgpu::Texture test_texture;
 
+  wgpu::BindGroupLayout constant_bind_group_layout;
+  wgpu::BindGroupLayout texture_bind_group_layout;
+
  public:
   void initialize();
 
@@ -35,5 +38,11 @@ class ScreenSpaceMeshRenderer {
   };
 
   void render(wgpu::TextureView render_target);
+
+  wgpu::BindGroup create_constant_bind_group(
+      const wgpu::Buffer& constant_buffer);
+
+  wgpu::BindGroup create_texture_bind_group(
+      const wgpu::TextureView& texture_view, const wgpu::Sampler& sampler);
 };
 }  // namespace ShiftFlamework
