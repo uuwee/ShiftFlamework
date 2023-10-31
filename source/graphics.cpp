@@ -6,6 +6,15 @@
 
 using namespace ShiftFlamework;
 
+uint32_t ceil_to_next_multiple(uint32_t value, uint32_t step) {
+  uint32_t divide_and_ceil = value / step + (value % step == 0 ? 0 : 1);
+  return step * divide_and_ceil;
+}
+
+uint32_t Graphics::get_buffer_stride(uint32_t size) {
+  return ceil_to_next_multiple(size, limits.minUniformBufferOffsetAlignment);
+}
+
 void get_device(wgpu::Instance instance, void (*callback)(wgpu::Device)) {
   instance.RequestAdapter(
       nullptr,

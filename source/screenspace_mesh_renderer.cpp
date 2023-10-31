@@ -7,11 +7,6 @@
 
 using namespace ShiftFlamework;
 
-uint32_t ceil_to_next_multiple(uint32_t value, uint32_t step) {
-  uint32_t divide_and_ceil = value / step + (value % step == 0 ? 0 : 1);
-  return step * divide_and_ceil;
-}
-
 void ScreenSpaceMeshRenderer::initialize() {
   std::vector<wgpu::VertexAttribute> vertex_attributes(2);
   vertex_attributes.at(0).format = wgpu::VertexFormat::Float32x2;
@@ -74,8 +69,7 @@ void ScreenSpaceMeshRenderer::initialize() {
       .targets = &color_target_state,
   };
 
-  auto binding_layout_entries =
-      std::vector<wgpu::BindGroupLayoutEntry>(3);
+  auto binding_layout_entries = std::vector<wgpu::BindGroupLayoutEntry>(3);
   // constant
   binding_layout_entries.at(0) =
       wgpu::BindGroupLayoutEntry{.binding = 0,
@@ -110,8 +104,8 @@ void ScreenSpaceMeshRenderer::initialize() {
       Engine::get_module<Graphics>()->device.CreateBindGroupLayout(
           &constant_bind_group_layout_desc);
 
-  std::vector<wgpu::BindGroupLayoutEntry> texture_layout_entries(binding_layout_entries.begin() + 1,
-                              binding_layout_entries.end());
+  std::vector<wgpu::BindGroupLayoutEntry> texture_layout_entries(
+      binding_layout_entries.begin() + 1, binding_layout_entries.end());
   wgpu::BindGroupLayoutDescriptor texture_bind_group_layout_desc = {
       .entryCount = 2,
       .entries = texture_layout_entries.data(),
@@ -141,9 +135,8 @@ void ScreenSpaceMeshRenderer::initialize() {
 
   // constant buffer heap
   {
-    auto bind_stride = ceil_to_next_multiple(
-        sizeof(Math::Matrix4x4f),
-        Engine::get_module<Graphics>()->limits.minUniformBufferOffsetAlignment);
+    auto bind_stride = Engine::get_module<Graphics>()->get_buffer_stride(
+        sizeof(Math::Matrix4x4f));
 
     wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
@@ -248,24 +241,7 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   for (const auto& mesh_wptr : mesh_list) {
     if (const auto& transform =
             mesh_wptr.lock()->entity->get_component<ScreenSpaceTransform>()) {
-      const auto rotate = Math::Matrix4x4f(
-          {{{std::cos(transform->angle), -std::sin(transform->angle), 0, 0},
-            {std::sin(transform->angle), std::cos(transform->angle), 0, 0},
-            {0, 0, 1, 0},
-            {0, 0, 0, 1}}});
-      const auto translate =
-          Math::Matrix4x4f({{{1, 0, 0, transform->position.internal_data.at(0)},
-                             {0, 1, 0, transform->position.internal_data.at(1)},
-                             {0, 0, 1, 0},
-                             {0, 0, 0, 1}}});
-      const auto scale =
-          Math::Matrix4x4f({{{transform->scale.internal_data.at(0), 0, 0, 0},
-                             {0, transform->scale.internal_data.at(1), 0, 0},
-                             {0, 0, 1, 0},
-                             {0, 0, 0, 1}}});
-      const auto matrix = translate * rotate * scale;
-      Engine::get_module<Graphics>()->update_buffer(
-          constant_buffer_heap, std::vector(1, transposed(matrix)));
+      transform->update_gpu_buffer();
     }
   }
 
@@ -290,7 +266,9 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
       pass.SetIndexBuffer(mesh->index_buffer, wgpu::IndexFormat::Uint32, 0,
                           mesh->indices.size() * sizeof(uint32_t));
 
-      pass.SetBindGroup(0, constant_buffer_bind_group, 0, nullptr);
+      pass.SetBindGroup(
+          0, mesh->entity->get_component<ScreenSpaceTransform>()->bindgroup, 0,
+          nullptr);
       pass.SetBindGroup(1, texture_bind_group, 0, nullptr);
       pass.DrawIndexed(mesh->indices.size(), 1, 0, 0, 0);
     }
