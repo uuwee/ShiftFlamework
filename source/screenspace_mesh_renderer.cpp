@@ -2,6 +2,7 @@
 
 #include "engine.hpp"
 #include "graphics.hpp"
+#include "material.hpp"
 #include "matrix.hpp"
 #include "test_image.h"
 
@@ -170,21 +171,22 @@ void ScreenSpaceMeshRenderer::initialize() {
 
   {
     uint32_t idx = 0;
-    for (uint32_t i = 0; i < width; i++) {
-      for (uint32_t j = 0; j < height; j++) {
+    for (uint32_t i = 0; i < test_image_width; i++) {
+      for (uint32_t j = 0; j < test_image_height; j++) {
         std::array<uint8_t, 4> data = {};
-        data.at(0) = (uint8_t)header_data[idx];
-        data.at(1) = (uint8_t)header_data[idx + 1];
-        data.at(2) = (uint8_t)header_data[idx + 2];
-        data.at(3) = (uint8_t)header_data[idx + 3];
+        data.at(0) = (uint8_t)test_image_data[idx];
+        data.at(1) = (uint8_t)test_image_data[idx + 1];
+        data.at(2) = (uint8_t)test_image_data[idx + 2];
+        data.at(3) = (uint8_t)test_image_data[idx + 3];
         idx += 4;
 
-        pixels.at(4 * ((width - 1 - i) * height + j) + 0) =
-            (((data.at(0) - 33) << 2) | ((data.at(1) - 33) >> 4));
-        pixels.at(4 * ((width - 1 - i) * height + j) + 1) =
+        pixels.at(4 * ((test_image_width - 1 - i) * test_image_height + j) +
+                  0) = (((data.at(0) - 33) << 2) | ((data.at(1) - 33) >> 4));
+        pixels.at(4 * ((test_image_width - 1 - i) * test_image_height + j) +
+                  1) =
             ((((data.at(1) - 33) & 0xF) << 4) | ((data.at(2) - 33) >> 2));
-        pixels.at(4 * ((width - 1 - i) * height + j) + 2) =
-            ((((data.at(2) - 33) & 0x3) << 6) | ((data.at(3) - 33)));
+        pixels.at(4 * ((test_image_width - 1 - i) * test_image_height + j) +
+                  2) = ((((data.at(2) - 33) & 0x3) << 6) | ((data.at(3) - 33)));
       }
     }
   }
@@ -269,7 +271,8 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
       pass.SetBindGroup(
           0, mesh->entity->get_component<ScreenSpaceTransform>()->bindgroup, 0,
           nullptr);
-      pass.SetBindGroup(1, texture_bind_group, 0, nullptr);
+      pass.SetBindGroup(1, mesh->entity->get_component<Material>()->bindgroup,
+                        0, nullptr);
       pass.DrawIndexed(mesh->indices.size(), 1, 0, 0, 0);
     }
   }

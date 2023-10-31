@@ -6,6 +6,7 @@
 
 #include "engine.hpp"
 #include "entity.hpp"
+#include "material.hpp"
 #include "screenspace_mesh.hpp"
 #include "script.hpp"
 #include "test_image.h"
