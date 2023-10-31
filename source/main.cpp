@@ -4,12 +4,14 @@
 
 #include "engine.hpp"
 #include "entity.hpp"
+#include "material.hpp"
 #include "screenspace_mesh.hpp"
 #include "script.hpp"
 #include "test_image.h"
 
 using namespace ShiftFlamework;
 std::shared_ptr<Entity> e;
+std::shared_ptr<Entity> e1;
 
 void main_loop() {
   // user script
@@ -45,6 +47,8 @@ void start() {
   e = std::make_shared<Entity>();
   e->add_component<ScreenSpaceMesh>();
   e->add_component<ScreenSpaceTransform>();
+  e->add_component<Material>()->create_gpu_buffer(
+      test_image_width, test_image_height, test_image_data);
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
