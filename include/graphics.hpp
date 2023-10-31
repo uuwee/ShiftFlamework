@@ -13,6 +13,7 @@
 #endif
 
 namespace ShiftFlamework {
+
 class Graphics {
  public:
   wgpu::Instance instance = nullptr;
@@ -39,6 +40,8 @@ class Graphics {
   wgpu::Buffer create_buffer(const wgpu::BufferDescriptor& descriptor) {
     return device.CreateBuffer(&descriptor);
   }
+
+  uint32_t get_buffer_stride(uint32_t size);
 
   template <typename T>
   void update_buffer(wgpu::Buffer& buffer, std::vector<T> data,

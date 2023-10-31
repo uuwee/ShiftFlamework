@@ -9,8 +9,16 @@
 #include "test_image.h"
 
 using namespace ShiftFlamework;
+std::shared_ptr<Entity> e;
+
 void main_loop() {
   // user script
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::Q) ==
+      ButtonState::HOLD)
+    e->get_component<ScreenSpaceTransform>()->angle += 0.1f;
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::E) ==
+      ButtonState::HOLD)
+    e->get_component<ScreenSpaceTransform>()->angle -= 0.1f;
 
   Engine::get_module<Input>()->update();
   Engine::get_module<ScreenSpaceMeshRenderer>()->render(
@@ -34,7 +42,7 @@ void start() {
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
   // game initialize
-  auto e = std::make_shared<Entity>();
+  e = std::make_shared<Entity>();
   e->add_component<ScreenSpaceMesh>();
   e->add_component<ScreenSpaceTransform>();
 
