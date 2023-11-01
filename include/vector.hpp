@@ -161,31 +161,31 @@ inline Vector<T, dimension> operator/(const Vector<T, dimension>& lhs,
 
 template <typename T, int dimension, typename U>
 inline void operator+=(Vector<T, dimension>& lhs,
-                                       const Vector<U, dimension>& rhs) {
+                       const Vector<U, dimension>& rhs) {
   for (int i = 0; i < dimension; i++) {
     lhs.internal_data.at(i) += rhs.internal_data.at(i);
   }
 }
 
 template <typename T, int dimension, typename U>
-inline void operator-=( Vector<T, dimension>& lhs,
-                                       const Vector<U, dimension>& rhs) {
+inline void operator-=(Vector<T, dimension>& lhs,
+                       const Vector<U, dimension>& rhs) {
   for (int i = 0; i < dimension; i++) {
     lhs.internal_data.at(i) -= rhs.internal_data.at(i);
   }
 }
 
 template <typename T, int dimension, typename U>
-inline void operator*=( Vector<T, dimension>& lhs,
-                                       const Vector<U, dimension>& rhs) {
+inline void operator*=(Vector<T, dimension>& lhs,
+                       const Vector<U, dimension>& rhs) {
   for (int i = 0; i < dimension; i++) {
     lhs.internal_data.at(i) *= rhs.internal_data.at(i);
   }
 }
 
 template <typename T, int dimension, typename U>
-inline void operator/=( Vector<T, dimension>& lhs,
-                                       const Vector<U, dimension>& rhs) {
+inline void operator/=(Vector<T, dimension>& lhs,
+                       const Vector<U, dimension>& rhs) {
   for (int i = 0; i < dimension; i++) {
     lhs.internal_data.at(i) /= rhs.internal_data.at(i);
   }
@@ -226,16 +226,15 @@ inline void display_vector(const Vector<T, dimension>& v) {
   std::cout << "}" << std::endl;
 }
 
-/*使わなくなった機能
-template<typename T, int dimension>
-inline double Vector<T, dimension>::Length()
-{
-    int val=0;
-    for(int i = 0; i < dimension; i++){
-        val += internal_data.at(i) * internal_data.at(i);
-    }
-    return std::sqrt(val);
+template <typename T, int dimension>
+inline T Length(const Vector<T, dimension>& v) {
+  T val = 0;
+  for (int i = 0; i < dimension; i++) {
+    val += v.internal_data.at(i) * v.internal_data.at(i);
+  }
+  return std::sqrt(val);
 }
+/*使わなくなった機能
 
 template<typename T, int dimension>
 inline Vector<T, dimension> Vector<T, dimension>::GetNormalized()
