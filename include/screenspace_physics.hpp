@@ -12,7 +12,7 @@ class ScreenSpacePhysics {
  public:
   void initialize();
   void update();
-  void register_body(std::shared_ptr<RigidBody> body) {}
-  void unregister_body(std::shared_ptr<RigidBody> body) {}
+  void register_body(std::shared_ptr<RigidBody> body);
+  void unregister_body(std::shared_ptr<RigidBody> body);
 };
 }  // namespace ShiftFlamework

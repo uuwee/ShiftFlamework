@@ -160,43 +160,35 @@ inline Vector<T, dimension> operator/(const Vector<T, dimension>& lhs,
 }
 
 template <typename T, int dimension, typename U>
-inline Vector<T, dimension> operator+=(const Vector<T, dimension>& lhs,
+inline void operator+=(Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
-  auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.internal_data.at(i) += rhs.internal_data.at(i);
+    lhs.internal_data.at(i) += rhs.internal_data.at(i);
   }
-  return v;
 }
 
 template <typename T, int dimension, typename U>
-inline Vector<T, dimension> operator-=(const Vector<T, dimension>& lhs,
+inline void operator-=( Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
-  auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.internal_data.at(i) -= rhs.internal_data.at(i);
+    lhs.internal_data.at(i) -= rhs.internal_data.at(i);
   }
-  return v;
 }
 
 template <typename T, int dimension, typename U>
-inline Vector<T, dimension> operator*=(const Vector<T, dimension>& lhs,
+inline void operator*=( Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
-  auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.internal_data.at(i) *= rhs.internal_data.at(i);
+    lhs.internal_data.at(i) *= rhs.internal_data.at(i);
   }
-  return v;
 }
 
 template <typename T, int dimension, typename U>
-inline Vector<T, dimension> operator/=(const Vector<T, dimension>& lhs,
+inline void operator/=( Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
-  auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.internal_data.at(i) /= rhs.internal_data.at(i);
+    lhs.internal_data.at(i) /= rhs.internal_data.at(i);
   }
-  return v;
 }
 
 template <typename T, int dimension>
