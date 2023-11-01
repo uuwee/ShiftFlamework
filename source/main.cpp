@@ -11,20 +11,28 @@
 #include "test_image.h"
 #include "vector.hpp"
 using namespace ShiftFlamework;
-std::shared_ptr<Entity> e;
-std::shared_ptr<Entity> e1;
+
+std::vector<std::shared_ptr<Entity>> pool{};
+
+void spawn_boal()
+{
+  auto boal = std::make_shared<Entity>();
+  boal->add_component<ScreenSpaceMesh>();
+  auto transform = boal->add_component<ScreenSpaceTransform>();
+  transform->position = Math::Vector2f({0, 0.8});
+  transform->scale = Math::Vector2f({0.25, 0.25});
+  boal->add_component<Material>()->create_gpu_buffer(
+      test_image_width, test_image_height, test_image_data);
+  boal->add_component<RigidBody>()->radius =
+      boal->get_component<ScreenSpaceTransform>()->scale.internal_data[0] * 0.5f;
+  pool.push_back(boal);
+}
 
 void main_loop() {
   // user script
-  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::Q) ==
-      ButtonState::HOLD)
-    e->get_component<ScreenSpaceTransform>()->angle += 0.1f;
-  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::E) ==
-      ButtonState::HOLD)
-    e->get_component<ScreenSpaceTransform>()->angle -= 0.1f;
   if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::W) ==
-      ButtonState::HOLD) {
-    e->get_component<RigidBody>()->velocity.internal_data[1] += 0.015f;
+      ButtonState::DOWN) {
+    spawn_boal();
   }
 
   Engine::get_module<ScreenSpacePhysics>()->update();
@@ -50,12 +58,7 @@ void start() {
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
   // game initialize
-  e = std::make_shared<Entity>();
-  e->add_component<ScreenSpaceMesh>();
-  e->add_component<ScreenSpaceTransform>();
-  e->add_component<Material>()->create_gpu_buffer(
-      test_image_width, test_image_height, test_image_data);
-  e->add_component<RigidBody>()->radius = 0.5f;
+  spawn_boal();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
