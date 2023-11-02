@@ -4,7 +4,7 @@
 using namespace ShiftFlamework;
 
 void Material::create_gpu_buffer(uint32_t height, uint32_t width,
-                                 const uint8_t *data) {
+                                 const uint8_t* data) {
   wgpu::TextureDescriptor texture_desc{
       .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst,
       .dimension = wgpu::TextureDimension::e2D,
@@ -67,9 +67,9 @@ void Material::create_gpu_buffer(uint32_t height, uint32_t width,
   texture_view = texture.CreateView(&texture_view_desc);
 
   auto sampler_decs =
-      wgpu::SamplerDescriptor{.addressModeU = wgpu::AddressMode::ClampToEdge,
-                              .addressModeV = wgpu::AddressMode::ClampToEdge,
-                              .addressModeW = wgpu::AddressMode::ClampToEdge,
+      wgpu::SamplerDescriptor{.addressModeU = wgpu::AddressMode::Repeat,
+                              .addressModeV = wgpu::AddressMode::Repeat,
+                              .addressModeW = wgpu::AddressMode::Repeat,
                               .magFilter = wgpu::FilterMode::Linear,
                               .minFilter = wgpu::FilterMode::Linear,
                               .mipmapFilter = wgpu::MipmapFilterMode::Linear,
@@ -109,4 +109,11 @@ void Material::create_gpu_buffer(uint32_t height, uint32_t width,
   bindgroup =
       Engine::get_module<ScreenSpaceMeshRenderer>()->create_texture_bind_group(
           texture_view, sampler, tex_offset_buffer, tile_scale_buffer);
+}
+
+void Material::update_texture_sampling() {
+  Engine::get_module<Graphics>()->update_buffer(tex_offset_buffer,
+                                                std::vector(1, uv_offset));
+  Engine::get_module<Graphics>()->update_buffer(tile_scale_buffer,
+                                                std::vector(1, tile_scale));
 }
