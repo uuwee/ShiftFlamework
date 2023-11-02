@@ -30,6 +30,8 @@ void ScreenSpaceMeshRenderer::initialize() {
       @group(0) @binding(0) var<uniform> world_mat: mat4x4f;
       @group(1) @binding(0) var gradientTexture: texture_2d<f32>;
       @group(1) @binding(1) var textureSampler: sampler;
+      @group(1) @binding(2) var<uniform> texture_offset: vec2f;
+      @group(1) @binding(3) var<uniform> tile_scale: vec2f;
 
       struct VertexInput{
         @location(0) position: vec2f,
@@ -52,7 +54,7 @@ void ScreenSpaceMeshRenderer::initialize() {
       }
 
       @fragment fn fragmentMain(in: VertexOutput) -> @location(0) vec4f {
-        return vec4f(textureSample(gradientTexture, textureSampler, in.texture_coord).rgb, 1.0);
+        return vec4f(textureSample(gradientTexture, textureSampler, in.texture_coord * tile_scale + texture_offset).rgb, 1.0);
       }
     )";
   wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
@@ -70,7 +72,7 @@ void ScreenSpaceMeshRenderer::initialize() {
       .targets = &color_target_state,
   };
 
-  auto binding_layout_entries = std::vector<wgpu::BindGroupLayoutEntry>(3);
+  auto binding_layout_entries = std::vector<wgpu::BindGroupLayoutEntry>(5);
   // constant
   binding_layout_entries.at(0) =
       wgpu::BindGroupLayoutEntry{.binding = 0,
@@ -96,6 +98,24 @@ void ScreenSpaceMeshRenderer::initialize() {
       .visibility = wgpu::ShaderStage::Fragment,
       .sampler = wgpu::SamplerBindingLayout{
           .type = wgpu::SamplerBindingType::Filtering}};
+  // offset
+  binding_layout_entries.at(3) = wgpu::BindGroupLayoutEntry{
+      .binding = 2,
+      .visibility = wgpu::ShaderStage::Fragment,
+      .buffer =
+          wgpu::BufferBindingLayout{.type = wgpu::BufferBindingType::Uniform,
+                                    .hasDynamicOffset = false,
+                                    .minBindingSize = sizeof(Math::Vector2f)},
+  };
+  // tile scale
+  binding_layout_entries.at(4) = wgpu::BindGroupLayoutEntry{
+      .binding = 3,
+      .visibility = wgpu::ShaderStage::Fragment,
+      .buffer =
+          wgpu::BufferBindingLayout{.type = wgpu::BufferBindingType::Uniform,
+                                    .hasDynamicOffset = false,
+                                    .minBindingSize = sizeof(Math::Vector2f)},
+  };
 
   std::vector<wgpu::BindGroupLayoutEntry> constant_layout_entries(
       binding_layout_entries.begin(), binding_layout_entries.begin() + 1);
@@ -108,7 +128,7 @@ void ScreenSpaceMeshRenderer::initialize() {
   std::vector<wgpu::BindGroupLayoutEntry> texture_layout_entries(
       binding_layout_entries.begin() + 1, binding_layout_entries.end());
   wgpu::BindGroupLayoutDescriptor texture_bind_group_layout_desc = {
-      .entryCount = 2,
+      .entryCount = 4,
       .entries = texture_layout_entries.data(),
   };
 
@@ -133,109 +153,6 @@ void ScreenSpaceMeshRenderer::initialize() {
 
   render_pipeline = Engine::get_module<Graphics>()->device.CreateRenderPipeline(
       &render_pipeline_desc);
-
-  // constant buffer heap
-  {
-    auto bind_stride = Engine::get_module<Graphics>()->get_buffer_stride(
-        sizeof(Math::Matrix4x4f));
-
-    wgpu::BufferDescriptor buffer_desc{
-        .nextInChain = nullptr,
-        .label = "constant buffer heap",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
-        .size = bind_stride,
-        .mappedAtCreation = false,
-    };
-
-    constant_buffer_heap =
-        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
-  }
-
-  // test texture gen
-  wgpu::TextureDescriptor texture_desc{
-      .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst,
-      .dimension = wgpu::TextureDimension::e2D,
-      .size = {256, 256, 1},
-      .format = wgpu::TextureFormat::RGBA8Unorm,
-      .mipLevelCount = 1,
-      .sampleCount = 1,
-      .viewFormatCount = 0,
-      .viewFormats = nullptr,
-  };
-
-  test_texture =
-      Engine::get_module<Graphics>()->device.CreateTexture(&texture_desc);
-
-  std::vector<uint8_t> pixels(
-      4 * texture_desc.size.width * texture_desc.size.height, 0);
-
-  {
-    uint32_t idx = 0;
-    for (uint32_t i = 0; i < test_image_width; i++) {
-      for (uint32_t j = 0; j < test_image_height; j++) {
-        std::array<uint8_t, 4> data = {};
-        data.at(0) = (uint8_t)test_image_data[idx];
-        data.at(1) = (uint8_t)test_image_data[idx + 1];
-        data.at(2) = (uint8_t)test_image_data[idx + 2];
-        data.at(3) = (uint8_t)test_image_data[idx + 3];
-        idx += 4;
-
-        pixels.at(4 * ((test_image_width - 1 - i) * test_image_height + j) +
-                  0) = (((data.at(0) - 33) << 2) | ((data.at(1) - 33) >> 4));
-        pixels.at(4 * ((test_image_width - 1 - i) * test_image_height + j) +
-                  1) =
-            ((((data.at(1) - 33) & 0xF) << 4) | ((data.at(2) - 33) >> 2));
-        pixels.at(4 * ((test_image_width - 1 - i) * test_image_height + j) +
-                  2) = ((((data.at(2) - 33) & 0x3) << 6) | ((data.at(3) - 33)));
-      }
-    }
-  }
-
-  wgpu::ImageCopyTexture destination{
-      .texture = test_texture,
-      .mipLevel = 0,
-      .origin = {0, 0, 0},
-      .aspect = wgpu::TextureAspect::All,
-  };
-
-  wgpu::TextureDataLayout source{
-      .offset = 0,
-      .bytesPerRow = 4 * texture_desc.size.width,
-      .rowsPerImage = texture_desc.size.height,
-  };
-
-  Engine::get_module<Graphics>()->device.GetQueue().WriteTexture(
-      &destination, pixels.data(), pixels.size(), &source, &texture_desc.size);
-
-  auto texture_view_desc = wgpu::TextureViewDescriptor{
-      .format = texture_desc.format,
-      .dimension = wgpu::TextureViewDimension::e2D,
-      .baseMipLevel = 0,
-      .mipLevelCount = 1,
-      .baseArrayLayer = 0,
-      .arrayLayerCount = 1,
-      .aspect = wgpu::TextureAspect::All,
-  };
-  auto texture_view = test_texture.CreateView(&texture_view_desc);
-
-  // sampler
-  auto sampler_desc =
-      wgpu::SamplerDescriptor{.addressModeU = wgpu::AddressMode::ClampToEdge,
-                              .addressModeV = wgpu::AddressMode::ClampToEdge,
-                              .addressModeW = wgpu::AddressMode::ClampToEdge,
-                              .magFilter = wgpu::FilterMode::Linear,
-                              .minFilter = wgpu::FilterMode::Linear,
-                              .mipmapFilter = wgpu::MipmapFilterMode::Linear,
-                              .lodMinClamp = 0.0f,
-                              .lodMaxClamp = 1.0f,
-                              .compare = wgpu::CompareFunction::Undefined,
-                              .maxAnisotropy = 1};
-  auto sampler =
-      Engine::get_module<Graphics>()->device.CreateSampler(&sampler_desc);
-
-  // bindings
-  constant_buffer_bind_group = create_constant_bind_group(constant_buffer_heap);
-  texture_bind_group = create_texture_bind_group(texture_view, sampler);
 }
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
@@ -299,8 +216,9 @@ wgpu::BindGroup ScreenSpaceMeshRenderer::create_constant_bind_group(
 }
 
 wgpu::BindGroup ScreenSpaceMeshRenderer::create_texture_bind_group(
-    const wgpu::TextureView& texture_view, const wgpu::Sampler& sampler) {
-  auto texture_bindings = std::vector<wgpu::BindGroupEntry>(2);
+    const wgpu::TextureView& texture_view, const wgpu::Sampler& sampler,
+    const wgpu::Buffer& tex_offset, const wgpu::Buffer& tile_scale) {
+  auto texture_bindings = std::vector<wgpu::BindGroupEntry>(4);
   texture_bindings.at(0) = wgpu::BindGroupEntry{
       .binding = 0,
       .textureView = texture_view,
@@ -309,10 +227,22 @@ wgpu::BindGroup ScreenSpaceMeshRenderer::create_texture_bind_group(
       .binding = 1,
       .sampler = sampler,
   };
+  texture_bindings.at(2) = wgpu::BindGroupEntry{
+      .binding = 2,
+      .buffer = tex_offset,
+      .offset = 0,
+      .size = sizeof(Math::Vector2f),
+  };
+  texture_bindings.at(3) = wgpu::BindGroupEntry{
+      .binding = 3,
+      .buffer = tile_scale,
+      .offset = 0,
+      .size = sizeof(Math::Vector2f),
+  };
 
   wgpu::BindGroupDescriptor texture_bind_group_desc{
       .layout = texture_bind_group_layout,
-      .entryCount = 2,
+      .entryCount = 4,
       .entries = texture_bindings.data(),
   };
   return Engine::get_module<Graphics>()->device.CreateBindGroup(
