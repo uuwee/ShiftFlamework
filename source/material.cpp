@@ -80,7 +80,33 @@ void Material::create_gpu_buffer(uint32_t height, uint32_t width,
 
   sampler = Engine::get_module<Graphics>()->device.CreateSampler(&sampler_decs);
 
+  wgpu::BufferDescriptor tex_offset_buffer_desc{
+      .nextInChain = nullptr,
+      .label = "tex offset",
+      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+      .size = sizeof(Math::Vector2f),
+      .mappedAtCreation = false,
+  };
+
+  tex_offset_buffer =
+      Engine::get_module<Graphics>()->create_buffer(tex_offset_buffer_desc);
+  Engine::get_module<Graphics>()->update_buffer(
+      tex_offset_buffer, std::vector(1, Math::Vector2f({0, 0})));
+
+  wgpu::BufferDescriptor tile_scale_buffer_desc{
+      .nextInChain = nullptr,
+      .label = "tile scale",
+      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+      .size = sizeof(Math::Vector2f),
+      .mappedAtCreation = false,
+  };
+
+  tile_scale_buffer =
+      Engine::get_module<Graphics>()->create_buffer(tile_scale_buffer_desc);
+  Engine::get_module<Graphics>()->update_buffer(
+      tile_scale_buffer, std::vector(1, Math::Vector2f({1, 1})));
+
   bindgroup =
       Engine::get_module<ScreenSpaceMeshRenderer>()->create_texture_bind_group(
-          texture_view, sampler);
+          texture_view, sampler, tex_offset_buffer, tile_scale_buffer);
 }
