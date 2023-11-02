@@ -43,6 +43,7 @@ class ScreenSpaceMeshRenderer {
       const wgpu::Buffer& constant_buffer);
 
   wgpu::BindGroup create_texture_bind_group(
-      const wgpu::TextureView& texture_view, const wgpu::Sampler& sampler);
+      const wgpu::TextureView& texture_view, const wgpu::Sampler& sampler,
+      const wgpu::Buffer& tex_offset, const wgpu::Buffer& tile_scale);
 };
 }  // namespace ShiftFlamework
