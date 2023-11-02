@@ -156,6 +156,8 @@ void start() {
   background->add_component<ScreenSpaceMesh>();
   background->add_component<ScreenSpaceTransform>()->scale =
       Math::Vector2f({2, 2});
+  background->add_component<Material>()->create_gpu_buffer(
+      test_image_height, test_image_width, test_image_data);
 
   // pipe
   pipes = std::vector<std::shared_ptr<Entity>>(8, nullptr);
@@ -165,6 +167,8 @@ void start() {
     auto pipe_t = pipe->add_component<ScreenSpaceTransform>();
     pipe_t->position = Math::Vector2f({-1.5f, i % 2 == 0.0f ? -1.0f : 1.0f});
     pipe_t->scale = Math::Vector2f({pipe_width, 1.0f});
+    pipe->add_component<Material>()->create_gpu_buffer(
+        test_image_height, test_image_width, test_image_data);
     pipes.at(i) = pipe;
     unused_pipe.push(pipe);
   }
@@ -176,6 +180,8 @@ void start() {
   auto p_transform = player->get_component<ScreenSpaceTransform>();
   p_transform->scale = Math::Vector2f({player_rad, player_rad});
   p_transform->position = Math::Vector2f({-0.3, 0});
+  player->add_component<Material>()->create_gpu_buffer(
+      test_image_height, test_image_width, test_image_data);
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
