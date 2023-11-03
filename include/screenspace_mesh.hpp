@@ -20,6 +20,7 @@ class ScreenSpaceMesh : public Component {
   std::vector<uint32_t> indices;
   wgpu::Buffer vertex_buffer = nullptr;
   wgpu::Buffer index_buffer = nullptr;
+  bool is_active = true;
 
   void on_register();
   void create_gpu_buffer();

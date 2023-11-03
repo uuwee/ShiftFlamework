@@ -54,7 +54,7 @@ void ScreenSpaceMeshRenderer::initialize() {
       }
 
       @fragment fn fragmentMain(in: VertexOutput) -> @location(0) vec4f {
-        return vec4f(textureSample(gradientTexture, textureSampler, in.texture_coord * tile_scale + texture_offset).rgb, 1.0);
+        return textureSample(gradientTexture, textureSampler, in.texture_coord * tile_scale + texture_offset);
       }
     )";
   wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
@@ -62,8 +62,14 @@ void ScreenSpaceMeshRenderer::initialize() {
       Engine::get_module<Graphics>()->device.CreateShaderModule(
           &shader_module_desc);
 
+  wgpu::BlendState blend_state = {
+      .color = wgpu::BlendComponent{
+          .operation = wgpu::BlendOperation::Add,
+          .srcFactor = wgpu::BlendFactor::SrcAlpha,
+          .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha}};
+
   wgpu::ColorTargetState color_target_state{
-      .format = wgpu::TextureFormat::BGRA8Unorm};
+      .format = wgpu::TextureFormat::BGRA8Unorm, .blend = &blend_state};
 
   wgpu::FragmentState fragment_state{
       .module = shader_module,
@@ -165,9 +171,12 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   }
 
   // render
-  wgpu::RenderPassColorAttachment attachment{.view = render_target,
-                                             .loadOp = wgpu::LoadOp::Clear,
-                                             .storeOp = wgpu::StoreOp::Store};
+  wgpu::RenderPassColorAttachment attachment{
+      .view = render_target,
+      .loadOp = wgpu::LoadOp::Clear,
+      .storeOp = wgpu::StoreOp::Store,
+      .clearValue = wgpu::Color{.r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0},
+  };
 
   wgpu::RenderPassDescriptor renderpass_desc{.colorAttachmentCount = 1,
                                              .colorAttachments = &attachment};
@@ -179,6 +188,7 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
 
   for (const auto& mesh_wptr : mesh_list) {
     if (const auto& mesh = mesh_wptr.lock()) {
+      if (!mesh->is_active) continue;
       pass.SetVertexBuffer(0, mesh->vertex_buffer, 0,
                            mesh->vertices.size() * sizeof(ScreenSpaceVertex));
 

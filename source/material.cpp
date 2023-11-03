@@ -20,8 +20,8 @@ void Material::create_gpu_buffer(uint32_t height, uint32_t width,
   std::vector<uint8_t> pixels(4 * width * height, 0);
 
   uint32_t idx = 0;
-  for (uint32_t i = 0; i < width; i++) {
-    for (uint32_t j = 0; j < height; j++) {
+  for (uint32_t i = 0; i < height; i++) {
+    for (uint32_t j = 0; j < width; j++) {
       std::array<uint8_t, 4> raw = {};
       raw.at(0) = (uint8_t)data[idx];
       raw.at(1) = (uint8_t)data[idx + 1];
@@ -29,12 +29,18 @@ void Material::create_gpu_buffer(uint32_t height, uint32_t width,
       raw.at(3) = (uint8_t)data[idx + 3];
       idx += 4;
 
-      pixels.at(4 * ((width - 1 - i) * height + j) + 0) =
+      pixels.at(4 * ((height - 1 - i) * width + j) + 0) =
           (((raw.at(0) - 33) << 2) | ((raw.at(1) - 33) >> 4));
-      pixels.at(4 * ((width - 1 - i) * height + j) + 1) =
+      pixels.at(4 * ((height - 1 - i) * width + j) + 1) =
           ((((raw.at(1) - 33) & 0xF) << 4) | ((raw.at(2) - 33) >> 2));
-      pixels.at(4 * ((width - 1 - i) * height + j) + 2) =
+      pixels.at(4 * ((height - 1 - i) * width + j) + 2) =
           ((((raw.at(2) - 33) & 0x3) << 6) | ((raw.at(3) - 33)));
+      pixels.at(4 * ((height - 1 - i) * width + j) + 3) =
+          (pixels.at(4 * ((height - 1 - i) * width + j) + 0) == 255 &&
+           pixels.at(4 * ((height - 1 - i) * width + j) + 1) == 255 &&
+           pixels.at(4 * ((height - 1 - i) * width + j) + 2) == 255)
+              ? 0
+              : 255;
     }
   }
 
