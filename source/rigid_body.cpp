@@ -3,8 +3,7 @@
 #include "engine.hpp"
 using namespace ShiftFlamework;
 
-RigidBody::RigidBody(float radius = 0.5f,
-                     Math::Vector2f velocity = Math::Vector2f({0, 0}))
+RigidBody::RigidBody(float radius, Math::Vector2f velocity)
     : radius(radius),
       velocity(velocity){
 

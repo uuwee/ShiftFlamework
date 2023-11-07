@@ -6,6 +6,7 @@
 #include <functional>
 #include <iostream>
 #include <string>
+
 namespace ShiftFlamework {
 
 class Window {

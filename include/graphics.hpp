@@ -6,12 +6,6 @@
 #include <iostream>
 #include <memory>
 
-#if defined(__EMSCRIPTEN__)
-#include <emscripten/emscripten.h>
-#else
-#include <webgpu/webgpu_glfw.h>
-#endif
-
 namespace ShiftFlamework {
 
 class Graphics {

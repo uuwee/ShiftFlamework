@@ -9,7 +9,6 @@
 #include "material.hpp"
 #include "rigid_body.hpp"
 #include "screenspace_mesh.hpp"
-#include "script.hpp"
 #include "test_image.h"
 #include "vector.hpp"
 using namespace ShiftFlamework;

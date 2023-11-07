@@ -3,6 +3,13 @@
 #include <iostream>
 using namespace ShiftFlamework;
 
+#if defined(_MSC_VER)
+#include <windows.h>
+#elif defined(__EMSCRIPTEN__)
+#include <emscripten/emscripten.h>
+#include <emscripten/html5.h>
+#endif
+
 #if defined(__EMSCRIPTEN__)
 static Keyboard input_to_code(const char input[32]) {
   if ((*input) - 'A' >= 0 && (*input) - 'A' < 26) {
