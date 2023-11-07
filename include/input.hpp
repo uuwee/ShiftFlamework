@@ -2,13 +2,6 @@
 
 #include <array>
 
-#if defined(_MSC_VER)
-#include <windows.h>
-#elif defined(__EMSCRIPTEN__)
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
-#endif
-
 namespace ShiftFlamework {
 
 enum class ButtonState {
@@ -52,9 +45,7 @@ enum class Keyboard : int {
 
 class Input {
  private:
-#if defined(_MSC_VER)
-  BYTE key_state_before[256];
-#endif
+  uint8_t key_state_before[256];
 
  public:
   std::array<ButtonState, 256> state;
