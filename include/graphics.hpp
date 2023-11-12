@@ -1,10 +1,11 @@
 #pragma once
-
 #include <GLFW/glfw3.h>
 #include <webgpu/webgpu_cpp.h>
 
 #include <iostream>
 #include <memory>
+
+#include "module.hpp"
 
 namespace ShiftFlamework {
 
