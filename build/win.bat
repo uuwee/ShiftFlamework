@@ -1,2 +1,2 @@
 cmake -B out\win
-cmake --build out\win
+./build/win-compile.bat

@@ -2,8 +2,11 @@
 
 using namespace ShiftFlamework;
 
+func main_loop_func;
+
 void main_loop() {
   // user script
+  main_loop_func();
 
   Engine::get_module<ScreenSpacePhysics>()->update();
   Engine::get_module<Input>()->update();
@@ -54,6 +57,6 @@ std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>,
 
 DLL void initialize_engine(void) { return Engine::initialize(); }
 
-DLL void* get_module(std::string name) {
-  return (void*)Engine::get_module<Input>().get();
-}
+DLL Input* get_module() { return Engine::get_module<Input>().get(); }
+
+DLL void set_loop(func func) { main_loop_func = func; }

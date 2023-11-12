@@ -32,4 +32,7 @@ class Engine {
 }  // namespace ShiftFlamework
 extern "C" DLL void initialize_engine(void);
 
-extern "C" DLL void* get_module(std::string name);
+extern "C" DLL ShiftFlamework::Input* get_module();
+
+typedef void (*func)(void);
+extern "C" DLL void set_loop(func func);

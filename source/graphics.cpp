@@ -246,3 +246,8 @@ void Graphics::render(wgpu::TextureView current_texture_view) {
   wgpu::CommandBuffer commands = encoder.Finish();
   device.GetQueue().Submit(1, &commands);
 }
+
+void Graphics::terminate() { device.Destroy(); }
+wgpu::Buffer Graphics::create_buffer(const wgpu::BufferDescriptor& descriptor) {
+  return device.CreateBuffer(&descriptor);
+}

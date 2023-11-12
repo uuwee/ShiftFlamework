@@ -1,9 +1,28 @@
 #pragma once
-#include <GLFW/glfw3.h>
-#include <webgpu/webgpu_cpp.h>
+// #include <GLFW/glfw3.h>
+// #include <webgpu/webgpu_cpp.h>
 
+namespace wgpu {
+typedef void* Instance;
+typedef void* Adapter;
+typedef void* Device;
+typedef void* SwapChain;
+typedef void* RenderPipeline;
+typedef void* Buffer;
+typedef void* BufferDescriptor;
+typedef void* TextureView;
+typedef void* BindGroup;
+typedef void* Limits;
+typedef void* Device;
+typedef void* Texture;
+typedef void* BindGroupLayout;
+typedef void* Sampler;
+}  // namespace wgpu
+
+#include <functional>
 #include <iostream>
 #include <memory>
+#include <vector>
 
 #include "module.hpp"
 
