@@ -2,6 +2,6 @@
 
 #if defined DLL_EXPORT
 #define DLL __declspec(dllexport)
-#else if defined DLL_IMPORT
+#else
 #define DLL __declspec(dllimport)
 #endif

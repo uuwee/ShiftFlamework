@@ -3,17 +3,17 @@
 #include <memory>
 #include <string>
 
-#include "graphics.hpp"
-#include "input.hpp"
 #include "module.hpp"
-#include "screenspace_mesh_renderer.hpp"
-#include "screenspace_physics.hpp"
-#include "window.hpp"
-namespace ShiftFlamework {
-class Engine {
- private:
-  Engine();
 
+namespace ShiftFlamework {
+
+class Graphics;
+class Window;
+class Input;
+class ScreenSpaceMeshRenderer;
+class ScreenSpacePhysics;
+
+class Engine {
  public:
   static std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>,
                     std::shared_ptr<Input>,
@@ -29,7 +29,7 @@ class Engine {
   }
 };
 
-}  // namespace ShiftFlamework
 extern "C" DLL void initialize_engine(void);
 
 extern "C" DLL void* get_module(std::string name);
+}  // namespace ShiftFlamework

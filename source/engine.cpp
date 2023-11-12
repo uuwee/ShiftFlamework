@@ -1,16 +1,5 @@
-#include <iostream>
-#include <memory>
-#include <queue>
-#include <random>
-#include <tuple>
-
 #include "engine.hpp"
-#include "entity.hpp"
-#include "material.hpp"
-#include "rigid_body.hpp"
-#include "screenspace_mesh.hpp"
-#include "test_image.h"
-#include "vector.hpp"
+
 using namespace ShiftFlamework;
 
 void main_loop() {
@@ -44,15 +33,7 @@ void start() {
   Engine::get_module<Window>()->start_main_loop(main_loop);
 }
 
-// pointer to modules
-std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>,
-           std::shared_ptr<Input>, std::shared_ptr<ScreenSpaceMeshRenderer>,
-           std::shared_ptr<ScreenSpacePhysics>>
-    Engine::modules =
-        std::make_tuple(nullptr, nullptr, nullptr, nullptr, nullptr);
-
-int main() {
-  // initialize modules
+void Engine::initialize() {
   std::get<std::shared_ptr<Graphics>>(Engine::modules) =
       std::make_shared<Graphics>();
   std::get<std::shared_ptr<Input>>(Engine::modules) = std::make_shared<Input>();
@@ -63,4 +44,16 @@ int main() {
   Engine::get_module<Input>()->initialize();
   Engine::get_module<ScreenSpacePhysics>()->initialize();
   Engine::get_module<Graphics>()->initialize([]() { start(); });
+};
+
+std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>,
+           std::shared_ptr<Input>, std::shared_ptr<ScreenSpaceMeshRenderer>,
+           std::shared_ptr<ScreenSpacePhysics>>
+    ShiftFlamework::Engine::modules =
+        std::make_tuple(nullptr, nullptr, nullptr, nullptr, nullptr);
+
+DLL void initialize_engine(void) { return Engine::initialize(); }
+
+DLL void* get_module(std::string name) {
+  return (void*)Engine::get_module<Input>().get();
 }
