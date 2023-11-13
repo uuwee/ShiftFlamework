@@ -57,6 +57,16 @@ std::tuple<std::shared_ptr<Graphics>, std::shared_ptr<Window>,
 
 DLL void initialize_engine(void) { return Engine::initialize(); }
 
-DLL Input* get_module() { return Engine::get_module<Input>().get(); }
+DLL Graphics* get_graphics_module() {
+  return Engine::get_module<Graphics>().get();
+}
+DLL Window* get_window_module() { return Engine::get_module<Window>().get(); }
+DLL Input* get_input_module() { return Engine::get_module<Input>().get(); }
+DLL ScreenSpaceMeshRenderer* get_screen_space_mesh_renderer_module() {
+  return Engine::get_module<ScreenSpaceMeshRenderer>().get();
+}
+DLL ScreenSpacePhysics* get_screen_space_physics_module() {
+  return Engine::get_module<ScreenSpacePhysics>().get();
+}
 
 DLL void set_loop(func func) { main_loop_func = func; }

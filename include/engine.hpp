@@ -32,7 +32,13 @@ class Engine {
 }  // namespace ShiftFlamework
 extern "C" DLL void initialize_engine(void);
 
-extern "C" DLL ShiftFlamework::Input* get_module();
+extern "C" DLL ShiftFlamework::Graphics* get_graphics_module();
+extern "C" DLL ShiftFlamework::Window* get_window_module();
+extern "C" DLL ShiftFlamework::Input* get_input_module();
+extern "C" DLL ShiftFlamework::ScreenSpaceMeshRenderer*
+get_screen_space_mesh_renderer_module();
+extern "C" DLL ShiftFlamework::ScreenSpacePhysics*
+get_screen_space_physics_module();
 
 typedef void (*func)(void);
 extern "C" DLL void set_loop(func func);
