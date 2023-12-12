@@ -29,16 +29,12 @@ void ScreenSpaceTransform::update_gpu_buffer() {
                          {std::sin(angle), std::cos(angle), 0, 0},
                          {0, 0, 1, 0},
                          {0, 0, 0, 1}}});
-  const auto translate_mat =
-      Math::Matrix4x4f({{{1, 0, 0, position.internal_data.at(0)},
-                         {0, 1, 0, position.internal_data.at(1)},
-                         {0, 0, 1, 0},
-                         {0, 0, 0, 1}}});
-  const auto scale_mat =
-      Math::Matrix4x4f({{{scale.internal_data.at(0), 0, 0, 0},
-                         {0, scale.internal_data.at(1), 0, 0},
-                         {0, 0, 1, 0},
-                         {0, 0, 0, 1}}});
+  const auto translate_mat = Math::Matrix4x4f({{{1, 0, 0, position.x},
+                                                {0, 1, 0, position.y},
+                                                {0, 0, 1, 0},
+                                                {0, 0, 0, 1}}});
+  const auto scale_mat = Math::Matrix4x4f(
+      {{{scale.x, 0, 0, 0}, {0, scale.y, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}});
   const auto matrix = translate_mat * rotate_mat * scale_mat;
   Engine::get_module<Graphics>()->update_buffer(
       constant_buffer, std::vector(1, transposed(matrix)));
@@ -53,4 +49,24 @@ const wgpu::Buffer ScreenSpaceTransform::get_constant_buffer() {
 }
 const wgpu::BindGroup ScreenSpaceTransform::get_bindgroup() {
   return bindgroup;
+}
+const Math::Vector2f ScreenSpaceTransform::get_position() { return position; }
+
+const float ScreenSpaceTransform::get_angle() { return angle; }
+
+const Math::Vector2f ScreenSpaceTransform::get_scale() { return scale; }
+
+void ScreenSpaceTransform::set_position(Math::Vector2f position) {
+  this->position = position;
+  update_gpu_buffer();
+}
+
+void ScreenSpaceTransform::set_angle(float angle) {
+  this->angle = angle;
+  update_gpu_buffer();
+}
+
+void ScreenSpaceTransform::set_scale(Math::Vector2f scale) {
+  this->scale = scale;
+  update_gpu_buffer();
 }
