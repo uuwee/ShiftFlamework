@@ -46,15 +46,13 @@ enum class Keyboard : int {
 class Input {
  private:
   uint8_t key_state_before[256];
+  std::array<ButtonState, 256> state;
 
  public:
-  std::array<ButtonState, 256> state;
   void initialize();
 
   void update();
 
-  ButtonState get_keyboard_state(Keyboard button) {
-    return state.at(static_cast<int>(button));
-  }
+  ButtonState get_keyboard_state(Keyboard button);
 };
 }  // namespace ShiftFlamework

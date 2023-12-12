@@ -20,7 +20,7 @@ void ScreenSpaceMesh::on_register() {
   indices = {0, 1, 2, 0, 2, 3};
   create_gpu_buffer();
   Engine::get_module<ScreenSpaceMeshRenderer>()->register_mesh(
-      entity->get_component<ScreenSpaceMesh>());
+      get_entity()->get_component<ScreenSpaceMesh>());
 }
 
 void ScreenSpaceMesh::create_gpu_buffer() {
@@ -47,3 +47,13 @@ void ScreenSpaceMesh::create_gpu_buffer() {
     Engine::get_module<Graphics>()->update_buffer(index_buffer, indices);
   }
 }
+
+const std::vector<ScreenSpaceVertex> ScreenSpaceMesh::get_vertices() {
+  return vertices;
+}
+
+const std::vector<uint32_t> ScreenSpaceMesh::get_indices() { return indices; }
+const wgpu::Buffer ScreenSpaceMesh::get_vertex_buffer() {
+  return vertex_buffer;
+}
+const wgpu::Buffer ScreenSpaceMesh::get_index_buffer() { return index_buffer; }

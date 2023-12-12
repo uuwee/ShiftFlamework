@@ -12,5 +12,5 @@ RigidBody::RigidBody(float radius, Math::Vector2f velocity)
 
 void RigidBody::on_register() {
   Engine::get_module<ScreenSpacePhysics>()->register_body(
-      entity->get_component<RigidBody>());
+      get_entity()->get_component<RigidBody>());
 };

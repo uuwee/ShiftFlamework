@@ -48,3 +48,9 @@ void ScreenSpaceTransform::on_register() {
   create_gpu_buffer();
   update_gpu_buffer();
 }
+const wgpu::Buffer ScreenSpaceTransform::get_constant_buffer() {
+  return constant_buffer;
+}
+const wgpu::BindGroup ScreenSpaceTransform::get_bindgroup() {
+  return bindgroup;
+}

@@ -14,14 +14,20 @@ struct ScreenSpaceVertex {
 };
 
 class ScreenSpaceMesh : public Component {
- public:
-  ScreenSpaceMesh() : Component(){};
+ private:
   std::vector<ScreenSpaceVertex> vertices;
   std::vector<uint32_t> indices;
   wgpu::Buffer vertex_buffer = nullptr;
   wgpu::Buffer index_buffer = nullptr;
 
+ public:
+  ScreenSpaceMesh() : Component(){};
   void on_register();
   void create_gpu_buffer();
+  const std::vector<ScreenSpaceVertex> get_vertices();
+  const std::vector<uint32_t> get_indices();
+
+  const wgpu::Buffer get_vertex_buffer();
+  const wgpu::Buffer get_index_buffer();
 };
 }  // namespace ShiftFlamework

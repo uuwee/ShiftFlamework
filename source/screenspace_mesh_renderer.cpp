@@ -59,7 +59,7 @@ void ScreenSpaceMeshRenderer::initialize() {
     )";
   wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
   wgpu::ShaderModule shader_module =
-      Engine::get_module<Graphics>()->device.CreateShaderModule(
+      Engine::get_module<Graphics>()->get_device().CreateShaderModule(
           &shader_module_desc);
 
   wgpu::ColorTargetState color_target_state{
@@ -122,7 +122,7 @@ void ScreenSpaceMeshRenderer::initialize() {
   wgpu::BindGroupLayoutDescriptor constant_bind_group_layout_desc = {
       .entryCount = 1, .entries = constant_layout_entries.data()};
   constant_bind_group_layout =
-      Engine::get_module<Graphics>()->device.CreateBindGroupLayout(
+      Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
           &constant_bind_group_layout_desc);
 
   std::vector<wgpu::BindGroupLayoutEntry> texture_layout_entries(
@@ -133,7 +133,7 @@ void ScreenSpaceMeshRenderer::initialize() {
   };
 
   texture_bind_group_layout =
-      Engine::get_module<Graphics>()->device.CreateBindGroupLayout(
+      Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
           &texture_bind_group_layout_desc);
   std::vector<wgpu::BindGroupLayout> layouts = {constant_bind_group_layout,
                                                 texture_bind_group_layout};
@@ -141,7 +141,8 @@ void ScreenSpaceMeshRenderer::initialize() {
       .bindGroupLayoutCount = 2, .bindGroupLayouts = layouts.data()};
 
   wgpu::PipelineLayout pipeline_layout =
-      Engine::get_module<Graphics>()->device.CreatePipelineLayout(&layout_desc);
+      Engine::get_module<Graphics>()->get_device().CreatePipelineLayout(
+          &layout_desc);
 
   wgpu::RenderPipelineDescriptor render_pipeline_desc{
       .layout = pipeline_layout,
@@ -151,15 +152,17 @@ void ScreenSpaceMeshRenderer::initialize() {
                  .buffers = &vertex_buffer_layout},
       .fragment = &fragment_state};
 
-  render_pipeline = Engine::get_module<Graphics>()->device.CreateRenderPipeline(
-      &render_pipeline_desc);
+  render_pipeline =
+      Engine::get_module<Graphics>()->get_device().CreateRenderPipeline(
+          &render_pipeline_desc);
 }
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   // update constant
   for (const auto& mesh_wptr : mesh_list) {
-    if (const auto& transform =
-            mesh_wptr.lock()->entity->get_component<ScreenSpaceTransform>()) {
+    if (const auto& transform = mesh_wptr.lock()
+                                    ->get_entity()
+                                    ->get_component<ScreenSpaceTransform>()) {
       transform->update_gpu_buffer();
     }
   }
@@ -173,29 +176,33 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
                                              .colorAttachments = &attachment};
 
   wgpu::CommandEncoder encoder =
-      Engine::get_module<Graphics>()->device.CreateCommandEncoder();
+      Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
   wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
   pass.SetPipeline(render_pipeline);
 
   for (const auto& mesh_wptr : mesh_list) {
     if (const auto& mesh = mesh_wptr.lock()) {
-      pass.SetVertexBuffer(0, mesh->vertex_buffer, 0,
-                           mesh->vertices.size() * sizeof(ScreenSpaceVertex));
+      pass.SetVertexBuffer(
+          0, mesh->get_vertex_buffer(), 0,
+          mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
 
-      pass.SetIndexBuffer(mesh->index_buffer, wgpu::IndexFormat::Uint32, 0,
-                          mesh->indices.size() * sizeof(uint32_t));
+      pass.SetIndexBuffer(mesh->get_index_buffer(), wgpu::IndexFormat::Uint32,
+                          0, mesh->get_indices().size() * sizeof(uint32_t));
 
-      pass.SetBindGroup(
-          0, mesh->entity->get_component<ScreenSpaceTransform>()->bindgroup, 0,
-          nullptr);
-      pass.SetBindGroup(1, mesh->entity->get_component<Material>()->bindgroup,
+      pass.SetBindGroup(0,
+                        mesh->get_entity()
+                            ->get_component<ScreenSpaceTransform>()
+                            ->get_bindgroup(),
                         0, nullptr);
-      pass.DrawIndexed(mesh->indices.size(), 1, 0, 0, 0);
+      pass.SetBindGroup(
+          1, mesh->get_entity()->get_component<Material>()->get_bindgroup(), 0,
+          nullptr);
+      pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
     }
   }
   pass.End();
   wgpu::CommandBuffer commands = encoder.Finish();
-  Engine::get_module<Graphics>()->device.GetQueue().Submit(1, &commands);
+  Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1, &commands);
 }
 
 wgpu::BindGroup ScreenSpaceMeshRenderer::create_constant_bind_group(
@@ -211,7 +218,7 @@ wgpu::BindGroup ScreenSpaceMeshRenderer::create_constant_bind_group(
       .entryCount = 1,
       .entries = &constant_binding};
 
-  return Engine::get_module<Graphics>()->device.CreateBindGroup(
+  return Engine::get_module<Graphics>()->get_device().CreateBindGroup(
       &bind_group_desc);
 }
 
@@ -245,6 +252,21 @@ wgpu::BindGroup ScreenSpaceMeshRenderer::create_texture_bind_group(
       .entryCount = 4,
       .entries = texture_bindings.data(),
   };
-  return Engine::get_module<Graphics>()->device.CreateBindGroup(
+  return Engine::get_module<Graphics>()->get_device().CreateBindGroup(
       &texture_bind_group_desc);
+}
+
+void ScreenSpaceMeshRenderer::register_mesh(
+    std::shared_ptr<ScreenSpaceMesh> mesh_component) {
+  mesh_list.push_back(mesh_component);
+}
+
+void ScreenSpaceMeshRenderer::unregister_mesh(
+    std::shared_ptr<ScreenSpaceMesh> mesh_component) {
+  // todo
+  // if we have id for each component(entity)
+  // we can use hash map and finish this operation O(1)
+  auto ptr = std::begin(mesh_list);
+  while (ptr->lock() != mesh_component && ptr != std::end(mesh_list)) ptr++;
+  mesh_list.erase(ptr);
 }

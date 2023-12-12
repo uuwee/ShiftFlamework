@@ -19,8 +19,8 @@ Window::Window(const std::string window_name, const uint32_t width,
   window = glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);
 }
 
-bool Window::initialize_swap_chain(wgpu::Instance& instance,
-                                   wgpu::Device& device) {
+bool Window::initialize_swap_chain(const wgpu::Instance& instance,
+                                   const wgpu::Device& device) {
 #if defined(__EMSCRIPTEN__)
   wgpu::SurfaceDescriptorFromCanvasHTMLSelector canvas_desc{};
   canvas_desc.selector = "#canvas";
