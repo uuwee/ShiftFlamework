@@ -17,7 +17,7 @@ void ScreenSpacePhysics::unregister_body(std::shared_ptr<RigidBody> body) {
 void ScreenSpacePhysics::initialize() {}
 
 void ScreenSpacePhysics::update() {
-  for (auto body_wptr : body_list) {
+  /*for (auto body_wptr : body_list) {
     if (std::shared_ptr<RigidBody> body = body_wptr.lock()) {
       auto old_position =
           body->get_entity()->get_component<ScreenSpaceTransform>()->position;
@@ -118,5 +118,5 @@ void ScreenSpacePhysics::update() {
       body->velocity =
           (transform->position - old_position) * body->deceleration;
     }
-  }
+  }*/
 }
