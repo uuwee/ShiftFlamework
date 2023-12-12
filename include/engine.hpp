@@ -9,10 +9,10 @@ namespace ShiftFlamework {
 class Engine {
  private:
   Engine();
-
- public:
+  ~Engine();
   static std::unordered_map<std::string, std::shared_ptr<void>> modules;
 
+ public:
   template <typename T>
   static std::shared_ptr<T> get_module() {
     auto type = typeid(T).name();

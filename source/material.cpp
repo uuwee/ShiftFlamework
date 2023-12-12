@@ -16,7 +16,8 @@ void Material::create_gpu_buffer(uint32_t height, uint32_t width,
       .viewFormatCount = 0,
       .viewFormats = nullptr};
 
-  texture = Engine::get_module<Graphics>()->device.CreateTexture(&texture_desc);
+  texture =
+      Engine::get_module<Graphics>()->get_device().CreateTexture(&texture_desc);
 
   std::vector<uint8_t> pixels(4 * width * height, 0);
 
@@ -52,7 +53,7 @@ void Material::create_gpu_buffer(uint32_t height, uint32_t width,
       .rowsPerImage = height,
   };
 
-  Engine::get_module<Graphics>()->device.GetQueue().WriteTexture(
+  Engine::get_module<Graphics>()->get_device().GetQueue().WriteTexture(
       &destination, pixels.data(), pixels.size(), &source, &texture_desc.size);
 
   auto texture_view_desc = wgpu::TextureViewDescriptor{
@@ -79,7 +80,8 @@ void Material::create_gpu_buffer(uint32_t height, uint32_t width,
                               .compare = wgpu::CompareFunction::Undefined,
                               .maxAnisotropy = 1};
 
-  sampler = Engine::get_module<Graphics>()->device.CreateSampler(&sampler_decs);
+  sampler =
+      Engine::get_module<Graphics>()->get_device().CreateSampler(&sampler_decs);
 
   wgpu::BufferDescriptor tex_offset_buffer_desc{
       .nextInChain = nullptr,
@@ -118,3 +120,5 @@ void Material::update_texture_sampling() {
   Engine::get_module<Graphics>()->update_buffer(tile_scale_buffer,
                                                 std::vector(1, tile_scale));
 }
+
+wgpu::BindGroup Material::get_bindgroup() { return bindgroup; }

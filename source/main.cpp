@@ -31,22 +31,24 @@ void start() {
   }
 
   wgpu::SupportedLimits supported_limits;
-  Engine::get_module<Graphics>()->device.GetLimits(&supported_limits);
-  Engine::get_module<Graphics>()->limits = supported_limits.limits;
+  Engine::get_module<Graphics>()->get_device().GetLimits(&supported_limits);
+  Engine::get_module<Graphics>()->set_limits(supported_limits.limits);
 
   Engine::get_module<Window>()->initialize_swap_chain(
-      Engine::get_module<Graphics>()->instance,
-      Engine::get_module<Graphics>()->device);
+      Engine::get_module<Graphics>()->get_instance(),
+      Engine::get_module<Graphics>()->get_device());
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
   // game initialize
+  auto e = std::make_shared<Entity>();
+  e->add_component<ScreenSpaceMesh>();
+  e->add_component<ScreenSpaceTransform>();
+  auto mat = e->add_component<Material>();
+  mat->create_gpu_buffer(test_image_height, test_image_width, test_image_data);
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
 }
-
-// pointer to modules
-std::unordered_map<std::string, std::shared_ptr<void>> Engine::modules = {};
 
 int main() {
   // initialize modules

@@ -20,7 +20,7 @@ void ScreenSpacePhysics::update() {
   for (auto body_wptr : body_list) {
     if (std::shared_ptr<RigidBody> body = body_wptr.lock()) {
       auto old_position =
-          body->entity->get_component<ScreenSpaceTransform>()->position;
+          body->get_entity()->get_component<ScreenSpaceTransform>()->position;
 
       // gravity
       // if (old_position.internal_data[1] - body->radius > -1.0f + 0.001f)
@@ -60,11 +60,11 @@ void ScreenSpacePhysics::update() {
       for (const auto circle : body_list) {
         if (circle.lock() == body) break;
         if (std::shared_ptr<RigidBody> other_body = circle.lock()) {
-          const auto pos_diff =
-              (old_position + body->velocity) -
-              (other_body->entity->get_component<ScreenSpaceTransform>()
-                   ->position +
-               other_body->velocity);
+          const auto pos_diff = (old_position + body->velocity) -
+                                (other_body->get_entity()
+                                     ->get_component<ScreenSpaceTransform>()
+                                     ->position +
+                                 other_body->velocity);
 
           if (Math::Length(pos_diff) < (body->radius + other_body->radius)) {
             body->velocity -= body->gravity;
@@ -76,26 +76,31 @@ void ScreenSpacePhysics::update() {
                 -2.0 * Math::Dot(other_body->velocity, -normal) *
                 other_body->velocity * other_body->restitution;
 
-            body->entity->get_component<ScreenSpaceTransform>()->position +=
+            body->get_entity()
+                ->get_component<ScreenSpaceTransform>()
+                ->position +=
                 -Math::GetNormalized(pos_diff) *
                 (body->radius + other_body->radius - Math::Length(pos_diff)) *
                 0.5 * 1.1;
-            other_body->entity->get_component<ScreenSpaceTransform>()
+            other_body->get_entity()
+                ->get_component<ScreenSpaceTransform>()
                 ->position +=
                 Math::GetNormalized(pos_diff) *
                 (body->radius + other_body->radius - Math::Length(pos_diff)) *
                 0.5 * 1.1;
 
-            old_position =
-                body->entity->get_component<ScreenSpaceTransform>()->position;
+            old_position = body->get_entity()
+                               ->get_component<ScreenSpaceTransform>()
+                               ->position;
           }
         }
       }
 
       // update transform
-      body->entity->get_component<ScreenSpaceTransform>()->position +=
+      body->get_entity()->get_component<ScreenSpaceTransform>()->position +=
           body->velocity;
-      auto transform = body->entity->get_component<ScreenSpaceTransform>();
+      auto transform =
+          body->get_entity()->get_component<ScreenSpaceTransform>();
       const auto before_fix_pos = transform->position;
       transform->position.internal_data[0] =
           std::min(1.0f - body->radius, transform->position.internal_data[0]);

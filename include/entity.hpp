@@ -11,21 +11,27 @@ class Component;
 class Entity;
 class Component {
  private:
+  std::shared_ptr<Entity> entity = nullptr;
+
  public:
   Component(){};
-  std::shared_ptr<Entity> entity = nullptr;
+  std::shared_ptr<Entity> get_entity();
+  void set_entity(std::shared_ptr<Entity> e);
   virtual void on_register(){};
 };
 
 class Entity : public std::enable_shared_from_this<Entity> {
+ private:
+  std::unordered_map<std::string, std::shared_ptr<Component>> components{};
+
  public:
-  Entity() { component.clear(); }
-  std::unordered_map<std::string, std::shared_ptr<Component>> component{};
+  Entity();
+  ~Entity();
 
   template <class T>
   std::shared_ptr<T> get_component() {
     auto name = typeid(T).name();
-    auto ptr = component.at(name);
+    auto ptr = components.at(name);
     auto r = std::reinterpret_pointer_cast<T>(ptr);
     return r;
   }
@@ -37,8 +43,8 @@ class Entity : public std::enable_shared_from_this<Entity> {
     std::string str = typeid(T).name();
     std::shared_ptr<Component> casted =
         std::static_pointer_cast<Component>(ptr);
-    component.emplace(str, casted);
-    ptr->entity = shared_from_this();
+    components.emplace(str, casted);
+    ptr->set_entity(shared_from_this());
     ptr->on_register();
     return ptr;
   }

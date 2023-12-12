@@ -78,3 +78,7 @@ void Input::update() {
   }
 #endif
 }
+
+ButtonState Input::get_keyboard_state(Keyboard button) {
+  return state.at(static_cast<int>(button));
+}
