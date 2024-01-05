@@ -22,3 +22,14 @@ class Material : public Component {
   wgpu::BindGroup get_bindgroup();
 };
 }  // namespace ShiftFlamework
+
+EXPORT void* ShiftFlamework_Entity_add_component_ShiftFlamework_Material(
+    void* self);
+
+EXPORT void* ShiftFlamework_Entity_get_component_ShiftFlamework_Material(
+    void* self);
+
+EXPORT void ShiftFlamework_Material_create_gpu_buffer(void* self,
+                                                      const uint32_t height,
+                                                      const uint32_t width,
+                                                      const uint8_t* data);

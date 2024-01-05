@@ -1,9 +1,9 @@
 #pragma once
 
 #include "entity.hpp"
+#include "export_object.hpp"
 #include "graphics.hpp"
 #include "vector.hpp"
-
 namespace ShiftFlamework {
 class ScreenSpaceTransform : public Component {
  private:
@@ -32,3 +32,11 @@ class ScreenSpaceTransform : public Component {
   void set_scale(Math::Vector2f scale);
 };
 }  // namespace ShiftFlamework
+
+EXPORT void*
+ShiftFlamework_Entity_add_component_ShiftFlamework_ScreenSpaceTransform(
+    void* self);
+
+EXPORT void*
+ShiftFlamework_Entity_get_component_ShiftFlamework_ScreenSpaceTransform(
+    void* self);
