@@ -6,21 +6,24 @@
 #include <unordered_map>
 #include <vector>
 
+#include "export_object.hpp"
+
 namespace ShiftFlamework {
 class Component;
 class Entity;
-class Component {
+class Component : public ExportObject {
  private:
   std::shared_ptr<Entity> entity = nullptr;
 
  public:
-  Component(){};
+  Component() : ExportObject(){};
   std::shared_ptr<Entity> get_entity();
   void set_entity(std::shared_ptr<Entity> e);
   virtual void on_register(){};
 };
 
-class Entity : public std::enable_shared_from_this<Entity> {
+class Entity : public std::enable_shared_from_this<Entity>,
+               public ExportObject {
  private:
   std::unordered_map<std::string, std::shared_ptr<Component>> components{};
 
@@ -50,3 +53,7 @@ class Entity : public std::enable_shared_from_this<Entity> {
   }
 };
 }  // namespace ShiftFlamework
+
+EXPORT void* ShiftFlamework_Entity_Constructor();
+
+EXPORT void ShiftFlamework_Entity_Destructor(void* self);

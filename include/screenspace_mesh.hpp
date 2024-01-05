@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "entity.hpp"
+#include "export_object.hpp"
 #include "graphics.hpp"
 #include "screenspace_transform.hpp"
 
@@ -31,3 +32,9 @@ class ScreenSpaceMesh : public Component {
   const wgpu::Buffer get_index_buffer();
 };
 }  // namespace ShiftFlamework
+
+EXPORT void* ShiftFlamework_Entity_get_component_ShiftFlamework_ScreenSpaceMesh(
+    void* self);
+
+EXPORT void* ShiftFlamework_Entity_add_component_ShiftFlamework_ScreenSpaceMesh(
+    void* self);
