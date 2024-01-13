@@ -8,7 +8,6 @@ namespace ShiftFlamework {
 class RigidBody : public Component {
  public:
   RigidBody(float radius, Math::Vector2f velocity);
-  RigidBody() = default;
   float radius;
   float restitution = 0.5;
   float deceleration = 1.0;

@@ -10,7 +10,7 @@
 namespace ShiftFlamework {
 class ScreenSpaceMeshRenderer {
  private:
-  std::vector<std::weak_ptr<ScreenSpaceMesh>> mesh_list{};
+  std::vector<std::shared_ptr<ScreenSpaceMesh>> mesh_list{};
   wgpu::RenderPipeline render_pipeline = nullptr;
   wgpu::Buffer constant_buffer_heap = nullptr;
   wgpu::BindGroup constant_buffer_bind_group = nullptr;

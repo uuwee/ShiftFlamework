@@ -159,9 +159,8 @@ void ScreenSpaceMeshRenderer::initialize() {
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   // update constant
-  for (const auto& mesh_wptr : mesh_list) {
-    if (const auto& transform = mesh_wptr.lock()
-                                    ->get_entity()
+  for (const auto& mesh : mesh_list) {
+    if (const auto& transform = mesh->get_entity()
                                     ->get_component<ScreenSpaceTransform>()) {
       transform->update_gpu_buffer();
     }
@@ -180,8 +179,7 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
   pass.SetPipeline(render_pipeline);
 
-  for (const auto& mesh_wptr : mesh_list) {
-    if (const auto& mesh = mesh_wptr.lock()) {
+  for (const auto& mesh : mesh_list) {
       pass.SetVertexBuffer(
           0, mesh->get_vertex_buffer(), 0,
           mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
@@ -198,7 +196,6 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
           1, mesh->get_entity()->get_component<Material>()->get_bindgroup(), 0,
           nullptr);
       pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
-    }
   }
   pass.End();
   wgpu::CommandBuffer commands = encoder.Finish();
@@ -267,6 +264,7 @@ void ScreenSpaceMeshRenderer::unregister_mesh(
   // if we have id for each component(entity)
   // we can use hash map and finish this operation O(1)
   auto ptr = std::begin(mesh_list);
-  while (ptr->lock() != mesh_component && ptr != std::end(mesh_list)) ptr++;
+  while (ptr->get() != mesh_component.get() && ptr != std::end(mesh_list))
+      ptr++;
   mesh_list.erase(ptr);
 }
