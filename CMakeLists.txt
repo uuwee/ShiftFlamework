@@ -8,6 +8,11 @@ file(GLOB includes include/*.hpp)
 add_executable(game ${sources} ${includes})
 target_include_directories(game PUBLIC include)
 
+file(GLOB runtime_sources runtime/source/*.cpp)
+file(GLOB runtime_includes runtime/include/*.hpp)
+add_library(runtime SHARED ${runtime_sources} ${runtime_includes})
+target_include_directories(runtime PUBLIC runtime/include)
+
 if(EMSCRIPTEN)
     set_target_properties(game PROPERTIES SUFFIX ".html")
     target_link_options(game PRIVATE "-sUSE_WEBGPU=1" "-sUSE_GLFW=3" "-sALLOW_MEMORY_GROWTH")

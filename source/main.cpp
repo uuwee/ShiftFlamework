@@ -1,3 +1,5 @@
+#include <windows.h>
+
 #include <iostream>
 #include <memory>
 #include <queue>
@@ -40,12 +42,12 @@ void start() {
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
   // game initialize
-  // auto e = std::make_shared<Entity>();
-  // e->add_component<ScreenSpaceMesh>();
-  // e->add_component<ScreenSpaceTransform>();
-  // auto mat = e->add_component<Material>();
-  // mat->create_gpu_buffer(test_image_height, test_image_width,
-  // test_image_data);
+  /* auto e = std::make_shared<Entity>();
+   e->add_component<ScreenSpaceMesh>();
+   e->add_component<ScreenSpaceTransform>();
+   auto mat = e->add_component<Material>();
+   mat->create_gpu_buffer(test_image_height, test_image_width,
+   test_image_data);
 
   auto e = std::shared_ptr<Entity>(
       (Entity*)ShiftFlamework_Entity_Constructor(),
@@ -58,7 +60,12 @@ void start() {
           e.get());
 
   ShiftFlamework_Material_create_gpu_buffer(mat, test_image_height,
-                                            test_image_width, test_image_data);
+                                            test_image_width,
+  test_image_data);*/
+
+  auto mod = LoadLibraryA("runtime.dll");
+  auto on_start = (void (*)())GetProcAddress(mod, "on_start");
+  on_start();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);

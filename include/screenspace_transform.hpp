@@ -16,7 +16,6 @@ class ScreenSpaceTransform : public Component {
   wgpu::BindGroup bindgroup = nullptr;
 
  public:
-  ScreenSpaceTransform() : Component() {}
   void create_gpu_buffer();
   void update_gpu_buffer();
   void on_register();

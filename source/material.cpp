@@ -141,5 +141,6 @@ EXPORT void ShiftFlamework_Material_create_gpu_buffer(void* self,
                                                       const uint32_t height,
                                                       const uint32_t width,
                                                       const uint8_t* data) {
+  std::cout << "create gpu buffer" << std::endl;
   ((Material*)self)->create_gpu_buffer(height, width, data);
 }
