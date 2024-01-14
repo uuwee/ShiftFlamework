@@ -70,21 +70,3 @@ void ScreenSpaceTransform::set_scale(Math::Vector2f scale) {
   this->scale = scale;
   update_gpu_buffer();
 }
-
-EXPORT void*
-ShiftFlamework_Entity_add_component_ShiftFlamework_ScreenSpaceTransform(
-    void* self) {
-  auto component =
-      ((ShiftFlamework::Entity*)self)->add_component<ScreenSpaceTransform>();
-  component->add_reference();
-  return component.get();
-}
-
-EXPORT void*
-ShiftFlamework_Entity_get_component_ShiftFlamework_ScreenSpaceTransform(
-    void* self) {
-  auto component =
-      ((ShiftFlamework::Entity*)self)->get_component<ScreenSpaceTransform>();
-  component->add_reference();
-  return component.get();
-}

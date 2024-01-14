@@ -57,22 +57,3 @@ const wgpu::Buffer ScreenSpaceMesh::get_vertex_buffer() {
   return vertex_buffer;
 }
 const wgpu::Buffer ScreenSpaceMesh::get_index_buffer() { return index_buffer; }
-
-EXPORT void* ShiftFlamework_Entity_get_component_ShiftFlamework_ScreenSpaceMesh(
-    void* self) {
-  auto entity = std::shared_ptr<ShiftFlamework::Entity>(
-      (ShiftFlamework::Entity*)self,
-      [&](ShiftFlamework::Entity* ptr) { ptr->remove_reference(); });
-  auto component = entity->add_component<ScreenSpaceMesh>();
-  //auto component = ((ShiftFlamework::Entity*) self)->get_component<ScreenSpaceMesh>();
-
-  component->add_reference();
-  return component.get();
-}
-
-EXPORT void* ShiftFlamework_Entity_add_component_ShiftFlamework_ScreenSpaceMesh(
-    void* self) {
-  auto component = ((ShiftFlamework::Entity*)self)->add_component<ScreenSpaceMesh>();
-  component->add_reference();
-  return component.get();
-}
