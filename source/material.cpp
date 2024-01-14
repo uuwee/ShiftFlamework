@@ -122,25 +122,3 @@ void Material::update_texture_sampling() {
 }
 
 wgpu::BindGroup Material::get_bindgroup() { return bindgroup; }
-
-EXPORT void* ShiftFlamework_Entity_add_component_ShiftFlamework_Material(
-    void* self) {
-  auto component = ((ShiftFlamework::Entity*)self)->add_component<Material>();
-  component->add_reference();
-  return component.get();
-}
-
-EXPORT void* ShiftFlamework_Entity_get_component_ShiftFlamework_Material(
-    void* self) {
-  auto component = ((ShiftFlamework::Entity*)self)->get_component<Material>();
-  component->add_reference();
-  return component.get();
-}
-
-EXPORT void ShiftFlamework_Material_create_gpu_buffer(void* self,
-                                                      const uint32_t height,
-                                                      const uint32_t width,
-                                                      const uint8_t* data) {
-  std::cout << "create gpu buffer" << std::endl;
-  ((Material*)self)->create_gpu_buffer(height, width, data);
-}

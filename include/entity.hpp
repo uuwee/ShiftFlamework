@@ -61,7 +61,3 @@ class Entity : public std::enable_shared_from_this<Entity>,
   }
 };
 }  // namespace ShiftFlamework
-
-EXPORT void* ShiftFlamework_Entity_Constructor();
-
-EXPORT void ShiftFlamework_Entity_Destructor(void* self);

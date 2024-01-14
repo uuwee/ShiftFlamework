@@ -23,7 +23,7 @@ class ScreenSpaceMesh : public Component {
 
  public:
   ScreenSpaceMesh() { std::cout << "ScreenSpaceMesh created" << std::endl; };
-~ScreenSpaceMesh() { std::cout << "ScreenSpaceMesh destroyed" << std::endl; };
+  ~ScreenSpaceMesh() { std::cout << "ScreenSpaceMesh destroyed" << std::endl; };
   void on_register();
   void create_gpu_buffer();
   const std::vector<ScreenSpaceVertex> get_vertices();
@@ -33,9 +33,3 @@ class ScreenSpaceMesh : public Component {
   const wgpu::Buffer get_index_buffer();
 };
 }  // namespace ShiftFlamework
-
-EXPORT void* ShiftFlamework_Entity_get_component_ShiftFlamework_ScreenSpaceMesh(
-    void* self);
-
-EXPORT void* ShiftFlamework_Entity_add_component_ShiftFlamework_ScreenSpaceMesh(
-    void* self);

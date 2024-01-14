@@ -31,11 +31,3 @@ class ScreenSpaceTransform : public Component {
   void set_scale(Math::Vector2f scale);
 };
 }  // namespace ShiftFlamework
-
-EXPORT void*
-ShiftFlamework_Entity_add_component_ShiftFlamework_ScreenSpaceTransform(
-    void* self);
-
-EXPORT void*
-ShiftFlamework_Entity_get_component_ShiftFlamework_ScreenSpaceTransform(
-    void* self);
