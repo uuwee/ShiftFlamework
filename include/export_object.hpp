@@ -8,6 +8,9 @@ class ExportObject {
  private:
   int reference_count = 0;
 
+ protected:
+  virtual ~ExportObject() = default;
+
  public:
   void add_reference();
   void remove_reference();

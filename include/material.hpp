@@ -17,6 +17,7 @@ class Material : public Component {
   Math::Vector2f tile_scale = Math::Vector2f({1, 1});
 
  public:
+  ~Material(){};
   void create_gpu_buffer(uint32_t height, uint32_t width, const uint8_t* data);
   void update_texture_sampling();
   wgpu::BindGroup get_bindgroup();

@@ -21,6 +21,7 @@ class Component : public ExportObject {
   std::shared_ptr<Entity> get_entity();
   void set_entity(std::shared_ptr<Entity> e);
   virtual void on_register(){};
+  virtual void on_unregister(){};
 };
 
 class Entity : public std::enable_shared_from_this<Entity>,
@@ -43,21 +44,16 @@ class Entity : public std::enable_shared_from_this<Entity>,
   template <class T,
             typename = std::enable_if_t<std::is_base_of_v<Component, T>>>
   std::shared_ptr<T> add_component() {
-    auto component = new T();
-    component->add_reference();
-    std::shared_ptr<T> ptr =
-        std::shared_ptr<T>(component, [&](T* ptr) { ptr->remove_reference(); });
+    auto component = std::make_shared<T>();
     std::string str = typeid(T).name();
     std::shared_ptr<Component> casted =
-        std::static_pointer_cast<Component>(ptr);
+        std::static_pointer_cast<Component>(component);
     components.emplace(str, casted);
-    ptr->set_entity(std::shared_ptr<Entity>(this, [&](Entity* ptr) {
-      ptr->remove_reference();
-      std::cout << "remove ref entity" << std::endl;
+    component->set_entity(std::shared_ptr<Entity>(this, [&](Entity* ptr) {
+      std::cout << "add compoennt delegate" << std::endl;   
     }));
-    // ptr->set_entity(weak_from_this().lock());
-    ptr->on_register();
-    return ptr;
+    component->on_register();
+    return component;
   }
 };
 }  // namespace ShiftFlamework
