@@ -14,4 +14,8 @@ ShiftFlamework::Entity::Entity() : ShiftFlamework::ExportObject() {
   components.clear();
 }
 
-ShiftFlamework::Entity::~Entity() { components.clear(); }
+ShiftFlamework::Entity::~Entity() {
+  for (auto& c : components) {
+    c.second->on_unregister();
+  }
+    components.clear(); }

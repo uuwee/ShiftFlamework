@@ -79,6 +79,15 @@ inline void Vector<T, dimension>::set_vector(int i, T n) {
   internal_data.at(i) = n;
 }
 
+template<typename T>
+inline void Vector<T, 2>::set_vector(int i, T n) {
+  if (i == 0) {
+	x = n;
+  } else if (i == 1) {
+	y = n;
+  }
+}
+
 template <typename T>
 inline void Vector<T, 3>::set_vector(int i, T n) {
   if (i == 0) {
@@ -106,6 +115,15 @@ inline void Vector<T, 4>::set_vector(int i, T n) {
 template <typename T, int dimension>
 inline T Vector<T, dimension>::get_vector(int i) const {
   return internal_data.at(i);
+}
+
+template <typename T>
+inline T Vector<T, 2>::get_vector(int i) const {
+  if (i == 0) {
+	return x;
+  } else if (i == 1) {
+	return y;
+  }
 }
 
 template <typename T>
@@ -236,7 +254,7 @@ inline Vector<T, dimension> operator+(const Vector<T, dimension>& lhs,
                                       const Vector<U, dimension>& rhs) {
   auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) + rhs.get_vector(i));
+    v.set_vector(i, v.get_vector(i) + rhs.get_vector(i));
   }
   return v;
 }

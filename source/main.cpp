@@ -13,13 +13,17 @@
 #include "material.hpp"
 #include "screenspace_mesh.hpp"
 #include "screenspace_mesh_renderer.hpp"
+#include "script.hpp"
 #include "test_image.h"
 #include "vector.hpp"
 #include "window.hpp"
 using namespace ShiftFlamework;
 
+std::shared_ptr<Entity> e;
+
 void main_loop() {
   // user script
+  e->get_component<Script>()->update();
 
   Engine::get_module<Input>()->update();
   Engine::get_module<ScreenSpaceMeshRenderer>()->render(
@@ -42,30 +46,12 @@ void start() {
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
   // game initialize
-  /* auto e = std::make_shared<Entity>();
-   e->add_component<ScreenSpaceMesh>();
-   e->add_component<ScreenSpaceTransform>();
-   auto mat = e->add_component<Material>();
-   mat->create_gpu_buffer(test_image_height, test_image_width,
-   test_image_data);
+  // auto mod = LoadLibraryA("runtime.dll");
+  // auto on_start = (void (*)())GetProcAddress(mod, "on_start");
+  // on_start();
 
-  auto e = std::shared_ptr<Entity>(
-      (Entity*)ShiftFlamework_Entity_Constructor(),
-      [&](void* ptr) { ((Entity*)ptr)->remove_reference(); });
-  ShiftFlamework_Entity_add_component_ShiftFlamework_ScreenSpaceMesh(e.get());
-  ShiftFlamework_Entity_add_component_ShiftFlamework_ScreenSpaceTransform(
-      e.get());
-  auto mat =
-      (Material*)ShiftFlamework_Entity_add_component_ShiftFlamework_Material(
-          e.get());
-
-  ShiftFlamework_Material_create_gpu_buffer(mat, test_image_height,
-                                            test_image_width,
-  test_image_data);*/
-
-  auto mod = LoadLibraryA("runtime.dll");
-  auto on_start = (void (*)())GetProcAddress(mod, "on_start");
-  on_start();
+  e = std::make_shared<Entity>();
+  e->add_component<Script>();;
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);

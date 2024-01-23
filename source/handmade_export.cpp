@@ -3,6 +3,7 @@
 #include "material.hpp"
 #include "screenspace_mesh.hpp"
 #include "screenspace_transform.hpp"
+#include "script.hpp"
 
 namespace ShiftFlamework {
 // entity.hpp
@@ -13,7 +14,10 @@ EXPORT void* ShiftFlamework_Entity_Constructor() {
 }
 
 EXPORT void ShiftFlamework_Entity_Destructor(void* self) {
-  ((ShiftFlamework::Entity*)self)->remove_reference();
+  std::cout << "destructor" << std::endl;
+  auto entity = (ShiftFlamework::Entity*)self;
+  entity->remove_reference();
+  //delete entity;
 }
 
 // screenspace_mesh.hpp
@@ -79,5 +83,20 @@ EXPORT void ShiftFlamework_Material_create_gpu_buffer(void* self,
                                                       const uint8_t* data) {
   std::cout << "create gpu buffer" << std::endl;
   ((Material*)self)->create_gpu_buffer(height, width, data);
+}
+
+// script.hpp
+EXPORT void* ShiftFlamework_Entity_add_component_ShiftFlamework_Script(
+    void* self) {
+  auto component = ((ShiftFlamework::Entity*)self)->add_component<Script>();
+  component->add_reference();
+  return component.get();
+}
+
+EXPORT void* ShiftFlamework_Entity_get_component_ShiftFlamework_Script(
+    void* self) {
+  auto component = ((ShiftFlamework::Entity*)self)->get_component<Script>();
+  component->add_reference();
+  return component.get();
 }
 }  // namespace ShiftFlamework
