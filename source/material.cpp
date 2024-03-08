@@ -121,4 +121,16 @@ void Material::update_texture_sampling() {
                                                 std::vector(1, tile_scale));
 }
 
+void Material::on_unregister() { 
+    if (texture != nullptr) {
+	texture.Destroy();
+  }
+    if (tex_offset_buffer != nullptr) {
+	tex_offset_buffer.Destroy();
+  }
+    if (tile_scale_buffer != nullptr) {
+	tile_scale_buffer.Destroy();
+  }
+}
+
 wgpu::BindGroup Material::get_bindgroup() { return bindgroup; }

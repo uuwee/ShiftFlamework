@@ -21,5 +21,6 @@ class Material : public Component {
   void create_gpu_buffer(uint32_t height, uint32_t width, const uint8_t* data);
   void update_texture_sampling();
   wgpu::BindGroup get_bindgroup();
+  void on_unregister();
 };
 }  // namespace ShiftFlamework

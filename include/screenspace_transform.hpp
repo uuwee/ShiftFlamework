@@ -20,6 +20,7 @@ class ScreenSpaceTransform : public Component {
   void create_gpu_buffer();
   void update_gpu_buffer();
   void on_register();
+  void on_unregister();
 
   const Math::Vector2f get_position();
   const float get_angle();

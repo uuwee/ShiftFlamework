@@ -108,20 +108,22 @@ std::shared_ptr<Material> Entity::add_component() {
   return ptr;
 };
 
-std::shared_ptr<Entity> create_entity() {
-  auto lib = LoadLibraryA("game.dll");
-  auto constructor =
-      (Entity * (*)()) GetProcAddress(lib, "ShiftFlamework_Entity_Constructor");
-  auto ptr = constructor();
-  auto e = std::shared_ptr<Entity>(
-      ptr, [&](Entity* ptr) { std::cout << "DESTRUCTION" << std::endl; });
-  return e;
-}
-
 void destroy_entity(std::shared_ptr<Entity> self) {
   auto lib = LoadLibraryA("game.dll");
   auto destructor =
       (void (*)(void*))GetProcAddress(lib, "ShiftFlamework_Entity_Destructor");
   destructor(self.get());
+}
+
+std::shared_ptr<Entity> create_entity() {
+  auto lib = LoadLibraryA("game.dll");
+  auto constructor =
+      (Entity * (*)()) GetProcAddress(lib, "ShiftFlamework_Entity_Constructor");
+  auto ptr = constructor();
+  auto e = std::shared_ptr<Entity>(ptr, [&](Entity* ptr) {
+    // we don't have to call restractor here
+    // because entity should be removed from scene when it explicitly destroyed
+  });
+  return e;
 }
 }  // namespace ShiftFlamework
