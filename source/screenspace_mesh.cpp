@@ -23,6 +23,15 @@ void ScreenSpaceMesh::on_register() {
       get_entity()->get_component<ScreenSpaceMesh>());
 }
 
+void ScreenSpaceMesh::on_unregister() {
+    Engine::get_module<ScreenSpaceMeshRenderer>()->unregister_mesh(
+	  get_entity()->get_component<ScreenSpaceMesh>());
+    if (vertex_buffer != nullptr) {
+      vertex_buffer.Destroy();
+      index_buffer.Destroy();
+	}
+}
+
 void ScreenSpaceMesh::create_gpu_buffer() {
   {
     const wgpu::BufferDescriptor buffer_desc{

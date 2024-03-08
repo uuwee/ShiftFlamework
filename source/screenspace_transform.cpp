@@ -44,6 +44,13 @@ void ScreenSpaceTransform::on_register() {
   create_gpu_buffer();
   update_gpu_buffer();
 }
+
+void ScreenSpaceTransform::on_unregister() {
+    if (constant_buffer != nullptr) {
+	constant_buffer.Destroy();
+  }
+}
+
 const wgpu::Buffer ScreenSpaceTransform::get_constant_buffer() {
   return constant_buffer;
 }

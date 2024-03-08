@@ -15,6 +15,7 @@ EXPORT void* ShiftFlamework_Entity_Constructor() {
 
 EXPORT void ShiftFlamework_Entity_Destructor(void* self) {
   std::cout << "destructor" << std::endl;
+  std::cout << "self: " << self << std::endl;
   auto entity = (ShiftFlamework::Entity*)self;
   entity->remove_reference();
   //delete entity;
