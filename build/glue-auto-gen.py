@@ -89,6 +89,65 @@ def enumerate_all_export_classes(headers: list[str]):
     return export_objects
     pass
 
+def generate_glue_code(class_tree):
+    name, tree = class_tree
+    print("generate code for", name)
+    # print(json.dumps(tree, indent=4))
+
+    perfect_class_name = ""
+    for namespace in tree["namespace"]:
+        perfect_class_name += namespace + "_"
+    perfect_class_name += name
+
+    code = ""
+    # constructor
+    # EXPORT void* ShiftFlamework_ExampleClass_Construcotor() {
+    #     auto ptr = new ShiftFlamework::ExampleClass();
+    #     ptr->add_reference();
+    #     return ptr;
+    # }
+    code += f"EXPORT void* {perfect_class_name}_Constructor() {{\n"
+    code += f"    auto ptr = new {perfect_class_name}();\n"
+    code += f"    ptr->add_reference();\n"
+    code += f"    return ptr;\n"
+    code += "}\n\n"
+
+    # destructor
+    # EXPORT void ShiftFlamework_ExampleClass_Destructor(void* self) {
+    #     auto obj = (ShiftFlamework::ExampleClass*)self;
+    #     obj->remove_reference();
+    # }
+    code += f"EXPORT void {perfect_class_name}_Destructor(void* self) {{\n"
+    code += f"    auto obj = ({perfect_class_name}*)self;\n"
+    code += f"    obj->remove_reference();\n"
+    code += "}\n\n"
+
+    # methods
+    for method_name, method in tree["methods"].items():
+        # public only
+        if method["access_specifier"] != "PUBLIC":
+            continue
+        # EXPORT void ShiftFlamework_ExampleClass_Method(void* self, const int a, const int b) {
+        #     auto obj = (ShiftFlamework::ExampleClass*)self;
+        #     obj->method(a, b);
+        # }
+        code += f"EXPORT {method['return_type']} {perfect_class_name}_{method_name}(void* self"
+        for param_name, param_type in method["parameters"].items():
+            code += f", {param_type} {param_name}"
+        code += ") {{\n"
+        code += f"    auto obj = ({perfect_class_name}*)self;\n"
+        code += f"    obj->{method_name}("
+        if len(method["parameters"]) > 0:
+            code += f"{', '.join([param_name for param_name in method['parameters']])}"
+        code += ");\n"
+        code += "}\n\n"
+
+
+        pass
+
+    # properties
+    print(code)
+
 if __name__ == '__main__':
     print("Running glue-auto-gen.py")
 
@@ -105,6 +164,7 @@ if __name__ == '__main__':
 
     print("Enumerating all definitions")
     export_classes = enumerate_all_export_classes(headers)
-    print(json.dumps(export_classes, indent=4))
 
     print("Generating glue code")
+    for k, v in export_classes.items():
+        generate_glue_code((k, v))
