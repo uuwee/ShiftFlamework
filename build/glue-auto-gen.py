@@ -34,6 +34,13 @@ def get_class_tree(input_filenames):
                 for method in cursor.get_children():
                     if not method.kind == CursorKind.CXX_METHOD:
                         continue
+
+                    #skip methods use template
+                    children = list(method.get_children())
+                    for child in children:
+                        if child.kind == CursorKind.TEMPLATE_REF:
+                            continue
+
                     classes[cursor.spelling]["methods"][method.spelling] = {
                         "return_type": method.result_type.spelling,
                         "parameters": {},
