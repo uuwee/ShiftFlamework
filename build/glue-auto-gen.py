@@ -54,21 +54,57 @@ def get_class_tree(input_filenames):
             search_namespace(cursor)
     return classes, typealiases
 
-def main():
+def get_base_classes(target, classes: dict):
+    if target not in classes:
+        return []
+    
+    base_classes = classes[target]["base_classes"]
+    for base in base_classes:
+        base_classes += get_base_classes(base, classes)
+
+    return base_classes
+
+def enumerate_all_headers():
+    headers = []
+    for root, dirs, files in os.walk("include"):
+        for file in files:
+            if file.endswith(".hpp"):
+                headers.append(os.path.join(root, file))
+
+    return headers
+
+def enumerate_all_export_classes(headers: list[str]):
+    classes = {}
+    structs = {}
+    type_aliases = {}
+
     index = Index.create()
-    translation_unit = index.parse("./include/screenspace_mesh.hpp", args=["-x", "c++", "-std=c++20"])
+    classes, type_aliases = get_class_tree(headers)
 
-    classes, type_aliases = get_class_tree(["./include/screenspace_mesh.hpp"])
-    print(json.dumps(classes, indent=4))
+    export_objects = {}
+    for k, v in classes.items():
+        if "ExportObject" in get_base_classes(k, classes):
+            export_objects[k] = v
 
+    return export_objects
     pass
 
 if __name__ == '__main__':
     print("Running glue-auto-gen.py")
 
+    # configure clang path
     parser = argparse.ArgumentParser()
     parser.add_argument("--clang-path", type=str , help="Path to clang", required=True)
     args = parser.parse_args()
 
     clang.cindex.Config.set_library_path(args.clang_path)
-    main()
+
+    print("Enumerating all headers")
+    headers = enumerate_all_headers()
+    print("Found headers: ", headers)
+
+    print("Enumerating all definitions")
+    export_classes = enumerate_all_export_classes(headers)
+    print(json.dumps(export_classes, indent=4))
+
+    print("Generating glue code")
