@@ -7,8 +7,8 @@ import argparse
 def get_class_tree(input_filenames):
     classes = {}
     typealiases = {}
+    index = Index.create()
     for input_file in input_filenames:
-        index = Index.create()
         translation_unit = index.parse(input_file, args=['-x', 'c++'])
 
         namespace = []
@@ -31,15 +31,20 @@ def get_class_tree(input_filenames):
                     "constructors": [method.spelling for method in cursor.get_children() if method.kind == CursorKind.CONSTRUCTOR],
                     "destructor": [method.spelling for method in cursor.get_children() if method.kind == CursorKind.DESTRUCTOR],
                 }
+
                 for method in cursor.get_children():
                     if not method.kind == CursorKind.CXX_METHOD:
                         continue
+                    
+                    # skip template methods for now
+                    if method.get_num_template_arguments() > 0:
+                        continue
 
-                    #skip methods use template
-                    children = list(method.get_children())
-                    for child in children:
-                        if child.kind == CursorKind.TEMPLATE_REF:
-                            continue
+                    print("\n" + method.spelling
+                          , method.result_type.spelling
+                          , method.result_type.kind
+                          , method.result_type.get_declaration().kind
+                          , method.result_type.get_declaration().spelling)
 
                     classes[cursor.spelling]["methods"][method.spelling] = {
                         "return_type": method.result_type.spelling,
@@ -50,6 +55,18 @@ def get_class_tree(input_filenames):
                     for c in method.get_children():
                         if c.kind == CursorKind.PARM_DECL:
                             classes[cursor.spelling]["methods"][method.spelling]["parameters"][c.spelling] = c.type.spelling
+                            print(method.spelling,
+                                  c.spelling,
+                                  c.type.spelling,
+                                  c.type.kind,
+                                  c.type.get_declaration().kind,
+                            )
+                            if c.type.get_declaration().kind == CursorKind.TYPE_ALIAS_DECL:
+                                print(c.type.get_declaration().spelling)
+                                for cc in c.type.get_declaration().get_children():
+                                    print(cc.spelling, cc.kind)
+                                    if cc.kind == CursorKind.TYPE_REF:
+                                        print(cc.get_definition().spelling)
 
                 for property in cursor.get_children():
                     if not property.kind == CursorKind.FIELD_DECL:
@@ -66,6 +83,7 @@ def get_class_tree(input_filenames):
                     "namespace": namespace.copy(),
                     "type": cursor.underlying_typedef_type.spelling,
                 }
+        
         for cursor in translation_unit.cursor.get_children():
             search_namespace(cursor)
     return classes, typealiases
@@ -107,7 +125,7 @@ def enumerate_all_export_classes(headers: list[str]):
 
 def generate_glue_code(class_tree):
     name, tree = class_tree
-    print("generate code for", name)
+    # print("generate code for", name)
     # print(json.dumps(tree, indent=4))
 
     perfect_class_name = ""
@@ -120,8 +138,11 @@ def generate_glue_code(class_tree):
         cpp_perfect_class_name += namespace + "::"
     cpp_perfect_class_name += name
 
+    # print(tree["namespace"])
+    # print(perfect_class_name)
+
     code = ""
-    # constructor
+    # CONSTRUCTOR
     # EXPORT void* ShiftFlamework_ExampleClass_Construcotor() {
     #     auto ptr = new ShiftFlamework::ExampleClass();
     #     ptr->add_reference();
@@ -133,7 +154,7 @@ def generate_glue_code(class_tree):
     code += f"    return ptr;\n"
     code += "}\n\n"
 
-    # destructor
+    # DESTRUCTOR
     # EXPORT void ShiftFlamework_ExampleClass_Destructor(void* self) {
     #     auto obj = (ShiftFlamework::ExampleClass*)self;
     #     obj->remove_reference();
@@ -143,7 +164,7 @@ def generate_glue_code(class_tree):
     code += f"    obj->remove_reference();\n"
     code += "}\n\n"
 
-    # methods
+    # METHODS
     for method_name, method in tree["methods"].items():
         # public only
         if method["access_specifier"] != "PUBLIC":
@@ -164,7 +185,7 @@ def generate_glue_code(class_tree):
         code += "}\n\n"
         pass
 
-    # properties
+    # PROPERTIES
     for property_name, property in tree["properties"].items():
         # public only
         if property["access_specifier"] != "PUBLIC":
