@@ -4,6 +4,7 @@ import clang
 import json
 import argparse
 
+
 def get_translation_units(input_filenames):
     index = Index.create()
     translation_units = []
@@ -13,15 +14,17 @@ def get_translation_units(input_filenames):
 
     return translation_units
 
+
 def get_base_classes(target, classes: dict):
     if target not in classes:
         return []
-    
+
     base_classes = classes[target]["base_classes"]
     for base in base_classes:
         base_classes += get_base_classes(base, classes)
 
     return base_classes
+
 
 def enumerate_all_headers():
     headers = []
@@ -32,10 +35,46 @@ def enumerate_all_headers():
 
     return headers
 
+
 def enumerate_all_export_classes(headers: list[str]):
     units = get_translation_units(headers)
+    export_classes = {}
+
     for unit in units:
-        
+        for cursor in unit.cursor.walk_preorder():
+
+            def deriving_from_export_object(cls):
+                for child in cls.get_children():
+                    if child.kind == CursorKind.CXX_BASE_SPECIFIER:
+                        base = child.get_definition()
+                        if base.spelling == "ExportObject" or base in export_classes:
+                            cls_def = cls
+                            print("Found export class: ", cls_def.spelling,
+                                  cls_def.location.file.name, cls_def.location.line)
+                            export_classes[(
+                                cls_def.location.file.name, cls_def.location.line)] = cls_def
+                            return True
+                        else:
+                            if deriving_from_export_object(child):
+                                cls_def = cls
+                                print("Found export class: ", cls_def.spelling,
+                                      cls_def.location.file.name, cls_def.location.line)
+                                export_classes[(
+                                    cls_def.location.file.name, cls_def.location.line)] = cls_def
+                                return True
+                            else:
+                                return False
+
+                return False
+
+            if cursor.kind == CursorKind.CLASS_DECL:
+                cls = cursor
+                # print("Found class: ", cursor.spelling)
+                deriving_from_export_object(cls)
+
+    print("Export classes: ", export_classes)
+    print("Export classes: ", [
+          v.spelling for v in export_classes.values()])
 
 
 if __name__ == '__main__':
@@ -43,8 +82,10 @@ if __name__ == '__main__':
 
     # configure clang path
     parser = argparse.ArgumentParser()
-    parser.add_argument("--clang-path", type=str , help="Path to clang", required=True)
-    parser.add_argument("--output", type=str , help="Output file", required=True)
+    parser.add_argument("--clang-path", type=os.path.abspath,
+                        help="Path to directory where libclang.dll exists", required=True)
+    parser.add_argument("--output", type=os.path.abspath,
+                        help="Output file", required=True)
     args = parser.parse_args()
 
     clang.cindex.Config.set_library_path(args.clang_path)
