@@ -43,24 +43,33 @@ def enumerate_all_export_classes(headers: list[str]):
     for unit in units:
         for cursor in unit.cursor.walk_preorder():
 
+            def fully_qualified(c):
+                if c is None:
+                    return ''
+                elif c.kind == CursorKind.TRANSLATION_UNIT:
+                    return ''
+                else:
+                    res = fully_qualified(c.semantic_parent)
+                    if res != '':
+                        return res + '::' + c.spelling
+                return c.spelling
+            
             def deriving_from_export_object(cls):
                 for child in cls.get_children():
                     if child.kind == CursorKind.CXX_BASE_SPECIFIER:
                         base = child.get_definition()
-                        if base.spelling == "ExportObject" or base in export_classes:
+                        if (base.spelling == "ExportObject") or (base in export_classes):
                             cls_def = cls
                             print("Found export class: ", cls_def.spelling,
                                   cls_def.location.file.name, cls_def.location.line)
-                            export_classes[(
-                                cls_def.location.file.name, cls_def.location.line)] = cls_def
+                            export_classes[fully_qualified(cls_def)] = cls_def
                             return True
                         else:
-                            if deriving_from_export_object(child):
+                            if deriving_from_export_object(base):
                                 cls_def = cls
                                 print("Found export class: ", cls_def.spelling,
                                       cls_def.location.file.name, cls_def.location.line)
-                                export_classes[(
-                                    cls_def.location.file.name, cls_def.location.line)] = cls_def
+                                export_classes[fully_qualified(cls_def)] = cls_def
                                 return True
                             else:
                                 return False
@@ -72,7 +81,6 @@ def enumerate_all_export_classes(headers: list[str]):
                 # print("Found class: ", cursor.spelling)
                 deriving_from_export_object(cls)
 
-    print("Export classes: ", export_classes)
     print("Export classes: ", [
           v.spelling for v in export_classes.values()])
 
