@@ -121,5 +121,6 @@
                 "propagate_const": "cpp",
                 "*.ipp": "cpp",
                 "latch": "cpp"
-        }
+        },
+        "cmake.configureOnOpen": false
 }

@@ -22,8 +22,8 @@ class ScreenSpaceMesh : public Component {
   wgpu::Buffer index_buffer = nullptr;
 
  public:
-  ScreenSpaceMesh() { std::cout << "ScreenSpaceMesh created" << std::endl; };
-  ~ScreenSpaceMesh() { std::cout << "ScreenSpaceMesh destroyed" << std::endl; };
+  ScreenSpaceMesh(){};
+  ~ScreenSpaceMesh(){};
   void on_register();
   void on_unregister();
   void create_gpu_buffer();

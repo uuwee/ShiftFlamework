@@ -5,9 +5,9 @@
 namespace ShiftFlamework {
 class Script : public Component {
  private:
- public:
   void on_register();
   void on_unregister();
+ public:
   void update();
 };
 }  // namespace ShiftFlamework
