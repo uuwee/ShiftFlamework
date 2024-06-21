@@ -14,23 +14,16 @@ def get_translation_units(input_filenames):
 
     return translation_units
 
-
-def get_base_classes(target, classes: dict):
-    if target not in classes:
-        return []
-
-    base_classes = classes[target]["base_classes"]
-    for base in base_classes:
-        base_classes += get_base_classes(base, classes)
-
-    return base_classes
-
-
 def enumerate_all_headers():
     headers = []
     for root, dirs, files in os.walk("include"):
         for file in files:
             if file.endswith(".hpp"):
+                headers.append(os.path.join(root, file))
+
+    for root, dirs, files in os.walk(os.path.join("out", "win", "lib", "dawn", "gen", "include", "dawn")):
+        for file in files:
+            if file.endswith(".h"):
                 headers.append(os.path.join(root, file))
 
     return headers
@@ -55,26 +48,25 @@ def enumerate_all_export_classes(headers: list[str]):
                 return c.spelling
             
             def deriving_from_export_object(cls):
+                derived_from_export_object = False
                 for child in cls.get_children():
                     if child.kind == CursorKind.CXX_BASE_SPECIFIER:
                         base = child.get_definition()
                         if (base.spelling == "ExportObject") or (base in export_classes):
                             cls_def = cls
-                            print("Found export class: ", cls_def.spelling,
-                                  cls_def.location.file.name, cls_def.location.line)
+                            # print("Found export class: ", cls_def.spelling,
+                            #       cls_def.location.file.name, cls_def.location.line)
                             export_classes[fully_qualified(cls_def)] = cls_def
-                            return True
+                            derived_from_export_object = True
                         else:
                             if deriving_from_export_object(base):
                                 cls_def = cls
-                                print("Found export class: ", cls_def.spelling,
-                                      cls_def.location.file.name, cls_def.location.line)
+                                # print("Found export class: ", cls_def.spelling,
+                                #       cls_def.location.file.name, cls_def.location.line)
                                 export_classes[fully_qualified(cls_def)] = cls_def
-                                return True
-                            else:
-                                return False
+                                derived_from_export_object = True
 
-                return False
+                return derived_from_export_object
 
             if cursor.kind == CursorKind.CLASS_DECL:
                 cls = cursor
@@ -83,6 +75,7 @@ def enumerate_all_export_classes(headers: list[str]):
 
     print("Export classes: ", [
           v.spelling for v in export_classes.values()])
+    return export_classes
 
 
 if __name__ == '__main__':
@@ -113,7 +106,62 @@ if __name__ == '__main__':
         code += f"#include \"{headers}\"\n"
 
     for k, v in export_classes.items():
-        code += generate_glue_code((k, v))
+        print("Generating glue code for: ", k)
+        
+        for child in v.get_children():
+            if child.access_specifier == clang.cindex.AccessSpecifier.PUBLIC:
+                # print(child.spelling, child.kind)
+                
+                if child.kind == CursorKind.CONSTRUCTOR:
+                    constructor = f"""
+EXPORT void* {k.replace('::', '_')}_Constructor() {{
+    auto ptr = new {k}();
+    ptr->add_reference();
+    return ptr;
+}}
+                    """
+                    # print(constructor)
+                    code += constructor
+                
+                if child.kind == CursorKind.DESTRUCTOR:
+                    destructor = f"""
+EXPORT void {k.replace('::', '_')}_Destructor(void* self) {{
+    auto obj = static_cast<{k}*>(self);
+    obj->remove_reference();
+}}
+                    """
+                    # print(destructor)
+                    code += destructor
+
+                if child.kind == CursorKind.CXX_METHOD:
+                    # for token in child.get_tokens():
+                    #     print(token.spelling, token.kind)
+                    print(child.spelling, child.result_type.get_canonical().spelling, child.result_type.get_canonical().get_declaration().spelling)
+                    argments = []
+                    argments.append((k, "self"))
+                    for arg in child.get_arguments():
+                        # print(arg.type.spelling, arg.spelling)
+                        argments.append((arg.type.get_canonical().spelling, arg.spelling))
+                        # print(argments[-1][0], argments[-1][1])
+                    
+                    method = f"""
+EXPORT {child.result_type.get_canonical().spelling} {k.replace('::', '_')}_{child.spelling}(void* self"""
+                    for arg in argments[1:]:
+                        method += f", {arg[0]} {arg[1]}"
+                    method += """) {"""
+                    method += f"""
+    auto obj = static_cast<{k}*>(self);
+    return obj->{child.spelling}("""
+                    for arg in argments[1:]:
+                        method += arg[1]
+                        if arg != argments[-1]:
+                            method += ", "
+                    method += """);
+}
+                    """
+                    # print(method)
+                    code += method
+        print("\n")
 
     # write to file
     with open(args.output, "w") as f:
