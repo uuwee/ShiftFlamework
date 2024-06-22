@@ -48,6 +48,7 @@ std::shared_ptr<ShiftFlamework::ScreenSpaceMesh>
 ShiftFlamework::ScreenSpaceMeshStore::create(EntityID id) {
   auto instance = std::make_shared<ScreenSpaceMesh>();
   instances.insert_or_assign(id, instance);
+  instance->entity_id = id;
 
   instance->vertices = {
       ScreenSpaceVertex{.position = Math::Vector2f({-0.5, -0.5}),
@@ -62,7 +63,7 @@ ShiftFlamework::ScreenSpaceMeshStore::create(EntityID id) {
 
   instance->indices = {0, 1, 2, 0, 2, 3};
   ShiftFlamework::Engine::get_module<ShiftFlamework::ScreenSpaceMeshRenderer>()
-      ->register_mesh(instance->get_entity()->get_component<ScreenSpaceMesh>());
+      ->register_mesh(instance);
   return instance;
 }
 
@@ -77,7 +78,7 @@ void ShiftFlamework::ScreenSpaceMeshStore::remove(EntityID id) {
   removed->vertices.clear();
 
   ShiftFlamework::Engine::get_module<ShiftFlamework::ScreenSpaceMeshRenderer>()
-      ->unregister_mesh(
-          removed->get_entity()->get_component<ScreenSpaceMesh>());
+      ->unregister_mesh(Engine::get_module<EntityStore>()
+                            ->get(id)->get_component<ScreenSpaceMesh>());
   instances.erase(id);
 }

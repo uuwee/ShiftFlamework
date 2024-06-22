@@ -1,13 +1,9 @@
 #include "entity.hpp"
+#include "engine.hpp"
 
-std::shared_ptr<ShiftFlamework::Entity>
-ShiftFlamework::Component::get_entity() {
-  return entity;
-}
-
-void ShiftFlamework::Component::set_entity(
-    std::shared_ptr<ShiftFlamework::Entity> e) {
-  entity = e;
+std::shared_ptr<ShiftFlamework::Entity> ShiftFlamework::Component::get_entity() {
+  return ShiftFlamework::Engine::get_module<ShiftFlamework::EntityStore>()->get(
+      entity_id);
 }
 
 ShiftFlamework::Entity::Entity() : ShiftFlamework::ExportObject() {

@@ -16,13 +16,11 @@ using EntityID = unsigned int;
 
 class Component : public ExportObject {
  private:
-  std::shared_ptr<Entity> entity = nullptr;
-  void set_entity(std::shared_ptr<Entity> e);
-  friend class Entity;
 
  public:
   Component() : ExportObject(){};
   ~Component(){};
+  EntityID entity_id = 0;
   std::shared_ptr<Entity> get_entity();
 };
 
@@ -54,9 +52,6 @@ class Entity : public std::enable_shared_from_this<Entity>,
     std::shared_ptr<Component> casted =
         std::static_pointer_cast<Component>(component);
     components.emplace(str, casted);
-    component->set_entity(std::shared_ptr<Entity>(this, [&](Entity* ptr) {
-      std::cout << "add compoennt delegate" << std::endl;
-    }));
     return component;
   }
 };

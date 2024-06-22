@@ -26,9 +26,6 @@ class ScreenSpaceMesh : public Component {
   ScreenSpaceMesh(){};
   ~ScreenSpaceMesh(){};
 
-  void on_register();
-  void on_unregister();
-  void create_gpu_buffer();
   const std::vector<ScreenSpaceVertex> get_vertices();
   const std::vector<uint32_t> get_indices();
 };

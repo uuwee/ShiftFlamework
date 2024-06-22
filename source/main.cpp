@@ -46,7 +46,8 @@ void start() {
       Engine::get_module<Graphics>()->get_device());
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
-  e = std::make_shared<Entity>();
+  //e = std::make_shared<Entity>();
+  e = Engine::get_module<EntityStore>()->create();
   e->add_component<Script>();
 
   // start main loop

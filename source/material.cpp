@@ -17,12 +17,13 @@ std::shared_ptr<MaterialStore> Material::get_store() {
 void Material::create_gpu_buffer(uint32_t height, uint32_t width,
                                  const uint8_t* data) {
   Engine::get_module<ScreenSpaceMeshRenderer>()->create_material_buffer(
-      get_entity()->get_id(), height, width, data);
+      Engine::get_module<EntityStore>()->get(entity_id)->get_id(), height, width, data);
 }
 
 std::shared_ptr<ShiftFlamework::Material> ShiftFlamework::MaterialStore::create(
     EntityID id) {
   auto instance = std::make_shared<Material>();
+  instance->entity_id = id;
   instances.insert_or_assign(id, instance);
   return instance;
 }
