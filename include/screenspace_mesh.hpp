@@ -20,10 +20,21 @@ class ScreenSpaceMesh : public Component {
   std::vector<uint32_t> indices;
   wgpu::Buffer vertex_buffer = nullptr;
   wgpu::Buffer index_buffer = nullptr;
-
- public:
   ScreenSpaceMesh(){};
   ~ScreenSpaceMesh(){};
+
+  static std::unordered_map<EntityID, std::shared_ptr<ScreenSpaceMesh>>
+      instances;
+
+ public:
+  static void initialize() {
+    instances = {};
+    instances.clear();
+  }
+  static std::shared_ptr<ScreenSpaceMesh> create(EntityID id);
+  static std::shared_ptr<ScreenSpaceMesh> get(EntityID id);
+  static void remove(EntityID id);
+
   void on_register();
   void on_unregister();
   void create_gpu_buffer();

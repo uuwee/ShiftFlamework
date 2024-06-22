@@ -21,3 +21,13 @@ void Script::on_unregister() {
   auto on_end = (void (*)())GetProcAddress(lib, "on_end");
   on_end();
 }
+
+std::shared_ptr<Script> Script::create(EntityID id) {
+  auto script = std::make_shared<Script>();
+  instances.insert_or_assign(id, script);
+  return script;
+}
+
+std::shared_ptr<Script> Script::get(EntityID id) { return instances[id]; }
+
+void Script::remove(EntityID id) { instances.erase(id); }

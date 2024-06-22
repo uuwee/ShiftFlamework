@@ -24,12 +24,12 @@ void ScreenSpaceMesh::on_register() {
 }
 
 void ScreenSpaceMesh::on_unregister() {
-    Engine::get_module<ScreenSpaceMeshRenderer>()->unregister_mesh(
-	  get_entity()->get_component<ScreenSpaceMesh>());
-    if (vertex_buffer != nullptr) {
-      vertex_buffer.Destroy();
-      index_buffer.Destroy();
-	}
+  Engine::get_module<ScreenSpaceMeshRenderer>()->unregister_mesh(
+      get_entity()->get_component<ScreenSpaceMesh>());
+  if (vertex_buffer != nullptr) {
+    vertex_buffer.Destroy();
+    index_buffer.Destroy();
+  }
 }
 
 void ScreenSpaceMesh::create_gpu_buffer() {
@@ -66,3 +66,15 @@ const wgpu::Buffer ScreenSpaceMesh::get_vertex_buffer() {
   return vertex_buffer;
 }
 const wgpu::Buffer ScreenSpaceMesh::get_index_buffer() { return index_buffer; }
+
+std::shared_ptr<ScreenSpaceMesh> ScreenSpaceMesh::create(EntityID id) {
+  auto mesh = std::make_shared<ScreenSpaceMesh>();
+  instances.emplace(id, mesh);
+  return mesh;
+}
+
+std::shared_ptr<ScreenSpaceMesh> ScreenSpaceMesh::get(EntityID id) {
+  return instances.at(id);
+}
+
+void ScreenSpaceMesh::remove(EntityID id) { instances.erase(id); }

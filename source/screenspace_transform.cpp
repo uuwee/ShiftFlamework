@@ -46,8 +46,8 @@ void ScreenSpaceTransform::on_register() {
 }
 
 void ScreenSpaceTransform::on_unregister() {
-    if (constant_buffer != nullptr) {
-	constant_buffer.Destroy();
+  if (constant_buffer != nullptr) {
+    constant_buffer.Destroy();
   }
 }
 
@@ -77,3 +77,19 @@ void ScreenSpaceTransform::set_scale(Math::Vector2f scale) {
   this->scale = scale;
   update_gpu_buffer();
 }
+
+std::unordered_map<EntityID, std::shared_ptr<ScreenSpaceTransform>>
+    ScreenSpaceTransform::instances;
+
+std::shared_ptr<ScreenSpaceTransform> ScreenSpaceTransform::create(
+    EntityID id) {
+  auto instance = std::make_shared<ScreenSpaceTransform>();
+  instances.insert_or_assign(id, instance);
+  return instance;
+}
+
+std::shared_ptr<ScreenSpaceTransform> ScreenSpaceTransform::get(EntityID id) {
+  return instances[id];
+}
+
+void ScreenSpaceTransform::remove(EntityID id) { instances.erase(id); }

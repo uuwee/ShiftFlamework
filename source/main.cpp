@@ -51,13 +51,20 @@ void start() {
   // on_start();
 
   e = std::make_shared<Entity>();
-  e->add_component<Script>();;
+  e->add_component<Script>();
+  ;
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
 }
 
 int main() {
+  // initialize component store
+  Script::initialize();
+  ScreenSpaceMesh::initialize();
+  ScreenSpaceTransform::initialize();
+  Material::initialize();
+
   // initialize modules
   Engine::add_module<Graphics>();
   Engine::add_module<Input>();

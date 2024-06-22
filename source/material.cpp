@@ -121,16 +121,28 @@ void Material::update_texture_sampling() {
                                                 std::vector(1, tile_scale));
 }
 
-void Material::on_unregister() { 
-    if (texture != nullptr) {
-	texture.Destroy();
+void Material::on_unregister() {
+  if (texture != nullptr) {
+    texture.Destroy();
   }
-    if (tex_offset_buffer != nullptr) {
-	tex_offset_buffer.Destroy();
+  if (tex_offset_buffer != nullptr) {
+    tex_offset_buffer.Destroy();
   }
-    if (tile_scale_buffer != nullptr) {
-	tile_scale_buffer.Destroy();
+  if (tile_scale_buffer != nullptr) {
+    tile_scale_buffer.Destroy();
   }
 }
 
 wgpu::BindGroup Material::get_bindgroup() { return bindgroup; }
+
+std::shared_ptr<Material> Material::create(EntityID id) {
+  auto material = std::make_shared<Material>();
+  instances.insert_or_assign(id, material);
+  return material;
+}
+
+std::shared_ptr<Material> Material::get(EntityID id) {
+  return instances.at(id);
+}
+
+void Material::remove(EntityID id) { instances.erase(id); }
