@@ -5,7 +5,6 @@
 #include "vector.hpp"
 
 namespace ShiftFlamework {
-class MaterialStore;
 class Material : public Component {
   friend class MaterialStore;
 
@@ -14,14 +13,27 @@ class Material : public Component {
   Math::Vector2f tile_scale = Math::Vector2f({1, 1});
 
  public:
-  std::shared_ptr<MaterialStore> get_store();
+  static std::shared_ptr<MaterialStore> get_store();
   Material(){};
   ~Material(){};
 
   void create_gpu_buffer(uint32_t height, uint32_t width, const uint8_t* data);
-  void update_texture_sampling();
 
   const Math::Vector2f get_uv_offset();
   const Math::Vector2f get_tile_scale();
+};
+
+class MaterialStore {
+ private:
+  std::unordered_map<EntityID, std::shared_ptr<Material>> instances{};
+
+ public:
+  void initialize() {
+    instances = {};
+    instances.clear();
+  }
+  std::shared_ptr<Material> create(EntityID id);
+  std::shared_ptr<Material> get(EntityID id);
+  void remove(EntityID id);
 };
 }  // namespace ShiftFlamework

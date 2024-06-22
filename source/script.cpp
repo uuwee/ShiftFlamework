@@ -2,13 +2,9 @@
 
 #include <windows.h>
 
-using namespace ShiftFlamework;
+#include "engine.hpp"
 
-void Script::on_register() {
-  auto lib = LoadLibraryA("runtime.dll");
-  auto on_start = (void (*)())GetProcAddress(lib, "on_start");
-  on_start();
-}
+using namespace ShiftFlamework;
 
 void Script::update() {
   auto lib = LoadLibraryA("runtime.dll");
@@ -16,18 +12,33 @@ void Script::update() {
   on_update();
 }
 
-void Script::on_unregister() {
+std::shared_ptr<ScriptStore> Script::get_store() {
+  return Engine::get_module<ScriptStore>();
+}
+
+std::shared_ptr<ShiftFlamework::Script> ShiftFlamework::ScriptStore::create(
+    EntityID id) {
+  auto instance = std::make_shared<Script>();
+  instances.insert_or_assign(id, instance);
+
+  auto lib = LoadLibraryA("runtime.dll");
+  auto on_start = (void (*)())GetProcAddress(lib, "on_start");
+  on_start();
+
+  return instance;
+}
+
+std::shared_ptr<ShiftFlamework::Script> ShiftFlamework::ScriptStore::get(
+    EntityID id) {
+  return instances.at(id);
+}
+
+void ShiftFlamework::ScriptStore::remove(EntityID id) {
+  auto removed = instances.at(id);
+
   auto lib = LoadLibraryA("runtime.dll");
   auto on_end = (void (*)())GetProcAddress(lib, "on_end");
   on_end();
+
+  instances.erase(id);
 }
-
-std::shared_ptr<Script> Script::create(EntityID id) {
-  auto script = std::make_shared<Script>();
-  instances.insert_or_assign(id, script);
-  return script;
-}
-
-std::shared_ptr<Script> Script::get(EntityID id) { return instances[id]; }
-
-void Script::remove(EntityID id) { instances.erase(id); }

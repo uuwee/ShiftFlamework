@@ -5,7 +5,7 @@
 #include "graphics.hpp"
 #include "vector.hpp"
 namespace ShiftFlamework {
-class ScreenSpaceTransformStore;
+
 class ScreenSpaceTransform : public Component {
   friend class ScreenSpaceTransformStore;
 
@@ -28,5 +28,20 @@ class ScreenSpaceTransform : public Component {
   void set_position(Math::Vector2f position);
   void set_angle(float angle);
   void set_scale(Math::Vector2f scale);
+};
+
+class ScreenSpaceTransformStore {
+ private:
+  std::unordered_map<EntityID, std::shared_ptr<ScreenSpaceTransform>>
+      instances{};
+
+ public:
+  void initialize() {
+    instances = {};
+    instances.clear();
+  }
+  std::shared_ptr<ScreenSpaceTransform> create(EntityID id);
+  std::shared_ptr<ScreenSpaceTransform> get(EntityID id);
+  void remove(EntityID id);
 };
 }  // namespace ShiftFlamework

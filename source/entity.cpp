@@ -12,7 +12,6 @@ void ShiftFlamework::Component::set_entity(
 
 ShiftFlamework::Entity::Entity() : ShiftFlamework::ExportObject() {
   components.clear();
-  id = ShiftFlamework::Entity::entity_count++;
 }
 
 ShiftFlamework::Entity::~Entity() {

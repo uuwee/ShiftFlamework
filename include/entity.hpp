@@ -35,8 +35,6 @@ class Entity : public std::enable_shared_from_this<Entity>,
   EntityID id = 0;
 
  public:
-  static int entity_count;  // need to be private, so entity store object should
-                            // be there
   Entity();
   ~Entity();
   EntityID get_id();
@@ -44,14 +42,14 @@ class Entity : public std::enable_shared_from_this<Entity>,
   template <class T>
   std::shared_ptr<T> get_component() {
     auto name = typeid(T).name();
-    auto ptr = T::get(id);
+    auto ptr = T::get_store()->get(id);
     return ptr;
   }
 
   template <class T,
             typename = std::enable_if_t<std::is_base_of_v<Component, T>>>
   std::shared_ptr<T> add_component() {
-    auto component = T::create(id);
+    auto component = T::get_store()->create(id);
     std::string str = typeid(T).name();
     std::shared_ptr<Component> casted =
         std::static_pointer_cast<Component>(component);
@@ -61,5 +59,27 @@ class Entity : public std::enable_shared_from_this<Entity>,
     }));
     return component;
   }
+};
+
+class EntityStore {
+ private:
+  std::unordered_map<EntityID, std::shared_ptr<Entity>> instances;
+  int entity_count = 0;
+
+ public:
+  void initialize() {
+    instances = {};
+    instances.clear();
+  }
+
+  std::shared_ptr<Entity> create() {
+    auto e = std::make_shared<Entity>();
+    auto id = entity_count++;
+    e->id = id;
+    instances.insert_or_assign(id, e);
+    return e;
+  }
+  std::shared_ptr<Entity> get(EntityID id) { return instances[id]; }
+  void remove(EntityID id) { instances.erase(id); }
 };
 }  // namespace ShiftFlamework

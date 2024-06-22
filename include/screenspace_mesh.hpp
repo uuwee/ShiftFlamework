@@ -14,7 +14,6 @@ struct ScreenSpaceVertex {
   Math::Vector2f texture_coord = Math::Vector2f({0, 0});
 };
 
-class ScreenSpaceMeshStore;
 class ScreenSpaceMesh : public Component {
   friend class ScreenSpaceMeshStore;
 
@@ -32,5 +31,19 @@ class ScreenSpaceMesh : public Component {
   void create_gpu_buffer();
   const std::vector<ScreenSpaceVertex> get_vertices();
   const std::vector<uint32_t> get_indices();
+};
+
+class ScreenSpaceMeshStore {
+ private:
+  std::unordered_map<EntityID, std::shared_ptr<ScreenSpaceMesh>> instances{};
+
+ public:
+  void initialize() {
+    instances = {};
+    instances.clear();
+  }
+  std::shared_ptr<ScreenSpaceMesh> create(EntityID id);
+  std::shared_ptr<ScreenSpaceMesh> get(EntityID id);
+  void remove(EntityID id);
 };
 }  // namespace ShiftFlamework

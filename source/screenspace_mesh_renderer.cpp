@@ -391,7 +391,6 @@ void ScreenSpaceMeshRenderer::create_material_buffer(EntityID id,
   }
 
   auto material = std::make_shared<GPUMaterialBuffer>();
-  gpu_material_buffers.insert_or_assign(id, material);
 
   wgpu::TextureDescriptor texture_desc{
       .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst,
@@ -501,6 +500,8 @@ void ScreenSpaceMeshRenderer::create_material_buffer(EntityID id,
       Engine::get_module<ScreenSpaceMeshRenderer>()->create_texture_bind_group(
           material->texture_view, material->sampler,
           material->tex_offset_buffer, material->tile_scale_buffer);
+
+  gpu_material_buffers.insert_or_assign(id, material);
 }
 
 void ScreenSpaceMeshRenderer::remove_material_buffer(EntityID id) {

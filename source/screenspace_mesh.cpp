@@ -10,3 +10,7 @@ const std::vector<ScreenSpaceVertex> ScreenSpaceMesh::get_vertices() {
 }
 
 const std::vector<uint32_t> ScreenSpaceMesh::get_indices() { return indices; }
+
+std::shared_ptr<ScreenSpaceMeshStore> ScreenSpaceMesh::get_store() {
+  return Engine::get_module<ScreenSpaceMeshStore>();
+}

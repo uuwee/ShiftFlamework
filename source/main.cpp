@@ -8,7 +8,6 @@
 
 #include "engine.hpp"
 #include "entity.hpp"
-#include "entity_store.hpp"
 #include "graphics.hpp"
 #include "input.hpp"
 #include "material.hpp"
@@ -18,6 +17,7 @@
 #include "test_image.h"
 #include "vector.hpp"
 #include "window.hpp"
+
 using namespace ShiftFlamework;
 
 std::shared_ptr<Entity> e;
@@ -58,8 +58,19 @@ int main() {
   Engine::add_module<Graphics>();
   Engine::add_module<Input>();
   Engine::add_module<ScreenSpaceMeshRenderer>();
+
   Engine::add_module<EntityStore>();
+  Engine::add_module<ScriptStore>();
+  Engine::add_module<ScreenSpaceMeshStore>();
+  Engine::add_module<MaterialStore>();
+  Engine::add_module<ScreenSpaceTransformStore>();
+
   Engine::get_module<Input>()->initialize();
   Engine::get_module<Graphics>()->initialize([]() { start(); });
+
   Engine::get_module<EntityStore>()->initialize();
+  Engine::get_module<ScriptStore>()->initialize();
+  Engine::get_module<ScreenSpaceMeshStore>()->initialize();
+  Engine::get_module<MaterialStore>()->initialize();
+  Engine::get_module<ScreenSpaceTransformStore>()->initialize();
 }
