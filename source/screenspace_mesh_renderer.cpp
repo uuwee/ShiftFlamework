@@ -162,46 +162,95 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   for (const auto& mesh : mesh_list) {
     if (const auto& transform =
             mesh->get_entity()->get_component<ScreenSpaceTransform>()) {
-      transform->update_gpu_buffer();
+      auto buffer_exists =
+          gpu_transform_buffers.contains(mesh->get_entity()->get_id());
+
+      if (!buffer_exists) {
+        wgpu::BufferDescriptor buffer_desc{
+            .nextInChain = nullptr,
+            .label = "constant",
+            .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+            .size = Engine::get_module<Graphics>()->get_buffer_stride(
+                sizeof(Math::Matrix4x4f)),
+            .mappedAtCreation = false,
+        };
+
+        auto constant_buffer =
+            Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+
+        auto bindgroup = create_constant_bind_group(constant_buffer);
+
+        auto gpu_transform_buffer = std::make_shared<GPUTransformBuffer>();
+        gpu_transform_buffer->buffer = constant_buffer;
+        gpu_transform_buffer->bindgroup = bindgroup;
+
+        gpu_transform_buffers.insert_or_assign(mesh->get_entity()->get_id(),
+                                               gpu_transform_buffer);
+      }
+
+      auto gpu_transform_buffer =
+          gpu_transform_buffers.at(mesh->get_entity()->get_id());
+      // update constant buffer
+      const auto rotate_mat =
+          Math::Matrix4x4f({{{std::cos(transform->get_angle()),
+                              -std::sin(transform->get_angle()), 0, 0},
+                             {std::sin(transform->get_angle()),
+                              std::cos(transform->get_angle()), 0, 0},
+                             {0, 0, 1, 0},
+                             {0, 0, 0, 1}}});
+      const auto translate_mat =
+          Math::Matrix4x4f({{{1, 0, 0, transform->get_position().x},
+                             {0, 1, 0, transform->get_position().y},
+                             {0, 0, 1, 0},
+                             {0, 0, 0, 1}}});
+
+      const auto scale_mat =
+          Math::Matrix4x4f({{{transform->get_scale().x, 0, 0, 0},
+                             {0, transform->get_scale().y, 0, 0},
+                             {0, 0, 1, 0},
+                             {0, 0, 0, 1}}});
+
+      const auto matrix = translate_mat * rotate_mat * scale_mat;
+
+      Engine::get_module<Graphics>()->update_buffer(
+          gpu_transform_buffer->buffer, std::vector(1, transposed(matrix)));
     }
+
+    // render
+    wgpu::RenderPassColorAttachment attachment{.view = render_target,
+                                               .loadOp = wgpu::LoadOp::Clear,
+                                               .storeOp = wgpu::StoreOp::Store};
+
+    wgpu::RenderPassDescriptor renderpass_desc{.colorAttachmentCount = 1,
+                                               .colorAttachments = &attachment};
+
+    wgpu::CommandEncoder encoder =
+        Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
+    wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
+    pass.SetPipeline(render_pipeline);
+
+    for (const auto& mesh : mesh_list) {
+      auto entity_id = mesh->get_entity()->get_id();
+      auto gpu_buffer = gpu_mesh_buffers.at(entity_id);
+      pass.SetVertexBuffer(
+          0, gpu_buffer->vertex_buffer, 0,
+          mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
+
+      pass.SetIndexBuffer(gpu_buffer->index_buffer, wgpu::IndexFormat::Uint32,
+                          0, mesh->get_indices().size() * sizeof(uint32_t));
+
+      auto transform_buffer = gpu_transform_buffers.at(entity_id);
+      pass.SetBindGroup(0, transform_buffer->bindgroup, 0, nullptr);
+      pass.SetBindGroup(
+          1, mesh->get_entity()->get_component<Material>()->get_bindgroup(), 0,
+          nullptr);
+      pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
+    }
+    pass.End();
+    wgpu::CommandBuffer commands = encoder.Finish();
+    Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1,
+                                                                   &commands);
   }
-
-  // render
-  wgpu::RenderPassColorAttachment attachment{.view = render_target,
-                                             .loadOp = wgpu::LoadOp::Clear,
-                                             .storeOp = wgpu::StoreOp::Store};
-
-  wgpu::RenderPassDescriptor renderpass_desc{.colorAttachmentCount = 1,
-                                             .colorAttachments = &attachment};
-
-  wgpu::CommandEncoder encoder =
-      Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
-  wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
-  pass.SetPipeline(render_pipeline);
-
-  for (const auto& mesh : mesh_list) {
-    auto entity_id = mesh->get_entity()->get_id();
-    auto gpu_buffer = gpu_mesh_buffers.at(entity_id);
-    pass.SetVertexBuffer(
-        0, gpu_buffer->vertex_buffer, 0,
-        mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
-
-    pass.SetIndexBuffer(gpu_buffer->index_buffer, wgpu::IndexFormat::Uint32, 0,
-                        mesh->get_indices().size() * sizeof(uint32_t));
-
-    pass.SetBindGroup(0,
-                      mesh->get_entity()
-                          ->get_component<ScreenSpaceTransform>()
-                          ->get_bindgroup(),
-                      0, nullptr);
-    pass.SetBindGroup(
-        1, mesh->get_entity()->get_component<Material>()->get_bindgroup(), 0,
-        nullptr);
-    pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
-  }
-  pass.End();
-  wgpu::CommandBuffer commands = encoder.Finish();
-  Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1, &commands);
 }
 
 wgpu::BindGroup ScreenSpaceMeshRenderer::create_constant_bind_group(

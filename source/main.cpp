@@ -8,6 +8,7 @@
 
 #include "engine.hpp"
 #include "entity.hpp"
+#include "entity_store.hpp"
 #include "graphics.hpp"
 #include "input.hpp"
 #include "material.hpp"
@@ -53,17 +54,12 @@ void start() {
 }
 
 int main() {
-  Entity::entity_count = 0;
-  // initialize component store
-  Script::initialize();
-  ScreenSpaceMesh::initialize();
-  ScreenSpaceTransform::initialize();
-  Material::initialize();
-
   // initialize modules
   Engine::add_module<Graphics>();
   Engine::add_module<Input>();
   Engine::add_module<ScreenSpaceMeshRenderer>();
+  Engine::add_module<EntityStore>();
   Engine::get_module<Input>()->initialize();
   Engine::get_module<Graphics>()->initialize([]() { start(); });
+  Engine::get_module<EntityStore>()->initialize();
 }

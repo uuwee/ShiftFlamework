@@ -14,24 +14,18 @@ struct ScreenSpaceVertex {
   Math::Vector2f texture_coord = Math::Vector2f({0, 0});
 };
 
+class ScreenSpaceMeshStore;
 class ScreenSpaceMesh : public Component {
+  friend class ScreenSpaceMeshStore;
+
  private:
   std::vector<ScreenSpaceVertex> vertices;
   std::vector<uint32_t> indices;
 
-  static std::unordered_map<EntityID, std::shared_ptr<ScreenSpaceMesh>>
-      instances;
-
  public:
+  static std::shared_ptr<ScreenSpaceMeshStore> get_store();
   ScreenSpaceMesh(){};
   ~ScreenSpaceMesh(){};
-  static void initialize() {
-    instances = {};
-    instances.clear();
-  }
-  static std::shared_ptr<ScreenSpaceMesh> create(EntityID id);
-  static std::shared_ptr<ScreenSpaceMesh> get(EntityID id);
-  static void remove(EntityID id);
 
   void on_register();
   void on_unregister();

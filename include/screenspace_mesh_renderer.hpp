@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "gpu_mesh_buffer.hpp"
+#include "gpu_transform_buffer.hpp"
 #include "screenspace_mesh.hpp"
 
 namespace ShiftFlamework {
@@ -14,6 +15,8 @@ class ScreenSpaceMeshRenderer {
   std::vector<std::shared_ptr<ScreenSpaceMesh>> mesh_list{};
   std::unordered_map<EntityID, std::shared_ptr<GPUMeshBuffer>>
       gpu_mesh_buffers{};
+  std::unordered_map<EntityID, std::shared_ptr<GPUTransformBuffer>>
+      gpu_transform_buffers{};
 
   wgpu::RenderPipeline render_pipeline = nullptr;
   wgpu::Buffer constant_buffer_heap = nullptr;

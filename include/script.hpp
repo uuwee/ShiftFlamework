@@ -3,24 +3,18 @@
 #include "entity.hpp"
 
 namespace ShiftFlamework {
+class ScriptStore;
 class Script : public Component {
+  friend class ScriptStore;
+
  private:
   void on_register();
   void on_unregister();
 
-  static std::unordered_map<EntityID, std::shared_ptr<Script>> instances;
-
  public:
+  static std::shared_ptr<ScriptStore> get_store();
   Script(){};
   ~Script(){};
   void update();
-
-  static std::shared_ptr<Script> create(EntityID id);
-  static std::shared_ptr<Script> get(EntityID id);
-  static void remove(EntityID id);
-  static void initialize() {
-    instances = {};
-    instances.clear();
-  }
 };
 }  // namespace ShiftFlamework

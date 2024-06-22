@@ -28,6 +28,8 @@ class Component : public ExportObject {
 
 class Entity : public std::enable_shared_from_this<Entity>,
                public ExportObject {
+  friend class EntityStore;
+
  private:
   std::unordered_map<std::string, std::shared_ptr<Component>> components{};
   EntityID id = 0;
