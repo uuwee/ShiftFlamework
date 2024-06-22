@@ -231,7 +231,7 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
             std::vector(1, material->get_tile_scale()));
       }
     }
-
+  }
     // render
     wgpu::RenderPassColorAttachment attachment{.view = render_target,
                                                .loadOp = wgpu::LoadOp::Clear,
@@ -266,7 +266,7 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
     Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1,
                                                                    &commands);
   }
-}
+
 
 wgpu::BindGroup ScreenSpaceMeshRenderer::create_constant_bind_group(
     const wgpu::Buffer& constant_buffer) {
