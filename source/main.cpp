@@ -45,20 +45,15 @@ void start() {
       Engine::get_module<Graphics>()->get_device());
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
-  // game initialize
-  // auto mod = LoadLibraryA("runtime.dll");
-  // auto on_start = (void (*)())GetProcAddress(mod, "on_start");
-  // on_start();
-
   e = std::make_shared<Entity>();
   e->add_component<Script>();
-  ;
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
 }
 
 int main() {
+  Entity::entity_count = 0;
   // initialize component store
   Script::initialize();
   ScreenSpaceMesh::initialize();

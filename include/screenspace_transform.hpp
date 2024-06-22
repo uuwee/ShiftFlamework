@@ -15,13 +15,12 @@ class ScreenSpaceTransform : public Component {
   wgpu::Buffer constant_buffer = nullptr;
   wgpu::BindGroup bindgroup = nullptr;
 
-  ScreenSpaceTransform(){};
-  ~ScreenSpaceTransform(){};
-
   static std::unordered_map<EntityID, std::shared_ptr<ScreenSpaceTransform>>
       instances;
 
  public:
+  ScreenSpaceTransform(){};
+  ~ScreenSpaceTransform(){};
   static void initialize() {
     instances = {};
     instances.clear();

@@ -18,8 +18,6 @@ class Component : public ExportObject {
  private:
   std::shared_ptr<Entity> entity = nullptr;
   void set_entity(std::shared_ptr<Entity> e);
-  virtual void on_register() {};
-  virtual void on_unregister() {};
   friend class Entity;
 
  public:
@@ -34,9 +32,9 @@ class Entity : public std::enable_shared_from_this<Entity>,
   std::unordered_map<std::string, std::shared_ptr<Component>> components{};
   EntityID id = 0;
 
-  static int entity_count;
-
  public:
+  static int entity_count;  // need to be private, so entity store object should
+                            // be there
   Entity();
   ~Entity();
   EntityID get_id();
@@ -59,7 +57,6 @@ class Entity : public std::enable_shared_from_this<Entity>,
     component->set_entity(std::shared_ptr<Entity>(this, [&](Entity* ptr) {
       std::cout << "add compoennt delegate" << std::endl;
     }));
-    std::static_pointer_cast<Component>(component)->on_register();
     return component;
   }
 };

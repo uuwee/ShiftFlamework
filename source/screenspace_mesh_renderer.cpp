@@ -160,8 +160,8 @@ void ScreenSpaceMeshRenderer::initialize() {
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   // update constant
   for (const auto& mesh : mesh_list) {
-    if (const auto& transform = mesh->get_entity()
-                                    ->get_component<ScreenSpaceTransform>()) {
+    if (const auto& transform =
+            mesh->get_entity()->get_component<ScreenSpaceTransform>()) {
       transform->update_gpu_buffer();
     }
   }
@@ -180,22 +180,24 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   pass.SetPipeline(render_pipeline);
 
   for (const auto& mesh : mesh_list) {
-      pass.SetVertexBuffer(
-          0, mesh->get_vertex_buffer(), 0,
-          mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
+    auto entity_id = mesh->get_entity()->get_id();
+    auto gpu_buffer = gpu_mesh_buffers.at(entity_id);
+    pass.SetVertexBuffer(
+        0, gpu_buffer->vertex_buffer, 0,
+        mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
 
-      pass.SetIndexBuffer(mesh->get_index_buffer(), wgpu::IndexFormat::Uint32,
-                          0, mesh->get_indices().size() * sizeof(uint32_t));
+    pass.SetIndexBuffer(gpu_buffer->index_buffer, wgpu::IndexFormat::Uint32, 0,
+                        mesh->get_indices().size() * sizeof(uint32_t));
 
-      pass.SetBindGroup(0,
-                        mesh->get_entity()
-                            ->get_component<ScreenSpaceTransform>()
-                            ->get_bindgroup(),
-                        0, nullptr);
-      pass.SetBindGroup(
-          1, mesh->get_entity()->get_component<Material>()->get_bindgroup(), 0,
-          nullptr);
-      pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
+    pass.SetBindGroup(0,
+                      mesh->get_entity()
+                          ->get_component<ScreenSpaceTransform>()
+                          ->get_bindgroup(),
+                      0, nullptr);
+    pass.SetBindGroup(
+        1, mesh->get_entity()->get_component<Material>()->get_bindgroup(), 0,
+        nullptr);
+    pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
   }
   pass.End();
   wgpu::CommandBuffer commands = encoder.Finish();
@@ -256,6 +258,37 @@ wgpu::BindGroup ScreenSpaceMeshRenderer::create_texture_bind_group(
 void ScreenSpaceMeshRenderer::register_mesh(
     std::shared_ptr<ScreenSpaceMesh> mesh_component) {
   mesh_list.push_back(mesh_component);
+
+  auto gpu_resource = std::make_shared<GPUMeshBuffer>();
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+        .nextInChain = nullptr,
+        .label = "vertex buffer",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
+        .size =
+            mesh_component->get_vertices().size() * sizeof(ScreenSpaceVertex),
+        .mappedAtCreation = false};
+
+    gpu_resource->vertex_buffer =
+        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+    Engine::get_module<Graphics>()->update_buffer(
+        gpu_resource->vertex_buffer, mesh_component->get_vertices());
+  }
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+        .nextInChain = nullptr,
+        .label = "index buffer",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Index,
+        .size = mesh_component->get_indices().size() * sizeof(uint32_t),
+        .mappedAtCreation = false,
+    };
+    gpu_resource->index_buffer =
+        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+    Engine::get_module<Graphics>()->update_buffer(
+        gpu_resource->index_buffer, mesh_component->get_indices());
+  }
+  gpu_mesh_buffers.insert_or_assign(mesh_component->get_entity()->get_id(),
+                                    gpu_resource);
 }
 
 void ScreenSpaceMeshRenderer::unregister_mesh(
@@ -265,6 +298,13 @@ void ScreenSpaceMeshRenderer::unregister_mesh(
   // we can use hash map and finish this operation O(1)
   auto ptr = std::begin(mesh_list);
   while (ptr->get() != mesh_component.get() && ptr != std::end(mesh_list))
-      ptr++;
+    ptr++;
+
+  auto removed_mesh_id = mesh_component->get_entity()->get_id();
   mesh_list.erase(ptr);
+
+  auto removed_mesh_gpu_buffer = gpu_mesh_buffers.at(removed_mesh_id);
+  removed_mesh_gpu_buffer->vertex_buffer.Destroy();
+  removed_mesh_gpu_buffer->index_buffer.Destroy();
+  gpu_mesh_buffers.erase(removed_mesh_id);
 }

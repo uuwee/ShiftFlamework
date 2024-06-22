@@ -8,12 +8,11 @@ class Script : public Component {
   void on_register();
   void on_unregister();
 
-  Script(){};
-  ~Script(){};
-
   static std::unordered_map<EntityID, std::shared_ptr<Script>> instances;
 
  public:
+  Script(){};
+  ~Script(){};
   void update();
 
   static std::shared_ptr<Script> create(EntityID id);
