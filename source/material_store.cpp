@@ -12,4 +12,7 @@ std::shared_ptr<ShiftFlamework::Material> ShiftFlamework::MaterialStore::get(
   return instances.at(id);
 }
 
-void ShiftFlamework::MaterialStore::remove(EntityID id) { instances.erase(id); }
+void ShiftFlamework::MaterialStore::remove(EntityID id) {
+  auto removed = instances.at(id);
+  instances.erase(id);
+}

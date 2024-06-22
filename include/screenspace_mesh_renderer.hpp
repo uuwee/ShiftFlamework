@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 
+#include "gpu_material_buffer.hpp"
 #include "gpu_mesh_buffer.hpp"
 #include "gpu_transform_buffer.hpp"
 #include "screenspace_mesh.hpp"
@@ -17,6 +18,8 @@ class ScreenSpaceMeshRenderer {
       gpu_mesh_buffers{};
   std::unordered_map<EntityID, std::shared_ptr<GPUTransformBuffer>>
       gpu_transform_buffers{};
+  std::unordered_map<EntityID, std::shared_ptr<GPUMaterialBuffer>>
+      gpu_material_buffers{};
 
   wgpu::RenderPipeline render_pipeline = nullptr;
   wgpu::Buffer constant_buffer_heap = nullptr;
@@ -28,6 +31,9 @@ class ScreenSpaceMeshRenderer {
   wgpu::BindGroupLayout constant_bind_group_layout;
   wgpu::BindGroupLayout texture_bind_group_layout;
 
+  wgpu::BindGroup create_constant_bind_group(
+      const wgpu::Buffer& constant_buffer);
+
  public:
   void initialize();
 
@@ -37,11 +43,15 @@ class ScreenSpaceMeshRenderer {
 
   void render(wgpu::TextureView render_target);
 
-  wgpu::BindGroup create_constant_bind_group(
-      const wgpu::Buffer& constant_buffer);
-
   wgpu::BindGroup create_texture_bind_group(
       const wgpu::TextureView& texture_view, const wgpu::Sampler& sampler,
       const wgpu::Buffer& tex_offset, const wgpu::Buffer& tile_scale);
+
+  void remove_constant_buffer(EntityID id);
+
+  void create_material_buffer(EntityID id, uint32_t height, uint32_t width,
+                              const uint8_t* data);
+
+  void remove_material_buffer(EntityID id);
 };
 }  // namespace ShiftFlamework

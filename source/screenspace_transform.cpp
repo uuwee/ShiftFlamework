@@ -6,12 +6,6 @@
 #include "screenspace_mesh_renderer.hpp"
 using namespace ShiftFlamework;
 
-void ScreenSpaceTransform::on_unregister() {
-  if (constant_buffer != nullptr) {
-    constant_buffer.Destroy();
-  }
-}
-
 const Math::Vector2f ScreenSpaceTransform::get_position() { return position; }
 
 const float ScreenSpaceTransform::get_angle() { return angle; }
