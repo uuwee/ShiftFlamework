@@ -35,6 +35,7 @@ class ScreenSpaceMeshStore {
   std::unordered_map<EntityID, std::shared_ptr<ScreenSpaceMesh>> instances{};
 
  public:
+ static std::string get_name() { return "ScreenSpaceMeshStore"; }
   void initialize() {
     instances = {};
     instances.clear();

@@ -18,6 +18,7 @@ class ScriptStore {
   std::unordered_map<EntityID, std::shared_ptr<Script>> instances{};
 
  public:
+  static std::string get_name() { return "ScriptStore"; }
   void initialize() {
     instances = {};
     instances.clear();

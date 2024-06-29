@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "gpu_material_buffer.hpp"
 #include "gpu_mesh_buffer.hpp"
@@ -35,6 +36,7 @@ class ScreenSpaceMeshRenderer {
       const wgpu::Buffer& constant_buffer);
 
  public:
+static std::string get_name() { return "ScreenSpaceMeshRenderer"; }
   void initialize();
 
   void register_mesh(std::shared_ptr<ScreenSpaceMesh> mesh_component);

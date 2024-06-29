@@ -62,6 +62,7 @@ class EntityStore {
   int entity_count = 0;
 
  public:
+ static std::string get_name() { return "EntityStore"; }
   void initialize() {
     instances = {};
     instances.clear();

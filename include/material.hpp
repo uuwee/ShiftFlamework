@@ -28,6 +28,7 @@ class MaterialStore {
   std::unordered_map<EntityID, std::shared_ptr<Material>> instances{};
 
  public:
+  static std::string get_name() { return "MaterialStore"; }
   void initialize() {
     instances = {};
     instances.clear();

@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <memory>
+#include <string>
 
 namespace ShiftFlamework {
 
@@ -19,6 +20,7 @@ class Graphics {
   std::function<void()> on_initialize_end;
 
  public:
+  static std::string get_name() { return "Graphics"; }
   void initialize(std::function<void()> on_initialize_end);
 
   void terminate() { device.Destroy(); }

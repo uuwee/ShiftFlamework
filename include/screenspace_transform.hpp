@@ -36,6 +36,7 @@ class ScreenSpaceTransformStore {
       instances{};
 
  public:
+  static std::string get_name() { return "ScreenSpaceTransformStore"; }
   void initialize() {
     instances = {};
     instances.clear();

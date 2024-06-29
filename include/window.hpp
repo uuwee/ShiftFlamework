@@ -19,6 +19,7 @@ class Window {
   std::function<void()> main_loop;
 
  public:
+ static std::string get_name() { return "Window"; }
   Window(const std::string window_name, const uint32_t width,
          const uint32_t height);
 
