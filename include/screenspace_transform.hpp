@@ -5,31 +5,44 @@
 #include "graphics.hpp"
 #include "vector.hpp"
 namespace ShiftFlamework {
+
 class ScreenSpaceTransform : public Component {
+  friend class ScreenSpaceTransformStore;
+
  private:
   Math::Vector2f position = Math::Vector2f({0, 0});
   float angle = 0;
   Math::Vector2f scale = Math::Vector2f({1, 1});
   uint32_t z_order = 0;  // min comes foreground
 
-  wgpu::Buffer constant_buffer = nullptr;
-  wgpu::BindGroup bindgroup = nullptr;
-
  public:
+  static std::shared_ptr<ScreenSpaceTransformStore> get_store();
+
+  ScreenSpaceTransform(){};
   ~ScreenSpaceTransform(){};
-  void create_gpu_buffer();
-  void update_gpu_buffer();
-  void on_register();
-  void on_unregister();
 
   const Math::Vector2f get_position();
   const float get_angle();
   const Math::Vector2f get_scale();
-  const wgpu::Buffer get_constant_buffer();
-  const wgpu::BindGroup get_bindgroup();
 
   void set_position(Math::Vector2f position);
   void set_angle(float angle);
   void set_scale(Math::Vector2f scale);
+};
+
+class ScreenSpaceTransformStore {
+ private:
+  std::unordered_map<EntityID, std::shared_ptr<ScreenSpaceTransform>>
+      instances{};
+
+ public:
+  static std::string get_name() { return "ScreenSpaceTransformStore"; }
+  void initialize() {
+    instances = {};
+    instances.clear();
+  }
+  std::shared_ptr<ScreenSpaceTransform> create(EntityID id);
+  std::shared_ptr<ScreenSpaceTransform> get(EntityID id);
+  void remove(EntityID id);
 };
 }  // namespace ShiftFlamework

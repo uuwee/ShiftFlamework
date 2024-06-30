@@ -120,7 +120,13 @@
                 "source_location": "cpp",
                 "propagate_const": "cpp",
                 "*.ipp": "cpp",
-                "latch": "cpp"
+                "latch": "cpp",
+                "cuchar": "cpp",
+                "expected": "cpp",
+                "syncstream": "cpp",
+                "stacktrace": "cpp",
+                "mdspan": "cpp",
+                "print": "cpp"
         },
         "cmake.configureOnOpen": false
 }

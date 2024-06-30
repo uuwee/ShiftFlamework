@@ -17,6 +17,7 @@
 #include "test_image.h"
 #include "vector.hpp"
 #include "window.hpp"
+
 using namespace ShiftFlamework;
 
 std::shared_ptr<Entity> e;
@@ -45,13 +46,9 @@ void start() {
       Engine::get_module<Graphics>()->get_device());
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
-  // game initialize
-  // auto mod = LoadLibraryA("runtime.dll");
-  // auto on_start = (void (*)())GetProcAddress(mod, "on_start");
-  // on_start();
-
-  e = std::make_shared<Entity>();
-  e->add_component<Script>();;
+  //e = std::make_shared<Entity>();
+  e = Engine::get_module<EntityStore>()->create();
+  e->add_component<Script>();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
@@ -62,6 +59,19 @@ int main() {
   Engine::add_module<Graphics>();
   Engine::add_module<Input>();
   Engine::add_module<ScreenSpaceMeshRenderer>();
+
+  Engine::add_module<EntityStore>();
+  Engine::add_module<ScriptStore>();
+  Engine::add_module<ScreenSpaceMeshStore>();
+  Engine::add_module<MaterialStore>();
+  Engine::add_module<ScreenSpaceTransformStore>();
+
   Engine::get_module<Input>()->initialize();
   Engine::get_module<Graphics>()->initialize([]() { start(); });
+
+  Engine::get_module<EntityStore>()->initialize();
+  Engine::get_module<ScriptStore>()->initialize();
+  Engine::get_module<ScreenSpaceMeshStore>()->initialize();
+  Engine::get_module<MaterialStore>()->initialize();
+  Engine::get_module<ScreenSpaceTransformStore>()->initialize();
 }

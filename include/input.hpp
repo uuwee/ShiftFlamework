@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <string>
 
 namespace ShiftFlamework {
 
@@ -49,6 +50,7 @@ class Input {
   std::array<ButtonState, 256> state;
 
  public:
+ static std::string get_name() { return "Input"; }
   void initialize();
 
   void update();

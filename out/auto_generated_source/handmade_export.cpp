@@ -1,3 +1,4 @@
+#include "engine.hpp"
 #include "entity.hpp"
 #include "export_object.hpp"
 #include "material.hpp"
@@ -7,97 +8,97 @@
 
 namespace ShiftFlamework {
 // entity.hpp
-EXPORT void* ShiftFlamework_Entity_Constructor() {
-  auto ptr = new ShiftFlamework::Entity();
-  ptr->add_reference();
-  return ptr;
+EXPORT ExportObject* ShiftFlamework_Entity_Constructor() {
+  auto ptr = ShiftFlamework::Engine::get_module<ShiftFlamework::EntityStore>()
+                 ->create();
+  auto container = new ShiftFlamework::ExportObject(ptr);
+  return container;
 }
 
-EXPORT void ShiftFlamework_Entity_Destructor(void* self) {
+EXPORT void ShiftFlamework_Entity_Destructor(ExportObject* self) {
   std::cout << "destructor" << std::endl;
   std::cout << "self: " << self << std::endl;
-  auto entity = (ShiftFlamework::Entity*)self;
-  entity->remove_reference();
-  //delete entity;
+  Engine::get_module<EntityStore>()->remove(std::static_pointer_cast<Entity>(self->object)->get_id());
+  delete self;
 }
 
 // screenspace_mesh.hpp
-EXPORT void* ShiftFlamework_Entity_get_component_ShiftFlamework_ScreenSpaceMesh(
-    void* self) {
-  auto entity = std::shared_ptr<ShiftFlamework::Entity>(
-      (ShiftFlamework::Entity*)self,
-      [&](ShiftFlamework::Entity* ptr) { ptr->remove_reference(); });
-  auto component = entity->add_component<ScreenSpaceMesh>();
-  // auto component = ((ShiftFlamework::Entity*)
-  // self)->get_component<ScreenSpaceMesh>();
-
-  component->add_reference();
-  return component.get();
+EXPORT ExportObject* ShiftFlamework_Entity_get_component_ShiftFlamework_ScreenSpaceMesh(
+    ExportObject* self) {
+  auto component = std::static_pointer_cast<Entity>(self->object)->get_component<ScreenSpaceMesh>();
+  
+  auto container = new ExportObject(component);
+  return container;
 }
 
-EXPORT void* ShiftFlamework_Entity_add_component_ShiftFlamework_ScreenSpaceMesh(
-    void* self) {
-  auto component =
-      ((ShiftFlamework::Entity*)self)->add_component<ScreenSpaceMesh>();
-  component->add_reference();
-  return component.get();
+EXPORT ExportObject* ShiftFlamework_Entity_add_component_ShiftFlamework_ScreenSpaceMesh(
+    ExportObject* self) {
+  auto component = std::static_pointer_cast<Entity>(self->object)->add_component<ScreenSpaceMesh>();
+  auto container = new ExportObject(component);
+  return container;
 }
 
 // screenspace_transform.hpp}
 
-EXPORT void*
+EXPORT ExportObject*
 ShiftFlamework_Entity_add_component_ShiftFlamework_ScreenSpaceTransform(
-    void* self) {
-  auto component =
-      ((ShiftFlamework::Entity*)self)->add_component<ScreenSpaceTransform>();
-  component->add_reference();
-  return component.get();
+    ExportObject* self) {
+  auto comopnent = std::static_pointer_cast<Entity>(self->object)->add_component<ScreenSpaceTransform>();
+  auto container = new ExportObject(comopnent);
+  return container;
 }
 
-EXPORT void*
+EXPORT ExportObject*
 ShiftFlamework_Entity_get_component_ShiftFlamework_ScreenSpaceTransform(
-    void* self) {
-  auto component =
-      ((ShiftFlamework::Entity*)self)->get_component<ScreenSpaceTransform>();
-  component->add_reference();
-  return component.get();
+    ExportObject* self) {
+  auto comopnent = std::static_pointer_cast<Entity>(self->object)->get_component<ScreenSpaceTransform>();
+  auto container = new ExportObject(comopnent);
+  return container;
 }
 // material.hpp
 
-EXPORT void* ShiftFlamework_Entity_add_component_ShiftFlamework_Material(
-    void* self) {
-  auto component = ((ShiftFlamework::Entity*)self)->add_component<Material>();
-  component->add_reference();
-  return component.get();
+EXPORT ExportObject* ShiftFlamework_Entity_add_component_ShiftFlamework_Material(
+    ExportObject* self) {
+  auto component = std::static_pointer_cast<Entity>(self->object)->add_component<Material>();
+  auto container = new ExportObject(component);
+  return container;
 }
 
-EXPORT void* ShiftFlamework_Entity_get_component_ShiftFlamework_Material(
-    void* self) {
-  auto component = ((ShiftFlamework::Entity*)self)->get_component<Material>();
-  component->add_reference();
-  return component.get();
+EXPORT ExportObject* ShiftFlamework_Entity_get_component_ShiftFlamework_Material(
+    ExportObject* self) {
+  auto component = std::static_pointer_cast<Entity>(self->object)->get_component<Material>();
+  auto container = new ExportObject(component);
+  return container;
 }
 
-EXPORT void ShiftFlamework_Material_create_gpu_buffer(void* self,
+EXPORT void ShiftFlamework_Material_create_gpu_buffer(ExportObject* self,
                                                       const uint32_t height,
                                                       const uint32_t width,
                                                       const uint8_t* data) {
   std::cout << "create gpu buffer" << std::endl;
-  ((Material*)self)->create_gpu_buffer(height, width, data);
+  std::static_pointer_cast<Material>(self->object)->create_gpu_buffer(height, width, data);
+  std::cout << "create gpu buffer done. mat count: " << Engine::get_module<MaterialStore>()->size() << "self state: " << self->object.use_count() << std::endl;
 }
 
 // script.hpp
-EXPORT void* ShiftFlamework_Entity_add_component_ShiftFlamework_Script(
-    void* self) {
-  auto component = ((ShiftFlamework::Entity*)self)->add_component<Script>();
-  component->add_reference();
-  return component.get();
+EXPORT ExportObject* ShiftFlamework_Entity_add_component_ShiftFlamework_Script(
+    ExportObject* self) {
+  auto component = std::static_pointer_cast<Entity>(self->object)->add_component<Script>();
+  auto container = new ExportObject(component);
+  return container;
 }
 
-EXPORT void* ShiftFlamework_Entity_get_component_ShiftFlamework_Script(
-    void* self) {
-  auto component = ((ShiftFlamework::Entity*)self)->get_component<Script>();
-  component->add_reference();
-  return component.get();
+EXPORT ExportObject* ShiftFlamework_Entity_get_component_ShiftFlamework_Script(
+    ExportObject* self) {
+  auto component = std::static_pointer_cast<Entity>(self->object)->get_component<Script>();
+  auto container = new ExportObject(component);
+  return container;
+}
+
+EXPORT void ShiftFlamework_delete_ExportObject(ExportObject* self) {
+  if (self == nullptr) {std::cout << "self is null" << std::endl;}
+  if (self->object == nullptr) {std::cout << "object is null" << std::endl;}
+    std::cout << "delete object use count: " << self->object.use_count() << std::endl;
+  delete self;
 }
 }  // namespace ShiftFlamework

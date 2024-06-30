@@ -2,8 +2,9 @@
 
 #include <memory>
 #include <string>
-#include <typeinfo>
 #include <unordered_map>
+
+#include "module.hpp"
 
 namespace ShiftFlamework {
 class Engine {
@@ -13,23 +14,23 @@ class Engine {
   static std::unordered_map<std::string, std::shared_ptr<void>> modules;
 
  public:
-  template <typename T>
+  template <Module T>
   static std::shared_ptr<T> get_module() {
-    auto type = typeid(T).name();
+    auto type = T::get_name();
     return std::static_pointer_cast<T>(Engine::modules.at(type));
   }
 
-  template <typename T>
+  template <Module T>
   static std::shared_ptr<T> add_module() {
     std::shared_ptr<T> ptr = std::make_shared<T>();
-    std::string str = typeid(T).name();
+    std::string str = T::get_name();
     modules.emplace(str, ptr);
     return ptr;
   }
 
-  template <typename T>
+  template <Module T>
   static std::shared_ptr<T> add_module(std::shared_ptr<T> ptr) {
-    std::string str = typeid(T).name();
+    std::string str = T::get_name();
     modules.emplace(str, ptr);
     return ptr;
   }

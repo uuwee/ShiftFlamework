@@ -158,49 +158,128 @@ void ScreenSpaceMeshRenderer::initialize() {
 }
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
+    std::cout << "Rendering: #mesh_buffers=" << gpu_mesh_buffers.size() << " #transform_buffers=" << gpu_transform_buffers.size() << " #material_buffers=" << gpu_material_buffers.size() << std::endl;
+
   // update constant
-  for (const auto& mesh : mesh_list) {
-    if (const auto& transform = mesh->get_entity()
-                                    ->get_component<ScreenSpaceTransform>()) {
-      transform->update_gpu_buffer();
+  auto entity_list = Engine::get_module<EntityStore>()->get_all();
+  int idx = 0;
+  for (auto entity = entity_list.begin(); entity != entity_list.end(); ) {
+    const auto& mesh = (*entity)->get_component<ScreenSpaceMesh>();
+    if (mesh == nullptr) {
+        entity = entity_list.erase(entity);
+      continue;
     }
+    if (const auto& transform =
+            mesh->get_entity()->get_component<ScreenSpaceTransform>()) {
+      auto buffer_exists =
+          gpu_transform_buffers.contains(mesh->get_entity()->get_id());
+
+      if (!buffer_exists) {
+        wgpu::BufferDescriptor buffer_desc{
+            .nextInChain = nullptr,
+            .label = "constant",
+            .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+            .size = Engine::get_module<Graphics>()->get_buffer_stride(
+                sizeof(Math::Matrix4x4f)),
+            .mappedAtCreation = false,
+        };
+
+        auto constant_buffer =
+            Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+
+        auto bindgroup = create_constant_bind_group(constant_buffer);
+
+        auto gpu_transform_buffer = std::make_shared<GPUTransformBuffer>();
+        gpu_transform_buffer->buffer = constant_buffer;
+        gpu_transform_buffer->bindgroup = bindgroup;
+
+        gpu_transform_buffers.insert_or_assign(mesh->get_entity()->get_id(),
+                                               gpu_transform_buffer);
+      }
+
+      auto gpu_transform_buffer =
+          gpu_transform_buffers.at(mesh->get_entity()->get_id());
+      // update constant buffer
+      const auto rotate_mat =
+          Math::Matrix4x4f({{{std::cos(transform->get_angle()),
+                              -std::sin(transform->get_angle()), 0, 0},
+                             {std::sin(transform->get_angle()),
+                              std::cos(transform->get_angle()), 0, 0},
+                             {0, 0, 1, 0},
+                             {0, 0, 0, 1}}});
+      const auto translate_mat =
+          Math::Matrix4x4f({{{1, 0, 0, transform->get_position().x},
+                             {0, 1, 0, transform->get_position().y},
+                             {0, 0, 1, 0},
+                             {0, 0, 0, 1}}});
+
+      const auto scale_mat =
+          Math::Matrix4x4f({{{transform->get_scale().x, 0, 0, 0},
+                             {0, transform->get_scale().y, 0, 0},
+                             {0, 0, 1, 0},
+                             {0, 0, 0, 1}}});
+
+      const auto matrix = translate_mat * rotate_mat * scale_mat;
+
+      Engine::get_module<Graphics>()->update_buffer(
+          gpu_transform_buffer->buffer, std::vector(1, transposed(matrix)));
+    }
+
+    // update texture sampling buffer
+    {
+      auto entity_id = mesh->get_entity()->get_id();
+      auto material = mesh->get_entity()->get_component<Material>();
+      if (gpu_material_buffers.contains(entity_id) && material != nullptr) {
+        auto gpu_material_buffer = gpu_material_buffers.at(entity_id);
+
+        Engine::get_module<Graphics>()->update_buffer(
+            gpu_material_buffer->tex_offset_buffer,
+            std::vector(1, material->get_uv_offset()));
+        Engine::get_module<Graphics>()->update_buffer(
+            gpu_material_buffer->tile_scale_buffer,
+            std::vector(1, material->get_tile_scale()));
+      }
+    }
+
+    entity++;
+  }
+    
+    // render
+    wgpu::RenderPassColorAttachment attachment{.view = render_target,
+                                                .loadOp = wgpu::LoadOp::Clear,
+                                                .storeOp = wgpu::StoreOp::Store};
+
+    wgpu::RenderPassDescriptor renderpass_desc{.colorAttachmentCount = 1,
+                                                .colorAttachments = &attachment};
+
+    wgpu::CommandEncoder encoder =
+        Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
+    wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
+    pass.SetPipeline(render_pipeline);
+
+    for (const auto& entity : entity_list) {
+        const auto& mesh = entity->get_component<ScreenSpaceMesh>();
+        auto entity_id = mesh->get_entity()->get_id();
+        auto gpu_buffer = gpu_mesh_buffers.at(entity_id);
+        pass.SetVertexBuffer(
+            0, gpu_buffer->vertex_buffer, 0,
+            mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
+
+        pass.SetIndexBuffer(gpu_buffer->index_buffer, wgpu::IndexFormat::Uint32,
+                            0, mesh->get_indices().size() * sizeof(uint32_t));
+
+        auto transform_buffer = gpu_transform_buffers.at(entity_id);
+        pass.SetBindGroup(0, transform_buffer->bindgroup, 0, nullptr);
+        pass.SetBindGroup(1, gpu_material_buffers.at(entity_id)->bindgroup, 0,
+                        nullptr);
+        pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
+    }
+    pass.End();
+    wgpu::CommandBuffer commands = encoder.Finish();
+    Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1,
+                                                                    &commands);
   }
 
-  // render
-  wgpu::RenderPassColorAttachment attachment{.view = render_target,
-                                             .loadOp = wgpu::LoadOp::Clear,
-                                             .storeOp = wgpu::StoreOp::Store};
-
-  wgpu::RenderPassDescriptor renderpass_desc{.colorAttachmentCount = 1,
-                                             .colorAttachments = &attachment};
-
-  wgpu::CommandEncoder encoder =
-      Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
-  wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
-  pass.SetPipeline(render_pipeline);
-
-  for (const auto& mesh : mesh_list) {
-      pass.SetVertexBuffer(
-          0, mesh->get_vertex_buffer(), 0,
-          mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
-
-      pass.SetIndexBuffer(mesh->get_index_buffer(), wgpu::IndexFormat::Uint32,
-                          0, mesh->get_indices().size() * sizeof(uint32_t));
-
-      pass.SetBindGroup(0,
-                        mesh->get_entity()
-                            ->get_component<ScreenSpaceTransform>()
-                            ->get_bindgroup(),
-                        0, nullptr);
-      pass.SetBindGroup(
-          1, mesh->get_entity()->get_component<Material>()->get_bindgroup(), 0,
-          nullptr);
-      pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
-  }
-  pass.End();
-  wgpu::CommandBuffer commands = encoder.Finish();
-  Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1, &commands);
-}
 
 wgpu::BindGroup ScreenSpaceMeshRenderer::create_constant_bind_group(
     const wgpu::Buffer& constant_buffer) {
@@ -255,16 +334,183 @@ wgpu::BindGroup ScreenSpaceMeshRenderer::create_texture_bind_group(
 
 void ScreenSpaceMeshRenderer::register_mesh(
     std::shared_ptr<ScreenSpaceMesh> mesh_component) {
-  mesh_list.push_back(mesh_component);
+  auto gpu_resource = std::make_shared<GPUMeshBuffer>();
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+        .nextInChain = nullptr,
+        .label = "vertex buffer",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
+        .size =
+            mesh_component->get_vertices().size() * sizeof(ScreenSpaceVertex),
+        .mappedAtCreation = false};
+
+    gpu_resource->vertex_buffer =
+        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+    Engine::get_module<Graphics>()->update_buffer(
+        gpu_resource->vertex_buffer, mesh_component->get_vertices());
+  }
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+        .nextInChain = nullptr,
+        .label = "index buffer",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Index,
+        .size = mesh_component->get_indices().size() * sizeof(uint32_t),
+        .mappedAtCreation = false,
+    };
+    gpu_resource->index_buffer =
+        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+    Engine::get_module<Graphics>()->update_buffer(
+        gpu_resource->index_buffer, mesh_component->get_indices());
+  }
+  gpu_mesh_buffers.insert_or_assign(mesh_component->get_entity()->get_id(),
+                                    gpu_resource);
 }
 
 void ScreenSpaceMeshRenderer::unregister_mesh(
     std::shared_ptr<ScreenSpaceMesh> mesh_component) {
-  // todo
-  // if we have id for each component(entity)
-  // we can use hash map and finish this operation O(1)
-  auto ptr = std::begin(mesh_list);
-  while (ptr->get() != mesh_component.get() && ptr != std::end(mesh_list))
-      ptr++;
-  mesh_list.erase(ptr);
+  
+    auto removed_mesh_id = mesh_component->get_entity()->get_id();
+  auto removed_mesh_gpu_buffer = gpu_mesh_buffers.at(removed_mesh_id);
+  removed_mesh_gpu_buffer->vertex_buffer.Destroy();
+  removed_mesh_gpu_buffer->index_buffer.Destroy();
+  gpu_mesh_buffers.erase(removed_mesh_id);
+}
+
+void ScreenSpaceMeshRenderer::remove_constant_buffer(EntityID id) {
+  auto removed = gpu_transform_buffers.at(id);
+  removed->buffer.Destroy();
+  // removed->bindgroup.Destroy();
+  removed->buffer = nullptr;
+  removed->bindgroup = nullptr;
+  gpu_transform_buffers.erase(id);
+}
+
+void ScreenSpaceMeshRenderer::create_material_buffer(EntityID id,
+                                                     uint32_t height,
+                                                     uint32_t width,
+                                                     const uint8_t* data) {
+  if (gpu_material_buffers.contains(id)) {
+    return;
+  }
+
+  auto material = std::make_shared<GPUMaterialBuffer>();
+
+  wgpu::TextureDescriptor texture_desc{
+      .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst,
+      .dimension = wgpu::TextureDimension::e2D,
+      .size = {width, height, 1},
+      .format = wgpu::TextureFormat::RGBA8Unorm,
+      .mipLevelCount = 1,
+      .sampleCount = 1,
+      .viewFormatCount = 0,
+      .viewFormats = nullptr,
+  };
+
+  material->texture =
+      Engine::get_module<Graphics>()->get_device().CreateTexture(&texture_desc);
+
+  std::vector<uint8_t> pixels(4 * width * height, 0);
+
+  uint32_t idx = 0;
+  for (uint32_t i = 0; i < width; i++) {
+    for (uint32_t j = 0; j < height; j++) {
+      std::array<uint8_t, 4> raw = {};
+      raw.at(0) = (uint8_t)data[idx];
+      raw.at(1) = (uint8_t)data[idx + 1];
+      raw.at(2) = (uint8_t)data[idx + 2];
+      raw.at(3) = (uint8_t)data[idx + 3];
+      idx += 4;
+
+      pixels.at(4 * ((width - 1 - i) * height + j) + 0) =
+          (((raw.at(0) - 33) << 2) | ((raw.at(1) - 33) >> 4));
+      pixels.at(4 * ((width - 1 - i) * height + j) + 1) =
+          ((((raw.at(1) - 33) & 0xF) << 4) | ((raw.at(2) - 33) >> 2));
+      pixels.at(4 * ((width - 1 - i) * height + j) + 2) =
+          ((((raw.at(2) - 33) & 0x3) << 6) | ((raw.at(3) - 33)));
+    }
+  }
+
+  wgpu::ImageCopyTexture destination{
+      .texture = material->texture,
+      .mipLevel = 0,
+      .origin = {0, 0, 0},
+      .aspect = wgpu::TextureAspect::All,
+  };
+
+  wgpu::TextureDataLayout source{
+      .offset = 0,
+      .bytesPerRow = 4 * width,
+      .rowsPerImage = height,
+  };
+
+  Engine::get_module<Graphics>()->get_device().GetQueue().WriteTexture(
+      &destination, pixels.data(), pixels.size(), &source, &texture_desc.size);
+
+  auto texture_view_desc = wgpu::TextureViewDescriptor{
+      .format = texture_desc.format,
+      .dimension = wgpu::TextureViewDimension::e2D,
+      .baseMipLevel = 0,
+      .mipLevelCount = 1,
+      .baseArrayLayer = 0,
+      .arrayLayerCount = 1,
+      .aspect = wgpu::TextureAspect::All,
+  };
+
+  material->texture_view = material->texture.CreateView(&texture_view_desc);
+
+  auto sampler_decs =
+      wgpu::SamplerDescriptor{.addressModeU = wgpu::AddressMode::Repeat,
+                              .addressModeV = wgpu::AddressMode::Repeat,
+                              .addressModeW = wgpu::AddressMode::Repeat,
+                              .magFilter = wgpu::FilterMode::Linear,
+                              .minFilter = wgpu::FilterMode::Linear,
+                              .mipmapFilter = wgpu::MipmapFilterMode::Linear,
+                              .lodMinClamp = 0.0f,
+                              .lodMaxClamp = 1.0f,
+                              .compare = wgpu::CompareFunction::Undefined,
+                              .maxAnisotropy = 1};
+
+  material->sampler =
+      Engine::get_module<Graphics>()->get_device().CreateSampler(&sampler_decs);
+
+  wgpu::BufferDescriptor tex_offset_buffer_desc{
+      .nextInChain = nullptr,
+      .label = "tex offset",
+      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+      .size = sizeof(Math::Vector2f),
+      .mappedAtCreation = false,
+  };
+
+  material->tex_offset_buffer =
+      Engine::get_module<Graphics>()->create_buffer(tex_offset_buffer_desc);
+  Engine::get_module<Graphics>()->update_buffer(
+      material->tex_offset_buffer, std::vector(1, Math::Vector2f({0, 0})));
+
+  wgpu::BufferDescriptor tile_scale_buffer_desc{
+      .nextInChain = nullptr,
+      .label = "tile scale",
+      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+      .size = sizeof(Math::Vector2f),
+      .mappedAtCreation = false,
+  };
+
+  material->tile_scale_buffer =
+      Engine::get_module<Graphics>()->create_buffer(tile_scale_buffer_desc);
+  Engine::get_module<Graphics>()->update_buffer(
+      material->tile_scale_buffer, std::vector(1, Math::Vector2f({1, 1})));
+
+  material->bindgroup =
+      Engine::get_module<ScreenSpaceMeshRenderer>()->create_texture_bind_group(
+          material->texture_view, material->sampler,
+          material->tex_offset_buffer, material->tile_scale_buffer);
+
+  gpu_material_buffers.insert_or_assign(id, material);
+}
+
+void ScreenSpaceMeshRenderer::remove_material_buffer(EntityID id) {
+  auto material = gpu_material_buffers.at(id);
+  material->texture.Destroy();
+  material->tex_offset_buffer.Destroy();
+  material->tile_scale_buffer.Destroy();
+  gpu_material_buffers.erase(id);
 }

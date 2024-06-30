@@ -15,22 +15,33 @@ struct ScreenSpaceVertex {
 };
 
 class ScreenSpaceMesh : public Component {
+  friend class ScreenSpaceMeshStore;
+
  private:
   std::vector<ScreenSpaceVertex> vertices;
   std::vector<uint32_t> indices;
-  wgpu::Buffer vertex_buffer = nullptr;
-  wgpu::Buffer index_buffer = nullptr;
 
  public:
+  static std::shared_ptr<ScreenSpaceMeshStore> get_store();
   ScreenSpaceMesh(){};
   ~ScreenSpaceMesh(){};
-  void on_register();
-  void on_unregister();
-  void create_gpu_buffer();
+
   const std::vector<ScreenSpaceVertex> get_vertices();
   const std::vector<uint32_t> get_indices();
+};
 
-  const wgpu::Buffer get_vertex_buffer();
-  const wgpu::Buffer get_index_buffer();
+class ScreenSpaceMeshStore {
+ private:
+  std::unordered_map<EntityID, std::shared_ptr<ScreenSpaceMesh>> instances{};
+
+ public:
+ static std::string get_name() { return "ScreenSpaceMeshStore"; }
+  void initialize() {
+    instances = {};
+    instances.clear();
+  }
+  std::shared_ptr<ScreenSpaceMesh> create(EntityID id);
+  std::shared_ptr<ScreenSpaceMesh> get(EntityID id);
+  void remove(EntityID id);
 };
 }  // namespace ShiftFlamework
