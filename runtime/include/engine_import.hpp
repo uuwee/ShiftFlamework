@@ -6,18 +6,18 @@
 #include <memory>
 
 namespace ShiftFlamework {
+class ExportObject;
+
+/*void delete_export_object(ExportObject* ptr) {
+  auto lib = LoadLibraryA("game.dll");
+  auto destructor =
+      (void (*)(void*))GetProcAddress(lib, "ShiftFlamework_delete_ExportObject");
+  destructor(ptr);
+}*/
+
 class ScreenSpaceMesh;
 class ScreenSpaceTransform;
-class Material {
- public:
-  void create_gpu_buffer(uint32_t height, uint32_t width, const uint8_t* data) {
-    auto lib = LoadLibraryA("game.dll");
-    auto ShiftFlamework_Material_create_gpu_buffer =
-        (void (*)(void*, const uint32_t, const uint32_t, const uint8_t*))
-            GetProcAddress(lib, "ShiftFlamework_Material_create_gpu_buffer");
-    ShiftFlamework_Material_create_gpu_buffer(this, height, width, data);
-  }
-};
+
 class Entity {
  private:
   Entity() = delete;
@@ -33,6 +33,16 @@ class Entity {
     return nullptr;
   };
 };
+class Material {
+ public:
+  void create_gpu_buffer(uint32_t height, uint32_t width, const uint8_t* data) {
+    auto lib = LoadLibraryA("game.dll");
+    auto ShiftFlamework_Material_create_gpu_buffer =
+        (void (*)(void*, const uint32_t, const uint32_t, const uint8_t*))
+            GetProcAddress(lib, "ShiftFlamework_Material_create_gpu_buffer");
+    ShiftFlamework_Material_create_gpu_buffer(this, height, width, data);
+  }
+};
 
 template <>
 std::shared_ptr<ScreenSpaceTransform> Entity::add_component() {
@@ -41,8 +51,9 @@ std::shared_ptr<ScreenSpaceTransform> Entity::add_component() {
       (void* (*)(void*))GetProcAddress(lib,
                                        "ShiftFlamework_Entity_add_component_"
                                        "ShiftFlamework_ScreenSpaceTransform");
+  auto raw_ptr = add_component(this);
   auto ptr = std::shared_ptr<ScreenSpaceTransform>(
-      (ScreenSpaceTransform*)add_component(this),
+      (ScreenSpaceTransform*)raw_ptr,
       [&](ScreenSpaceTransform* ptr) {});
   return ptr;
 };
@@ -54,9 +65,12 @@ std::shared_ptr<ScreenSpaceTransform> Entity::get_component() {
       (void* (*)(void*))GetProcAddress(lib,
                                        "ShiftFlamework_Entity_get_component_"
                                        "ShiftFlamework_ScreenSpaceTransform");
+  auto raw_ptr = get_component(this);
   auto ptr = std::shared_ptr<ScreenSpaceTransform>(
-      (ScreenSpaceTransform*)get_component(this),
-      [&](ScreenSpaceTransform* ptr) {});
+      (ScreenSpaceTransform*)raw_ptr,
+      [&](ScreenSpaceTransform* ptr) { 
+        //delete_export_object( (ExportObject*)raw_ptr);
+        });
   return ptr;
 };
 
@@ -67,8 +81,11 @@ std::shared_ptr<ScreenSpaceMesh> Entity::add_component() {
       (void* (*)(void*))GetProcAddress(lib,
                                        "ShiftFlamework_Entity_add_component_"
                                        "ShiftFlamework_ScreenSpaceMesh");
+  auto raw_ptr = add_component(this);
   auto ptr = std::shared_ptr<ScreenSpaceMesh>(
-      (ScreenSpaceMesh*)add_component(this), [&](ScreenSpaceMesh* ptr) {});
+      (ScreenSpaceMesh*)raw_ptr, [&](ScreenSpaceMesh* ptr) {
+        //delete_export_object( (ExportObject*)raw_ptr);
+        });
   return ptr;
 };
 
@@ -79,8 +96,12 @@ std::shared_ptr<ScreenSpaceMesh> Entity::get_component() {
       (void* (*)(void*))GetProcAddress(lib,
                                        "ShiftFlamework_Entity_get_component_"
                                        "ShiftFlamework_ScreenSpaceMesh");
+
+  auto raw_ptr = get_component(this);
   auto ptr = std::shared_ptr<ScreenSpaceMesh>(
-      (ScreenSpaceMesh*)get_component(this), [&](ScreenSpaceMesh* ptr) {});
+      (ScreenSpaceMesh*)raw_ptr, [&](ScreenSpaceMesh* ptr) {
+        //delete_export_object( (ExportObject*)raw_ptr);
+        });
   return ptr;
 };
 
@@ -91,8 +112,11 @@ std::shared_ptr<Material> Entity::get_component() {
       (void* (*)(void*))GetProcAddress(lib,
                                        "ShiftFlamework_Entity_get_component_"
                                        "ShiftFlamework_Material");
-  auto ptr = std::shared_ptr<Material>((Material*)get_component(this),
-                                       [&](Material* ptr) {});
+                                       auto raw_ptr = get_component(this);
+  auto ptr = std::shared_ptr<Material>((Material*)raw_ptr,
+                                       [&](Material* ptr) {
+                                        //delete_export_object( (ExportObject*)raw_ptr);
+                                        });
   return ptr;
 };
 
@@ -103,8 +127,13 @@ std::shared_ptr<Material> Entity::add_component() {
       (void* (*)(void*))GetProcAddress(lib,
                                        "ShiftFlamework_Entity_add_component_"
                                        "ShiftFlamework_Material");
-  auto ptr = std::shared_ptr<Material>((Material*)add_component(this),
-                                       [&](Material* ptr) {});
+  auto raw_ptr = add_component(this);
+  auto ptr = std::shared_ptr<Material>((Material*)raw_ptr,
+                                           [&](Material* ptr) {
+                                             std::cout << "delete mat"
+                                                       << std::endl;
+                                             //delete_export_object( (ExportObject*)raw_ptr);
+                                           });
   return ptr;
 };
 
@@ -123,6 +152,7 @@ std::shared_ptr<Entity> create_entity() {
   auto e = std::shared_ptr<Entity>(ptr, [&](Entity* ptr) {
     // we don't have to call restractor here
     // because entity should be removed from scene when it explicitly destroyed
+    
   });
   return e;
 }

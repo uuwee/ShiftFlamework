@@ -124,7 +124,9 @@
                 "cuchar": "cpp",
                 "expected": "cpp",
                 "syncstream": "cpp",
-                "stacktrace": "cpp"
+                "stacktrace": "cpp",
+                "mdspan": "cpp",
+                "print": "cpp"
         },
         "cmake.configureOnOpen": false
 }

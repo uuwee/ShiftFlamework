@@ -159,7 +159,15 @@ void ScreenSpaceMeshRenderer::initialize() {
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   // update constant
-  for (const auto& mesh : mesh_list) {
+  auto entity_list = Engine::get_module<EntityStore>()->get_all();
+
+  int idx = 0;
+  for (auto entity = entity_list.begin(); entity != entity_list.end(); ) {
+    const auto& mesh = (*entity)->get_component<ScreenSpaceMesh>();
+    if (mesh == nullptr) {
+        entity = entity_list.erase(entity);
+      continue;
+    }
     if (const auto& transform =
             mesh->get_entity()->get_component<ScreenSpaceTransform>()) {
       auto buffer_exists =
@@ -231,40 +239,44 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
             std::vector(1, material->get_tile_scale()));
       }
     }
+
+    entity++;
   }
+    
     // render
     wgpu::RenderPassColorAttachment attachment{.view = render_target,
-                                               .loadOp = wgpu::LoadOp::Clear,
-                                               .storeOp = wgpu::StoreOp::Store};
+                                                .loadOp = wgpu::LoadOp::Clear,
+                                                .storeOp = wgpu::StoreOp::Store};
 
     wgpu::RenderPassDescriptor renderpass_desc{.colorAttachmentCount = 1,
-                                               .colorAttachments = &attachment};
+                                                .colorAttachments = &attachment};
 
     wgpu::CommandEncoder encoder =
         Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
     wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
     pass.SetPipeline(render_pipeline);
 
-    for (const auto& mesh : mesh_list) {
-      auto entity_id = mesh->get_entity()->get_id();
-      auto gpu_buffer = gpu_mesh_buffers.at(entity_id);
-      pass.SetVertexBuffer(
-          0, gpu_buffer->vertex_buffer, 0,
-          mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
+    for (const auto& entity : entity_list) {
+        const auto& mesh = entity->get_component<ScreenSpaceMesh>();
+        auto entity_id = mesh->get_entity()->get_id();
+        auto gpu_buffer = gpu_mesh_buffers.at(entity_id);
+        pass.SetVertexBuffer(
+            0, gpu_buffer->vertex_buffer, 0,
+            mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
 
-      pass.SetIndexBuffer(gpu_buffer->index_buffer, wgpu::IndexFormat::Uint32,
-                          0, mesh->get_indices().size() * sizeof(uint32_t));
+        pass.SetIndexBuffer(gpu_buffer->index_buffer, wgpu::IndexFormat::Uint32,
+                            0, mesh->get_indices().size() * sizeof(uint32_t));
 
-      auto transform_buffer = gpu_transform_buffers.at(entity_id);
-      pass.SetBindGroup(0, transform_buffer->bindgroup, 0, nullptr);
-      pass.SetBindGroup(1, gpu_material_buffers.at(entity_id)->bindgroup, 0,
+        auto transform_buffer = gpu_transform_buffers.at(entity_id);
+        pass.SetBindGroup(0, transform_buffer->bindgroup, 0, nullptr);
+        pass.SetBindGroup(1, gpu_material_buffers.at(entity_id)->bindgroup, 0,
                         nullptr);
-      pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
+        pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
     }
     pass.End();
     wgpu::CommandBuffer commands = encoder.Finish();
     Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1,
-                                                                   &commands);
+                                                                    &commands);
   }
 
 
@@ -321,8 +333,6 @@ wgpu::BindGroup ScreenSpaceMeshRenderer::create_texture_bind_group(
 
 void ScreenSpaceMeshRenderer::register_mesh(
     std::shared_ptr<ScreenSpaceMesh> mesh_component) {
-  mesh_list.push_back(mesh_component);
-
   auto gpu_resource = std::make_shared<GPUMeshBuffer>();
   {
     const wgpu::BufferDescriptor buffer_desc{
@@ -357,16 +367,8 @@ void ScreenSpaceMeshRenderer::register_mesh(
 
 void ScreenSpaceMeshRenderer::unregister_mesh(
     std::shared_ptr<ScreenSpaceMesh> mesh_component) {
-  // todo
-  // if we have id for each component(entity)
-  // we can use hash map and finish this operation O(1)
-  auto ptr = std::begin(mesh_list);
-  while (ptr->get() != mesh_component.get() && ptr != std::end(mesh_list))
-    ptr++;
-
-  auto removed_mesh_id = mesh_component->get_entity()->get_id();
-  mesh_list.erase(ptr);
-
+  
+    auto removed_mesh_id = mesh_component->get_entity()->get_id();
   auto removed_mesh_gpu_buffer = gpu_mesh_buffers.at(removed_mesh_id);
   removed_mesh_gpu_buffer->vertex_buffer.Destroy();
   removed_mesh_gpu_buffer->index_buffer.Destroy();

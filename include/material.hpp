@@ -36,5 +36,6 @@ class MaterialStore {
   std::shared_ptr<Material> create(EntityID id);
   std::shared_ptr<Material> get(EntityID id);
   void remove(EntityID id);
+  int size(){return instances.size();};
 };
 }  // namespace ShiftFlamework

@@ -14,7 +14,6 @@
 namespace ShiftFlamework {
 class ScreenSpaceMeshRenderer {
  private:
-  std::vector<std::shared_ptr<ScreenSpaceMesh>> mesh_list{};
   std::unordered_map<EntityID, std::shared_ptr<GPUMeshBuffer>>
       gpu_mesh_buffers{};
   std::unordered_map<EntityID, std::shared_ptr<GPUTransformBuffer>>

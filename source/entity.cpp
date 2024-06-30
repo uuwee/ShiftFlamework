@@ -6,7 +6,7 @@ std::shared_ptr<ShiftFlamework::Entity> ShiftFlamework::Component::get_entity() 
       entity_id);
 }
 
-ShiftFlamework::Entity::Entity() : ShiftFlamework::ExportObject() {
+ShiftFlamework::Entity::Entity(){
   components.clear();
 }
 

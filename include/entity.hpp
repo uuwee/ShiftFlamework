@@ -6,30 +6,27 @@
 #include <unordered_map>
 #include <vector>
 
-#include "export_object.hpp"
-
 namespace ShiftFlamework {
 class Component;
 class Entity;
 
 using EntityID = unsigned int;
 
-class Component : public ExportObject {
+class Component{
  private:
 
  public:
-  Component() : ExportObject(){};
+  Component(){};
   ~Component(){};
   EntityID entity_id = 0;
   std::shared_ptr<Entity> get_entity();
 };
 
-class Entity : public std::enable_shared_from_this<Entity>,
-               public ExportObject {
+class Entity : public std::enable_shared_from_this<Entity>{
   friend class EntityStore;
 
  private:
-  std::unordered_map<std::string, std::shared_ptr<Component>> components{};
+  std::unordered_map<std::string, std::shared_ptr<void>> components{};
   EntityID id = 0;
 
  public:
@@ -40,6 +37,9 @@ class Entity : public std::enable_shared_from_this<Entity>,
   template <class T>
   std::shared_ptr<T> get_component() {
     auto name = typeid(T).name();
+    if (components.find(name) == components.end()) {
+      return nullptr;
+    }
     auto ptr = T::get_store()->get(id);
     return ptr;
   }
@@ -76,6 +76,16 @@ class EntityStore {
     return e;
   }
   std::shared_ptr<Entity> get(EntityID id) { return instances[id]; }
-  void remove(EntityID id) { instances.erase(id); }
+  void remove(EntityID id) { 
+    instances.erase(id); 
+    }
+
+  std::vector<std::shared_ptr<Entity>> get_all(){
+      std::vector<std::shared_ptr<Entity>> vec;
+      for(auto& [key, value] : instances){
+          vec.push_back(value);
+      }
+      return vec;
+  }
 };
 }  // namespace ShiftFlamework
