@@ -158,9 +158,10 @@ void ScreenSpaceMeshRenderer::initialize() {
 }
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
+    std::cout << "Rendering: #mesh_buffers=" << gpu_mesh_buffers.size() << " #transform_buffers=" << gpu_transform_buffers.size() << " #material_buffers=" << gpu_material_buffers.size() << std::endl;
+
   // update constant
   auto entity_list = Engine::get_module<EntityStore>()->get_all();
-
   int idx = 0;
   for (auto entity = entity_list.begin(); entity != entity_list.end(); ) {
     const auto& mesh = (*entity)->get_component<ScreenSpaceMesh>();

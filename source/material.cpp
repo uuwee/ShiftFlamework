@@ -35,5 +35,6 @@ std::shared_ptr<ShiftFlamework::Material> ShiftFlamework::MaterialStore::get(
 
 void ShiftFlamework::MaterialStore::remove(EntityID id) {
   auto removed = instances.at(id);
+  Engine::get_module<ScreenSpaceMeshRenderer>()->remove_material_buffer(id);
   instances.erase(id);
 }
