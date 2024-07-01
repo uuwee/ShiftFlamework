@@ -87,7 +87,7 @@ class EntityStore {
         value();
     }
     instances.erase(id); 
-    }
+  }
 
   std::vector<std::shared_ptr<Entity>> get_all(){
       std::vector<std::shared_ptr<Entity>> vec;

@@ -20,8 +20,6 @@ std::shared_ptr<ScreenSpaceMesh> ScreenSpaceMeshStore::create(EntityID id) {
   };
 
   instance->indices = {0, 1, 2, 2, 3, 0};
-
-  Engine::get_module<ScreenSpaceMeshRenderer>()->register_mesh(instance);
   return instance;
 }
 
@@ -31,6 +29,6 @@ std::shared_ptr<ScreenSpaceMesh> ScreenSpaceMeshStore::get(EntityID id) {
 
 void ScreenSpaceMeshStore::remove(EntityID id) {
   auto removed = instances.at(id);
-  Engine::get_module<ScreenSpaceMeshRenderer>()->unregister_mesh(removed);
+  Engine::get_module<ScreenSpaceMeshRenderer>()->unregister_mesh(id);
   instances.erase(id);
 }

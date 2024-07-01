@@ -16,8 +16,13 @@ std::shared_ptr<MaterialStore> Material::get_store() {
 
 void Material::create_gpu_buffer(uint32_t height, uint32_t width,
                                  const uint8_t* data) {
-  Engine::get_module<ScreenSpaceMeshRenderer>()->create_material_buffer(
-      Engine::get_module<EntityStore>()->get(entity_id)->get_id(), height, width, data);
+  this->height = height;
+  this->width = width;
+  this->data = data;
+
+  // notify the renderer that a new material buffer must be created
+  Engine::get_module<ScreenSpaceMeshRenderer>()->remove_material_buffer(
+      entity_id);
 }
 
 std::shared_ptr<ShiftFlamework::Material> ShiftFlamework::MaterialStore::create(
@@ -36,5 +41,6 @@ std::shared_ptr<ShiftFlamework::Material> ShiftFlamework::MaterialStore::get(
 void ShiftFlamework::MaterialStore::remove(EntityID id) {
   auto removed = instances.at(id);
   Engine::get_module<ScreenSpaceMeshRenderer>()->remove_material_buffer(id);
+
   instances.erase(id);
 }
