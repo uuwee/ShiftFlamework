@@ -158,15 +158,43 @@ void ScreenSpaceMeshRenderer::initialize() {
 }
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
-    std::cout << "Rendering: #mesh_buffers=" << gpu_mesh_buffers.size() << " #transform_buffers=" << gpu_transform_buffers.size() << " #material_buffers=" << gpu_material_buffers.size() << std::endl;
+  std::cout << "Rendering: #mesh_buffers=" << gpu_mesh_buffers.size()
+            << " #transform_buffers=" << gpu_transform_buffers.size()
+            << " #material_buffers=" << gpu_material_buffers.size()
+            << std::endl;
+
+  auto entity_list = Engine::get_module<EntityStore>()->get_all();
+
+  // create gpu resource
+  for (const auto& entity : entity_list) {
+    const auto& mesh = entity->get_component<ScreenSpaceMesh>();
+    const auto& material = entity->get_component<Material>();
+    const auto& transform = entity->get_component<ScreenSpaceTransform>();
+
+    auto entity_id = entity->get_id();
+    if (!(mesh != nullptr && material != nullptr && transform != nullptr)) {
+      unregister_mesh(entity_id);
+      remove_constant_buffer(entity_id);
+      remove_material_buffer(entity_id);
+      continue;
+    }
+
+    if (!gpu_mesh_buffers.contains(entity_id)) {
+      register_mesh(mesh);
+    }
+
+    if (!gpu_material_buffers.contains(entity_id)) {
+      create_material_buffer(entity_id, material->height, material->width,
+                             material->data);
+    }
+  }
 
   // update constant
-  auto entity_list = Engine::get_module<EntityStore>()->get_all();
   int idx = 0;
-  for (auto entity = entity_list.begin(); entity != entity_list.end(); ) {
+  for (auto entity = entity_list.begin(); entity != entity_list.end();) {
     const auto& mesh = (*entity)->get_component<ScreenSpaceMesh>();
     if (mesh == nullptr) {
-        entity = entity_list.erase(entity);
+      entity = entity_list.erase(entity);
       continue;
     }
     if (const auto& transform =
@@ -243,43 +271,41 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
 
     entity++;
   }
-    
-    // render
-    wgpu::RenderPassColorAttachment attachment{.view = render_target,
-                                                .loadOp = wgpu::LoadOp::Clear,
-                                                .storeOp = wgpu::StoreOp::Store};
 
-    wgpu::RenderPassDescriptor renderpass_desc{.colorAttachmentCount = 1,
-                                                .colorAttachments = &attachment};
+  // render
+  wgpu::RenderPassColorAttachment attachment{.view = render_target,
+                                             .loadOp = wgpu::LoadOp::Clear,
+                                             .storeOp = wgpu::StoreOp::Store};
 
-    wgpu::CommandEncoder encoder =
-        Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
-    wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
-    pass.SetPipeline(render_pipeline);
+  wgpu::RenderPassDescriptor renderpass_desc{.colorAttachmentCount = 1,
+                                             .colorAttachments = &attachment};
 
-    for (const auto& entity : entity_list) {
-        const auto& mesh = entity->get_component<ScreenSpaceMesh>();
-        auto entity_id = mesh->get_entity()->get_id();
-        auto gpu_buffer = gpu_mesh_buffers.at(entity_id);
-        pass.SetVertexBuffer(
-            0, gpu_buffer->vertex_buffer, 0,
-            mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
+  wgpu::CommandEncoder encoder =
+      Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
+  wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
+  pass.SetPipeline(render_pipeline);
 
-        pass.SetIndexBuffer(gpu_buffer->index_buffer, wgpu::IndexFormat::Uint32,
-                            0, mesh->get_indices().size() * sizeof(uint32_t));
+  for (const auto& entity : entity_list) {
+    const auto& mesh = entity->get_component<ScreenSpaceMesh>();
+    auto entity_id = mesh->get_entity()->get_id();
+    auto gpu_buffer = gpu_mesh_buffers.at(entity_id);
+    pass.SetVertexBuffer(
+        0, gpu_buffer->vertex_buffer, 0,
+        mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
 
-        auto transform_buffer = gpu_transform_buffers.at(entity_id);
-        pass.SetBindGroup(0, transform_buffer->bindgroup, 0, nullptr);
-        pass.SetBindGroup(1, gpu_material_buffers.at(entity_id)->bindgroup, 0,
-                        nullptr);
-        pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
-    }
-    pass.End();
-    wgpu::CommandBuffer commands = encoder.Finish();
-    Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1,
-                                                                    &commands);
+    pass.SetIndexBuffer(gpu_buffer->index_buffer, wgpu::IndexFormat::Uint32, 0,
+                        mesh->get_indices().size() * sizeof(uint32_t));
+
+    auto transform_buffer = gpu_transform_buffers.at(entity_id);
+    pass.SetBindGroup(0, transform_buffer->bindgroup, 0, nullptr);
+    pass.SetBindGroup(1, gpu_material_buffers.at(entity_id)->bindgroup, 0,
+                      nullptr);
+    pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
   }
-
+  pass.End();
+  wgpu::CommandBuffer commands = encoder.Finish();
+  Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1, &commands);
+}
 
 wgpu::BindGroup ScreenSpaceMeshRenderer::create_constant_bind_group(
     const wgpu::Buffer& constant_buffer) {
@@ -366,17 +392,22 @@ void ScreenSpaceMeshRenderer::register_mesh(
                                     gpu_resource);
 }
 
-void ScreenSpaceMeshRenderer::unregister_mesh(
-    std::shared_ptr<ScreenSpaceMesh> mesh_component) {
-  
-    auto removed_mesh_id = mesh_component->get_entity()->get_id();
-  auto removed_mesh_gpu_buffer = gpu_mesh_buffers.at(removed_mesh_id);
+void ScreenSpaceMeshRenderer::unregister_mesh(EntityID id) {
+  if (!gpu_mesh_buffers.contains(id)) {
+    return;
+  }
+
+  auto removed_mesh_gpu_buffer = gpu_mesh_buffers.at(id);
   removed_mesh_gpu_buffer->vertex_buffer.Destroy();
   removed_mesh_gpu_buffer->index_buffer.Destroy();
-  gpu_mesh_buffers.erase(removed_mesh_id);
+  gpu_mesh_buffers.erase(id);
 }
 
 void ScreenSpaceMeshRenderer::remove_constant_buffer(EntityID id) {
+  if (!gpu_transform_buffers.contains(id)) {
+    return;
+  }
+
   auto removed = gpu_transform_buffers.at(id);
   removed->buffer.Destroy();
   // removed->bindgroup.Destroy();
@@ -508,6 +539,9 @@ void ScreenSpaceMeshRenderer::create_material_buffer(EntityID id,
 }
 
 void ScreenSpaceMeshRenderer::remove_material_buffer(EntityID id) {
+  if (!gpu_material_buffers.contains(id)) {
+    return;
+  }
   auto material = gpu_material_buffers.at(id);
   material->texture.Destroy();
   material->tex_offset_buffer.Destroy();

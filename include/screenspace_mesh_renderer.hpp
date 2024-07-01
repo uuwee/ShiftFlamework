@@ -3,8 +3,8 @@
 #include <stdint.h>
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "gpu_material_buffer.hpp"
 #include "gpu_mesh_buffer.hpp"
@@ -34,13 +34,14 @@ class ScreenSpaceMeshRenderer {
   wgpu::BindGroup create_constant_bind_group(
       const wgpu::Buffer& constant_buffer);
 
- public:
-static std::string get_name() { return "ScreenSpaceMeshRenderer"; }
-  void initialize();
-
   void register_mesh(std::shared_ptr<ScreenSpaceMesh> mesh_component);
 
-  void unregister_mesh(std::shared_ptr<ScreenSpaceMesh> mesh_component);
+  void create_material_buffer(EntityID id, uint32_t height, uint32_t width,
+                              const uint8_t* data);
+
+ public:
+  static std::string get_name() { return "ScreenSpaceMeshRenderer"; }
+  void initialize();
 
   void render(wgpu::TextureView render_target);
 
@@ -48,11 +49,8 @@ static std::string get_name() { return "ScreenSpaceMeshRenderer"; }
       const wgpu::TextureView& texture_view, const wgpu::Sampler& sampler,
       const wgpu::Buffer& tex_offset, const wgpu::Buffer& tile_scale);
 
+  void unregister_mesh(EntityID id);
   void remove_constant_buffer(EntityID id);
-
-  void create_material_buffer(EntityID id, uint32_t height, uint32_t width,
-                              const uint8_t* data);
-
   void remove_material_buffer(EntityID id);
 };
 }  // namespace ShiftFlamework
