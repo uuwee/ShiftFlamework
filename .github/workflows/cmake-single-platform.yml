@@ -27,6 +27,8 @@ jobs:
     - shell: pwsh
       run: |
         dir
+        git submodule init
+        git submodule update
         cd ./lib/dawn
         cp scripts/standalone.gclient .gclient
         gclient sync
