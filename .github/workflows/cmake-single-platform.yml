@@ -31,7 +31,9 @@ jobs:
         git submodule update
         cd ./lib/dawn
         cp scripts/standalone.gclient .gclient
-        gclient sync
+        gclient sync --no-history --shallow
+      env: 
+        DEPOT_TOOLS_WIN_TOOLCHAIN: 0
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
