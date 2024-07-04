@@ -286,17 +286,15 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   pass.SetPipeline(render_pipeline);
 
   for (const auto& entity : entity_list) {
-    const auto& mesh = entity->get_component<ScreenSpaceMesh>();
-    auto entity_id = mesh->get_entity()->get_id();
+    auto entity_id = entity->get_id();
 
     GPUResource resource{};
     resource.mesh = *gpu_mesh_buffers.at(entity_id);
     resource.transform = *gpu_transform_buffers.at(entity_id);
     resource.material = *gpu_material_buffers.at(entity_id);
 
-    pass.SetVertexBuffer(
-        0, resource.mesh.vertex_buffer, 0,
-        mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
+    pass.SetVertexBuffer(0, resource.mesh.vertex_buffer, 0,
+                         resource.mesh.vertex_buffer.GetSize());
 
     pass.SetIndexBuffer(resource.mesh.index_buffer, wgpu::IndexFormat::Uint32,
                         0, resource.mesh.index_buffer.GetSize());
