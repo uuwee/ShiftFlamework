@@ -18,7 +18,7 @@
 #include "vector.hpp"
 #include "window.hpp"
 
-using namespace ShiftFlamework;
+using namespace SF;
 
 std::shared_ptr<Entity> e;
 

@@ -4,7 +4,7 @@
 
 #include "engine.hpp"
 #include "screenspace_mesh_renderer.hpp"
-using namespace ShiftFlamework;
+using namespace SF;
 
 const Math::Vector2f Material::get_uv_offset() { return uv_offset; }
 
@@ -25,7 +25,7 @@ void Material::create_gpu_buffer(uint32_t height, uint32_t width,
       entity_id);
 }
 
-std::shared_ptr<ShiftFlamework::Material> ShiftFlamework::MaterialStore::create(
+std::shared_ptr<SF::Material> SF::MaterialStore::create(
     EntityID id) {
   auto instance = std::make_shared<Material>();
   instance->entity_id = id;
@@ -33,12 +33,12 @@ std::shared_ptr<ShiftFlamework::Material> ShiftFlamework::MaterialStore::create(
   return instance;
 }
 
-std::shared_ptr<ShiftFlamework::Material> ShiftFlamework::MaterialStore::get(
+std::shared_ptr<SF::Material> SF::MaterialStore::get(
     EntityID id) {
   return instances.at(id);
 }
 
-void ShiftFlamework::MaterialStore::remove(EntityID id) {
+void SF::MaterialStore::remove(EntityID id) {
   auto removed = instances.at(id);
   Engine::get_module<ScreenSpaceMeshRenderer>()->remove_material_buffer(id);
 

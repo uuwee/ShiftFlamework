@@ -2,7 +2,7 @@
 
 #include "graphics.hpp"
 
-namespace ShiftFlamework {
+namespace SF {
 struct GPUTransformBuffer {
  public:
   wgpu::Buffer buffer = nullptr;

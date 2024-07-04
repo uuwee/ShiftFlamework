@@ -1,7 +1,7 @@
 #pragma once
 #include "graphics.hpp"
 
-namespace ShiftFlamework {
+namespace SF {
 struct GPUMaterialBuffer {
  public:
   wgpu::Texture texture = nullptr;

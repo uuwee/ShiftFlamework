@@ -2,7 +2,7 @@
 #include "screenspace_mesh.hpp"
 #include "screenspace_mesh_renderer.hpp"
 
-using namespace ShiftFlamework;
+using namespace SF;
 std::shared_ptr<ScreenSpaceMesh> ScreenSpaceMeshStore::create(EntityID id) {
   auto instance = std::make_shared<ScreenSpaceMesh>();
   instances.insert_or_assign(id, instance);

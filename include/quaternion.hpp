@@ -3,7 +3,7 @@
 #include "matrix.hpp"
 #include "vector.hpp"
 
-namespace ShiftFlamework::Math {
+namespace SF::Math {
 using Quaternionf = Vector4f;
 // using Quaterniond = Vector4d;
 

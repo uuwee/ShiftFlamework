@@ -2,7 +2,7 @@
 
 #include "entity.hpp"
 
-namespace ShiftFlamework {
+namespace SF {
 class Script : public Component {
   friend class ScriptStore;
 

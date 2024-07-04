@@ -6,7 +6,7 @@
 #include <webgpu/webgpu_glfw.h>
 #endif
 
-using namespace ShiftFlamework;
+using namespace SF;
 
 Window::Window(const std::string window_name, const uint32_t width,
                const uint32_t height)

@@ -4,7 +4,7 @@
 
 #include "engine.hpp"
 
-using namespace ShiftFlamework;
+using namespace SF;
 
 const std::vector<ScreenSpaceVertex> ScreenSpaceMesh::get_vertices() {
   return vertices;

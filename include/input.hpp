@@ -3,7 +3,7 @@
 #include <array>
 #include <string>
 
-namespace ShiftFlamework {
+namespace SF {
 
 enum class ButtonState {
   DOWN,

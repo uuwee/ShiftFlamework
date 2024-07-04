@@ -4,16 +4,16 @@
 #include "graphics.hpp"
 #include "matrix.hpp"
 #include "screenspace_mesh_renderer.hpp"
-using namespace ShiftFlamework;
+using namespace SF;
 
-std::shared_ptr<ShiftFlamework::ScreenSpaceTransform>
+std::shared_ptr<SF::ScreenSpaceTransform>
 ScreenSpaceTransformStore::create(EntityID id) {
   auto instance = std::make_shared<ScreenSpaceTransform>();
   instances.insert_or_assign(id, instance);
   return instance;
 }
 
-std::shared_ptr<ShiftFlamework::ScreenSpaceTransform>
+std::shared_ptr<SF::ScreenSpaceTransform>
 ScreenSpaceTransformStore::get(EntityID id) {
   return instances.at(id);
 }

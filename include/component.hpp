@@ -1,7 +1,7 @@
 #include <memory>
 #include "entity.hpp"
 
-namespace ShiftFlamework {
+namespace SF {
 
 template <typename ComponentStoreClass, typename ComponentClass>
 concept ComponentStore = requires (ComponentStoreClass store, ComponentClass component){

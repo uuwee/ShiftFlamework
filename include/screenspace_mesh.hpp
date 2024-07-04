@@ -7,7 +7,7 @@
 #include "graphics.hpp"
 #include "screenspace_transform.hpp"
 
-namespace ShiftFlamework {
+namespace SF {
 struct ScreenSpaceVertex {
  public:
   Math::Vector2f position = Math::Vector2f({0, 0});

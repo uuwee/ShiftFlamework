@@ -4,7 +4,7 @@
 #include "graphics.hpp"
 #include "vector.hpp"
 
-namespace ShiftFlamework {
+namespace SF {
 class Material : public Component {
   friend class MaterialStore;
 
