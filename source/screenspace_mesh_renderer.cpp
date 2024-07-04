@@ -187,6 +187,10 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
       create_material_buffer(entity_id, material->height, material->width,
                              material->data);
     }
+
+    if (!gpu_transform_buffers.contains(entity_id)) {
+      create_constant_buffer(mesh->get_entity()->get_id());
+    }
   }
 
   // update constant
@@ -197,17 +201,7 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
       entity = entity_list.erase(entity);
       continue;
     }
-    if (const auto& transform =
-            mesh->get_entity()->get_component<ScreenSpaceTransform>()) {
-      auto buffer_exists =
-          gpu_transform_buffers.contains(mesh->get_entity()->get_id());
-
-      if (!buffer_exists) {
-        create_constant_buffer(mesh->get_entity()->get_id());
-      }
-
-      update_constant_buffer(mesh->get_entity()->get_id());
-    }
+    update_constant_buffer(mesh->get_entity()->get_id());
 
     // update texture sampling buffer
     {
@@ -316,7 +310,7 @@ wgpu::BindGroup ScreenSpaceMeshRenderer::create_texture_bind_group(
       &texture_bind_group_desc);
 }
 
-void ScreenSpaceMeshRenderer::register_mesh(
+GPUMeshBuffer ScreenSpaceMeshRenderer::register_mesh(
     std::shared_ptr<ScreenSpaceMesh> mesh_component) {
   auto gpu_resource = std::make_shared<GPUMeshBuffer>();
   {
@@ -348,6 +342,8 @@ void ScreenSpaceMeshRenderer::register_mesh(
   }
   gpu_mesh_buffers.insert_or_assign(mesh_component->get_entity()->get_id(),
                                     gpu_resource);
+
+  return *gpu_resource;
 }
 
 void ScreenSpaceMeshRenderer::unregister_mesh(EntityID id) {
@@ -374,12 +370,10 @@ void ScreenSpaceMeshRenderer::remove_constant_buffer(EntityID id) {
   gpu_transform_buffers.erase(id);
 }
 
-void ScreenSpaceMeshRenderer::create_material_buffer(EntityID id,
-                                                     uint32_t height,
-                                                     uint32_t width,
-                                                     const uint8_t* data) {
+GPUMaterialBuffer ScreenSpaceMeshRenderer::create_material_buffer(
+    EntityID id, uint32_t height, uint32_t width, const uint8_t* data) {
   if (gpu_material_buffers.contains(id)) {
-    return;
+    return GPUMaterialBuffer{};
   }
 
   auto material = std::make_shared<GPUMaterialBuffer>();
@@ -494,6 +488,8 @@ void ScreenSpaceMeshRenderer::create_material_buffer(EntityID id,
           material->tex_offset_buffer, material->tile_scale_buffer);
 
   gpu_material_buffers.insert_or_assign(id, material);
+
+  return *material;
 }
 
 void ScreenSpaceMeshRenderer::remove_material_buffer(EntityID id) {
@@ -507,7 +503,8 @@ void ScreenSpaceMeshRenderer::remove_material_buffer(EntityID id) {
   gpu_material_buffers.erase(id);
 }
 
-void ScreenSpaceMeshRenderer::create_constant_buffer(EntityID id) {
+GPUTransformBuffer ScreenSpaceMeshRenderer::create_constant_buffer(
+    EntityID id) {
   wgpu::BufferDescriptor buffer_desc{
       .nextInChain = nullptr,
       .label = "constant",
@@ -527,6 +524,8 @@ void ScreenSpaceMeshRenderer::create_constant_buffer(EntityID id) {
   gpu_transform_buffer->bindgroup = bindgroup;
 
   gpu_transform_buffers.insert_or_assign(id, gpu_transform_buffer);
+
+  return *gpu_transform_buffer;
 }
 
 void ScreenSpaceMeshRenderer::update_constant_buffer(EntityID id) {
