@@ -14,12 +14,12 @@
 namespace ShiftFlamework {
 class ScreenSpaceMeshRenderer {
  private:
-  std::unordered_map<EntityID, std::shared_ptr<GPUMeshBuffer>>
-      gpu_mesh_buffers{};
-  std::unordered_map<EntityID, std::shared_ptr<GPUTransformBuffer>>
-      gpu_transform_buffers{};
-  std::unordered_map<EntityID, std::shared_ptr<GPUMaterialBuffer>>
-      gpu_material_buffers{};
+  struct GPUResource {
+    GPUMeshBuffer mesh;
+    GPUTransformBuffer transform;
+    GPUMaterialBuffer material;
+  };
+  std::unordered_map<EntityID, GPUResource> gpu_resources{};
 
   wgpu::RenderPipeline render_pipeline = nullptr;
   wgpu::Buffer constant_buffer_heap = nullptr;
@@ -34,10 +34,15 @@ class ScreenSpaceMeshRenderer {
   wgpu::BindGroup create_constant_bind_group(
       const wgpu::Buffer& constant_buffer);
 
-  void register_mesh(std::shared_ptr<ScreenSpaceMesh> mesh_component);
+  GPUTransformBuffer create_constant_buffer(EntityID id);
+  void update_constant_buffer(EntityID id);
 
-  void create_material_buffer(EntityID id, uint32_t height, uint32_t width,
-                              const uint8_t* data);
+  GPUMeshBuffer register_mesh(std::shared_ptr<ScreenSpaceMesh> mesh_component);
+
+  GPUMaterialBuffer create_material_buffer(EntityID id, uint32_t height,
+                                           uint32_t width, const uint8_t* data);
+
+  void dispose_gpu_resource(EntityID id);
 
  public:
   static std::string get_name() { return "ScreenSpaceMeshRenderer"; }
