@@ -8,13 +8,6 @@
 namespace ShiftFlamework {
 class ExportObject;
 
-/*void delete_export_object(ExportObject* ptr) {
-  auto lib = LoadLibraryA("game.dll");
-  auto destructor =
-      (void (*)(void*))GetProcAddress(lib, "ShiftFlamework_delete_ExportObject");
-  destructor(ptr);
-}*/
-
 class ScreenSpaceMesh;
 class ScreenSpaceTransform;
 
@@ -53,8 +46,12 @@ std::shared_ptr<ScreenSpaceTransform> Entity::add_component() {
                                        "ShiftFlamework_ScreenSpaceTransform");
   auto raw_ptr = add_component(this);
   auto ptr = std::shared_ptr<ScreenSpaceTransform>(
-      (ScreenSpaceTransform*)raw_ptr,
-      [&](ScreenSpaceTransform* ptr) {});
+      (ScreenSpaceTransform*)raw_ptr, [&](ScreenSpaceTransform* ptr) {
+        auto lib = LoadLibraryA("game.dll");
+        auto destructor = (void (*)(void*))GetProcAddress(
+            lib, "ShiftFlamework_delete_ExportObject");
+        destructor(ptr);
+      });
   return ptr;
 };
 
@@ -67,10 +64,12 @@ std::shared_ptr<ScreenSpaceTransform> Entity::get_component() {
                                        "ShiftFlamework_ScreenSpaceTransform");
   auto raw_ptr = get_component(this);
   auto ptr = std::shared_ptr<ScreenSpaceTransform>(
-      (ScreenSpaceTransform*)raw_ptr,
-      [&](ScreenSpaceTransform* ptr) { 
-        //delete_export_object( (ExportObject*)raw_ptr);
-        });
+      (ScreenSpaceTransform*)raw_ptr, [&](ScreenSpaceTransform* ptr) {
+        auto lib = LoadLibraryA("game.dll");
+        auto destructor = (void (*)(void*))GetProcAddress(
+            lib, "ShiftFlamework_delete_ExportObject");
+        destructor(ptr);
+      });
   return ptr;
 };
 
@@ -84,8 +83,11 @@ std::shared_ptr<ScreenSpaceMesh> Entity::add_component() {
   auto raw_ptr = add_component(this);
   auto ptr = std::shared_ptr<ScreenSpaceMesh>(
       (ScreenSpaceMesh*)raw_ptr, [&](ScreenSpaceMesh* ptr) {
-        //delete_export_object( (ExportObject*)raw_ptr);
-        });
+        auto lib = LoadLibraryA("game.dll");
+        auto destructor = (void (*)(void*))GetProcAddress(
+            lib, "ShiftFlamework_delete_ExportObject");
+        destructor(ptr);
+      });
   return ptr;
 };
 
@@ -100,8 +102,11 @@ std::shared_ptr<ScreenSpaceMesh> Entity::get_component() {
   auto raw_ptr = get_component(this);
   auto ptr = std::shared_ptr<ScreenSpaceMesh>(
       (ScreenSpaceMesh*)raw_ptr, [&](ScreenSpaceMesh* ptr) {
-        //delete_export_object( (ExportObject*)raw_ptr);
-        });
+        auto lib = LoadLibraryA("game.dll");
+        auto destructor = (void (*)(void*))GetProcAddress(
+            lib, "ShiftFlamework_delete_ExportObject");
+        destructor(ptr);
+      });
   return ptr;
 };
 
@@ -112,11 +117,13 @@ std::shared_ptr<Material> Entity::get_component() {
       (void* (*)(void*))GetProcAddress(lib,
                                        "ShiftFlamework_Entity_get_component_"
                                        "ShiftFlamework_Material");
-                                       auto raw_ptr = get_component(this);
-  auto ptr = std::shared_ptr<Material>((Material*)raw_ptr,
-                                       [&](Material* ptr) {
-                                        //delete_export_object( (ExportObject*)raw_ptr);
-                                        });
+  auto raw_ptr = get_component(this);
+  auto ptr = std::shared_ptr<Material>((Material*)raw_ptr, [&](Material* ptr) {
+    auto lib = LoadLibraryA("game.dll");
+    auto destructor = (void (*)(void*))GetProcAddress(
+        lib, "ShiftFlamework_delete_ExportObject");
+    destructor(ptr);
+  });
   return ptr;
 };
 
@@ -128,12 +135,12 @@ std::shared_ptr<Material> Entity::add_component() {
                                        "ShiftFlamework_Entity_add_component_"
                                        "ShiftFlamework_Material");
   auto raw_ptr = add_component(this);
-  auto ptr = std::shared_ptr<Material>((Material*)raw_ptr,
-                                           [&](Material* ptr) {
-                                             std::cout << "delete mat"
-                                                       << std::endl;
-                                             //delete_export_object( (ExportObject*)raw_ptr);
-                                           });
+  auto ptr = std::shared_ptr<Material>((Material*)raw_ptr, [&](Material* ptr) {
+    auto lib = LoadLibraryA("game.dll");
+    auto destructor = (void (*)(void*))GetProcAddress(
+        lib, "ShiftFlamework_delete_ExportObject");
+    destructor(ptr);
+  });
   return ptr;
 };
 
@@ -152,7 +159,6 @@ std::shared_ptr<Entity> create_entity() {
   auto e = std::shared_ptr<Entity>(ptr, [&](Entity* ptr) {
     // we don't have to call restractor here
     // because entity should be removed from scene when it explicitly destroyed
-    
   });
   return e;
 }
