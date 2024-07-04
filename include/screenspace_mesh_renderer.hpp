@@ -19,12 +19,6 @@ class ScreenSpaceMeshRenderer {
     GPUTransformBuffer transform;
     GPUMaterialBuffer material;
   };
-  std::unordered_map<EntityID, std::shared_ptr<GPUMeshBuffer>>
-      gpu_mesh_buffers{};
-  std::unordered_map<EntityID, std::shared_ptr<GPUTransformBuffer>>
-      gpu_transform_buffers{};
-  std::unordered_map<EntityID, std::shared_ptr<GPUMaterialBuffer>>
-      gpu_material_buffers{};
   std::unordered_map<EntityID, GPUResource> gpu_resources{};
 
   wgpu::RenderPipeline render_pipeline = nullptr;
@@ -47,6 +41,8 @@ class ScreenSpaceMeshRenderer {
 
   GPUMaterialBuffer create_material_buffer(EntityID id, uint32_t height,
                                            uint32_t width, const uint8_t* data);
+
+  void dispose_gpu_resource(EntityID id);
 
  public:
   static std::string get_name() { return "ScreenSpaceMeshRenderer"; }
