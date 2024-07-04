@@ -299,11 +299,12 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
         mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
 
     pass.SetIndexBuffer(resource.mesh.index_buffer, wgpu::IndexFormat::Uint32,
-                        0, mesh->get_indices().size() * sizeof(uint32_t));
+                        0, resource.mesh.index_buffer.GetSize());
 
     pass.SetBindGroup(0, resource.transform.bindgroup, 0, nullptr);
     pass.SetBindGroup(1, resource.material.bindgroup, 0, nullptr);
-    pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
+    pass.DrawIndexed(resource.mesh.index_buffer.GetSize() / sizeof(uint32_t), 1,
+                     0, 0, 0);
   }
   pass.End();
   wgpu::CommandBuffer commands = encoder.Finish();
