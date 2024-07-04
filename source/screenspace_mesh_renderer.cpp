@@ -203,54 +203,10 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
           gpu_transform_buffers.contains(mesh->get_entity()->get_id());
 
       if (!buffer_exists) {
-        wgpu::BufferDescriptor buffer_desc{
-            .nextInChain = nullptr,
-            .label = "constant",
-            .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
-            .size = Engine::get_module<Graphics>()->get_buffer_stride(
-                sizeof(Math::Matrix4x4f)),
-            .mappedAtCreation = false,
-        };
-
-        auto constant_buffer =
-            Engine::get_module<Graphics>()->create_buffer(buffer_desc);
-
-        auto bindgroup = create_constant_bind_group(constant_buffer);
-
-        auto gpu_transform_buffer = std::make_shared<GPUTransformBuffer>();
-        gpu_transform_buffer->buffer = constant_buffer;
-        gpu_transform_buffer->bindgroup = bindgroup;
-
-        gpu_transform_buffers.insert_or_assign(mesh->get_entity()->get_id(),
-                                               gpu_transform_buffer);
+        create_constant_buffer(mesh->get_entity()->get_id());
       }
 
-      auto gpu_transform_buffer =
-          gpu_transform_buffers.at(mesh->get_entity()->get_id());
-      // update constant buffer
-      const auto rotate_mat =
-          Math::Matrix4x4f({{{std::cos(transform->get_angle()),
-                              -std::sin(transform->get_angle()), 0, 0},
-                             {std::sin(transform->get_angle()),
-                              std::cos(transform->get_angle()), 0, 0},
-                             {0, 0, 1, 0},
-                             {0, 0, 0, 1}}});
-      const auto translate_mat =
-          Math::Matrix4x4f({{{1, 0, 0, transform->get_position().x},
-                             {0, 1, 0, transform->get_position().y},
-                             {0, 0, 1, 0},
-                             {0, 0, 0, 1}}});
-
-      const auto scale_mat =
-          Math::Matrix4x4f({{{transform->get_scale().x, 0, 0, 0},
-                             {0, transform->get_scale().y, 0, 0},
-                             {0, 0, 1, 0},
-                             {0, 0, 0, 1}}});
-
-      const auto matrix = translate_mat * rotate_mat * scale_mat;
-
-      Engine::get_module<Graphics>()->update_buffer(
-          gpu_transform_buffer->buffer, std::vector(1, transposed(matrix)));
+      update_constant_buffer(mesh->get_entity()->get_id());
     }
 
     // update texture sampling buffer
@@ -549,4 +505,55 @@ void ScreenSpaceMeshRenderer::remove_material_buffer(EntityID id) {
   material->tex_offset_buffer.Destroy();
   material->tile_scale_buffer.Destroy();
   gpu_material_buffers.erase(id);
+}
+
+void ScreenSpaceMeshRenderer::create_constant_buffer(EntityID id) {
+  wgpu::BufferDescriptor buffer_desc{
+      .nextInChain = nullptr,
+      .label = "constant",
+      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+      .size = Engine::get_module<Graphics>()->get_buffer_stride(
+          sizeof(Math::Matrix4x4f)),
+      .mappedAtCreation = false,
+  };
+
+  auto constant_buffer =
+      Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+
+  auto bindgroup = create_constant_bind_group(constant_buffer);
+
+  auto gpu_transform_buffer = std::make_shared<GPUTransformBuffer>();
+  gpu_transform_buffer->buffer = constant_buffer;
+  gpu_transform_buffer->bindgroup = bindgroup;
+
+  gpu_transform_buffers.insert_or_assign(id, gpu_transform_buffer);
+}
+
+void ScreenSpaceMeshRenderer::update_constant_buffer(EntityID id) {
+  auto gpu_transform_buffer = gpu_transform_buffers.at(id);
+  // update constant buffer
+  const auto transform =
+      Engine::get_module<ScreenSpaceTransformStore>()->get(id);
+  const auto rotate_mat =
+      Math::Matrix4x4f({{{std::cos(transform->get_angle()),
+                          -std::sin(transform->get_angle()), 0, 0},
+                         {std::sin(transform->get_angle()),
+                          std::cos(transform->get_angle()), 0, 0},
+                         {0, 0, 1, 0},
+                         {0, 0, 0, 1}}});
+  const auto translate_mat =
+      Math::Matrix4x4f({{{1, 0, 0, transform->get_position().x},
+                         {0, 1, 0, transform->get_position().y},
+                         {0, 0, 1, 0},
+                         {0, 0, 0, 1}}});
+
+  const auto scale_mat = Math::Matrix4x4f({{{transform->get_scale().x, 0, 0, 0},
+                                            {0, transform->get_scale().y, 0, 0},
+                                            {0, 0, 1, 0},
+                                            {0, 0, 0, 1}}});
+
+  const auto matrix = translate_mat * rotate_mat * scale_mat;
+
+  Engine::get_module<Graphics>()->update_buffer(
+      gpu_transform_buffer->buffer, std::vector(1, transposed(matrix)));
 }

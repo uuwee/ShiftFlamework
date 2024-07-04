@@ -40,6 +40,9 @@ class ScreenSpaceMeshRenderer {
   wgpu::BindGroup create_constant_bind_group(
       const wgpu::Buffer& constant_buffer);
 
+  void create_constant_buffer(EntityID id);
+  void update_constant_buffer(EntityID id);
+
   void register_mesh(std::shared_ptr<ScreenSpaceMesh> mesh_component);
 
   void create_material_buffer(EntityID id, uint32_t height, uint32_t width,
