@@ -9,7 +9,7 @@
 #define EXPORT extern "C" __declspec(dllexport)
 #define IMPORT extern "C" __declspec(dllimport)
 
-namespace ShiftFlamework {
+namespace SF {
 class ExportObject {
  private:
   static uint32_t count;

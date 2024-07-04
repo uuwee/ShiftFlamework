@@ -2,7 +2,7 @@
 
 #include "graphics.hpp"
 
-namespace ShiftFlamework {
+namespace SF {
 struct GPUMeshBuffer {
  public:
   wgpu::Buffer vertex_buffer = nullptr;

@@ -3,7 +3,7 @@
 #include "entity.hpp"
 #include "vector.hpp"
 
-namespace ShiftFlamework {
+namespace SF {
 
 class Transform : public Component {
  public:

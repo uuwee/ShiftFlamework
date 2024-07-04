@@ -4,7 +4,7 @@
 #include <iostream>
 #include <ostream>
 
-namespace ShiftFlamework::Math {
+namespace SF::Math {
 
 template <typename T, int dimension>
 class Vector {

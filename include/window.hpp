@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 
-namespace ShiftFlamework {
+namespace SF {
 
 class Window {
  private:

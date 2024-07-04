@@ -6,12 +6,12 @@
 #include "screenspace_transform.hpp"
 #include "script.hpp"
 
-namespace ShiftFlamework {
+namespace SF {
 // entity.hpp
 EXPORT ExportObject* ShiftFlamework_Entity_Constructor() {
-  auto ptr = ShiftFlamework::Engine::get_module<ShiftFlamework::EntityStore>()
+  auto ptr = SF::Engine::get_module<SF::EntityStore>()
                  ->create();
-  auto container = new ShiftFlamework::ExportObject(ptr);
+  auto container = new SF::ExportObject(ptr);
   return container;
 }
 

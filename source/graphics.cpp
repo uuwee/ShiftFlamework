@@ -7,7 +7,7 @@
 #include "engine.hpp"
 #include "matrix.hpp"
 #include "vector.hpp"
-using namespace ShiftFlamework;
+using namespace SF;
 
 uint32_t ceil_to_next_multiple(uint32_t value, uint32_t step) {
   uint32_t divide_and_ceil = value / step + (value % step == 0 ? 0 : 1);

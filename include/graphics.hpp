@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 
-namespace ShiftFlamework {
+namespace SF {
 
 class Graphics {
  private:

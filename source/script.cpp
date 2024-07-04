@@ -4,7 +4,7 @@
 
 #include "engine.hpp"
 
-using namespace ShiftFlamework;
+using namespace SF;
 
 void Script::update() {
   auto lib = LoadLibraryA("runtime.dll");
@@ -16,7 +16,7 @@ std::shared_ptr<ScriptStore> Script::get_store() {
   return Engine::get_module<ScriptStore>();
 }
 
-std::shared_ptr<ShiftFlamework::Script> ShiftFlamework::ScriptStore::create(
+std::shared_ptr<SF::Script> SF::ScriptStore::create(
     EntityID id) {
   auto instance = std::make_shared<Script>();
   instances.insert_or_assign(id, instance);
@@ -28,12 +28,12 @@ std::shared_ptr<ShiftFlamework::Script> ShiftFlamework::ScriptStore::create(
   return instance;
 }
 
-std::shared_ptr<ShiftFlamework::Script> ShiftFlamework::ScriptStore::get(
+std::shared_ptr<SF::Script> SF::ScriptStore::get(
     EntityID id) {
   return instances.at(id);
 }
 
-void ShiftFlamework::ScriptStore::remove(EntityID id) {
+void SF::ScriptStore::remove(EntityID id) {
   auto removed = instances.at(id);
 
   auto lib = LoadLibraryA("runtime.dll");

@@ -6,7 +6,7 @@
 
 #include "module.hpp"
 
-namespace ShiftFlamework {
+namespace SF {
 class Engine {
  private:
   Engine();

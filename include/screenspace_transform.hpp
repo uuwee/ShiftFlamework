@@ -4,7 +4,7 @@
 #include "export_object.hpp"
 #include "graphics.hpp"
 #include "vector.hpp"
-namespace ShiftFlamework {
+namespace SF {
 
 class ScreenSpaceTransform : public Component {
   friend class ScreenSpaceTransformStore;

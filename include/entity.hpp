@@ -7,7 +7,7 @@
 #include <vector>
 #include <functional>
 
-namespace ShiftFlamework {
+namespace SF {
 class Component;
 class Entity;
 

@@ -6,7 +6,7 @@
 #include "matrix.hpp"
 #include "test_image.h"
 
-using namespace ShiftFlamework;
+using namespace SF;
 
 void ScreenSpaceMeshRenderer::initialize() {
   std::vector<wgpu::VertexAttribute> vertex_attributes(2);

@@ -1,7 +1,7 @@
 #include "input.hpp"
 
 #include <iostream>
-using namespace ShiftFlamework;
+using namespace SF;
 
 #if defined(_MSC_VER)
 #include <windows.h>

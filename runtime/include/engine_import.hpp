@@ -5,7 +5,7 @@
 #include <iostream>
 #include <memory>
 
-namespace ShiftFlamework {
+namespace SF {
 class ExportObject;
 
 class ScreenSpaceMesh;

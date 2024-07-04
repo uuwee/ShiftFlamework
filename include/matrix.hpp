@@ -5,7 +5,7 @@
 #include <ostream>
 #include <vector>
 
-namespace ShiftFlamework::Math {
+namespace SF::Math {
 
 template <typename T, int row, int column>
 class Matrix {

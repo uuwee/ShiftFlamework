@@ -8,7 +8,7 @@
 #include "engine_import.hpp"
 #include "test_image.h"
 
-using namespace ShiftFlamework;
+using namespace SF;
 
 std::shared_ptr<Entity> e = nullptr;
 std::queue<std::shared_ptr<Entity>> entities = {};

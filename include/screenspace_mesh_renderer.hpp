@@ -11,7 +11,7 @@
 #include "gpu_transform_buffer.hpp"
 #include "screenspace_mesh.hpp"
 
-namespace ShiftFlamework {
+namespace SF {
 class ScreenSpaceMeshRenderer {
  private:
   struct GPUResource {

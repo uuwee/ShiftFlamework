@@ -2,9 +2,9 @@
 
 #include "vector.hpp"
 
-using namespace ShiftFlamework::Math;
+using namespace SF::Math;
 
-namespace ShiftFlamework {
+namespace SF {
 struct Mesh {
   Vector3f position;
   Vector3f normal;
