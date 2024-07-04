@@ -187,12 +187,9 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
 
   // update constant
   int idx = 0;
-  for (auto entity = entity_list.begin(); entity != entity_list.end();) {
-    const auto& mesh = (*entity)->get_component<ScreenSpaceMesh>();
-    if (mesh == nullptr) {
-      entity = entity_list.erase(entity);
-      continue;
-    }
+  for (auto rendered : gpu_resources) {
+      const auto entity = Engine::get_module<EntityStore>()->get(rendered.first);
+    const auto& mesh = entity->get_component<ScreenSpaceMesh>();
     update_constant_buffer(mesh->get_entity()->get_id());
 
     // update texture sampling buffer
@@ -211,8 +208,6 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
             std::vector(1, material->get_tile_scale()));
       }
     }
-
-    entity++;
   }
 
   // render
@@ -228,14 +223,9 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
   pass.SetPipeline(render_pipeline);
 
-  for (const auto& entity : entity_list) {
-    auto entity_id = entity->get_id();
-
-    /*GPUResource resource{};
-    resource.mesh = *gpu_mesh_buffers.at(entity_id);
-    resource.transform = *gpu_transform_buffers.at(entity_id);
-    resource.material = *gpu_material_buffers.at(entity_id);*/
-    auto resource = gpu_resources.at(entity_id);
+  for (const auto& rendered : gpu_resources) {
+    auto entity_id = rendered.first;
+    auto resource = rendered.second;
 
     pass.SetVertexBuffer(0, resource.mesh.vertex_buffer, 0,
                          resource.mesh.vertex_buffer.GetSize());
