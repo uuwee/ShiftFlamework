@@ -28,7 +28,7 @@ void ScreenSpaceMeshRenderer::initialize() {
   wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
   wgsl_desc.code = R"(
       @group(0) @binding(0) var<uniform> world_mat: mat4x4f;
-      @group(1) @binding(0) var gradientTexture: texture_2d<f32>;
+      @group(1) @binding(0) var tex: texture_2d<f32>;
       @group(1) @binding(1) var textureSampler: sampler;
       @group(1) @binding(2) var<uniform> texture_offset: vec2f;
       @group(1) @binding(3) var<uniform> tile_scale: vec2f;
@@ -54,7 +54,7 @@ void ScreenSpaceMeshRenderer::initialize() {
       }
 
       @fragment fn fragmentMain(in: VertexOutput) -> @location(0) vec4f {
-        return vec4f(textureSample(gradientTexture, textureSampler, in.texture_coord * tile_scale + texture_offset).rgb, 1.0);
+        return vec4f(textureSample(tex, textureSampler, in.texture_coord * tile_scale + texture_offset).rgb, 1.0);
       }
     )";
   wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
@@ -288,18 +288,21 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   for (const auto& entity : entity_list) {
     const auto& mesh = entity->get_component<ScreenSpaceMesh>();
     auto entity_id = mesh->get_entity()->get_id();
-    auto gpu_buffer = gpu_mesh_buffers.at(entity_id);
+
+    GPUResource resource{};
+    resource.mesh = *gpu_mesh_buffers.at(entity_id);
+    resource.transform = *gpu_transform_buffers.at(entity_id);
+    resource.material = *gpu_material_buffers.at(entity_id);
+
     pass.SetVertexBuffer(
-        0, gpu_buffer->vertex_buffer, 0,
+        0, resource.mesh.vertex_buffer, 0,
         mesh->get_vertices().size() * sizeof(ScreenSpaceVertex));
 
-    pass.SetIndexBuffer(gpu_buffer->index_buffer, wgpu::IndexFormat::Uint32, 0,
-                        mesh->get_indices().size() * sizeof(uint32_t));
+    pass.SetIndexBuffer(resource.mesh.index_buffer, wgpu::IndexFormat::Uint32,
+                        0, mesh->get_indices().size() * sizeof(uint32_t));
 
-    auto transform_buffer = gpu_transform_buffers.at(entity_id);
-    pass.SetBindGroup(0, transform_buffer->bindgroup, 0, nullptr);
-    pass.SetBindGroup(1, gpu_material_buffers.at(entity_id)->bindgroup, 0,
-                      nullptr);
+    pass.SetBindGroup(0, resource.transform.bindgroup, 0, nullptr);
+    pass.SetBindGroup(1, resource.material.bindgroup, 0, nullptr);
     pass.DrawIndexed(mesh->get_indices().size(), 1, 0, 0, 0);
   }
   pass.End();

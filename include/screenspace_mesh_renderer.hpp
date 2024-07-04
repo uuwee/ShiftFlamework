@@ -14,12 +14,18 @@
 namespace ShiftFlamework {
 class ScreenSpaceMeshRenderer {
  private:
+  struct GPUResource {
+    GPUMeshBuffer mesh;
+    GPUTransformBuffer transform;
+    GPUMaterialBuffer material;
+  };
   std::unordered_map<EntityID, std::shared_ptr<GPUMeshBuffer>>
       gpu_mesh_buffers{};
   std::unordered_map<EntityID, std::shared_ptr<GPUTransformBuffer>>
       gpu_transform_buffers{};
   std::unordered_map<EntityID, std::shared_ptr<GPUMaterialBuffer>>
       gpu_material_buffers{};
+  std::unordered_map<EntityID, GPUResource> gpu_resources{};
 
   wgpu::RenderPipeline render_pipeline = nullptr;
   wgpu::Buffer constant_buffer_heap = nullptr;
