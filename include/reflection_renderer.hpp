@@ -20,6 +20,8 @@ class ReflectionRenderer {
   wgpu::BindGroup mesh_constant_bind_group;
   wgpu::BindGroup camera_constant_bind_group;
 
+  wgpu::TextureView depthTextureView;
+
   int count = 0;
 
  public:

@@ -48,6 +48,7 @@ void ReflectionRenderer::initialize() {
         var p: vec4f;
         p = view_proj_mat * world_mat * in.position;
         p /= p.w;
+        p = vec4f(p.xy, p.z * 0.5 + 0.5, 1.0);
         out.position = p;
         out.texcoord0 = in.texcoord0;
         return out;
@@ -126,12 +127,64 @@ void ReflectionRenderer::initialize() {
       Engine::get_module<Graphics>()->get_device().CreatePipelineLayout(
           &layout_desc);
 
+  wgpu::DepthStencilState depth_stencil_state{
+      .nextInChain = nullptr,
+      .format = wgpu::TextureFormat::Depth24Plus,
+      .depthWriteEnabled = true,
+      .depthCompare = wgpu::CompareFunction::Less,
+      .stencilFront =
+          wgpu::StencilFaceState{.compare = wgpu::CompareFunction::Always,
+                                 .failOp = wgpu::StencilOperation::Keep,
+                                 .depthFailOp = wgpu::StencilOperation::Keep,
+                                 .passOp = wgpu::StencilOperation::Keep},
+      .stencilBack =
+          wgpu::StencilFaceState{.compare = wgpu::CompareFunction::Always,
+                                 .failOp = wgpu::StencilOperation::Keep,
+                                 .depthFailOp = wgpu::StencilOperation::Keep,
+                                 .passOp = wgpu::StencilOperation::Keep},
+      .stencilReadMask = 0,
+      .stencilWriteMask = 0,
+      .depthBias = 0,
+      .depthBiasSlopeScale = 0.0f,
+      .depthBiasClamp = 0.0f,
+  };
+
+  wgpu::TextureDescriptor depthTextureDesc{
+      .nextInChain = nullptr,
+      .usage = wgpu::TextureUsage::RenderAttachment,
+      .dimension = wgpu::TextureDimension::e2D,
+      .size = {1080, 1080, 1},
+      .format = wgpu::TextureFormat::Depth24Plus,
+      .mipLevelCount = 1,
+      .sampleCount = 1,
+      .viewFormatCount = 1,
+      .viewFormats = &depth_stencil_state.format,
+  };
+
+  wgpu::Texture depthTexture =
+      Engine::get_module<Graphics>()->get_device().CreateTexture(
+          &depthTextureDesc);
+
+  wgpu::TextureViewDescriptor depthTextureViewDesc{
+      .nextInChain = nullptr,
+      .format = wgpu::TextureFormat::Depth24Plus,
+      .dimension = wgpu::TextureViewDimension::e2D,
+      .baseMipLevel = 0,
+      .mipLevelCount = 1,
+      .baseArrayLayer = 0,
+      .arrayLayerCount = 1,
+      .aspect = wgpu::TextureAspect::DepthOnly,
+  };
+
+  depthTextureView = depthTexture.CreateView(&depthTextureViewDesc);
+
   wgpu::RenderPipelineDescriptor render_pipeline_desc{
       .layout = pipeline_layout,
       .vertex = {.module = shader_module,
                  .entryPoint = "vertexMain",
                  .bufferCount = 1,
                  .buffers = &vertex_buffer_layout},
+      .depthStencil = &depth_stencil_state,
       .fragment = &fragment_state,
   };
 
@@ -290,8 +343,22 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
       .storeOp = wgpu::StoreOp::Store,
   };
 
-  wgpu::RenderPassDescriptor renderpass_desc{.colorAttachmentCount = 1,
-                                             .colorAttachments = &attachment};
+  wgpu::RenderPassDepthStencilAttachment depth_stencil_attachment{
+      .view = depthTextureView,
+      .depthLoadOp = wgpu::LoadOp::Clear,
+      .depthStoreOp = wgpu::StoreOp::Store,
+      .depthClearValue = 1.0f,
+      .depthReadOnly = false,
+      .stencilLoadOp = wgpu::LoadOp::Undefined,
+      .stencilStoreOp = wgpu::StoreOp::Undefined,
+      .stencilClearValue = 0,
+      .stencilReadOnly = true,
+  };
+
+  wgpu::RenderPassDescriptor renderpass_desc{
+      .colorAttachmentCount = 1,
+      .colorAttachments = &attachment,
+      .depthStencilAttachment = &depth_stencil_attachment};
 
   wgpu::CommandEncoder encoder =
       Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
