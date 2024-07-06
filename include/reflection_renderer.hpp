@@ -37,6 +37,8 @@ class ReflectionRenderer {
   int count = 0;
 
   void dispose_gpu_resource(EntityID id);
+  GPUMeshBuffer create_mesh_buffer(EntityID id);
+  GPUTransformBuffer create_constant_buffer(EntityID id);
 
  public:
   static std::string get_name() { return "ReflectionRenderer"; }

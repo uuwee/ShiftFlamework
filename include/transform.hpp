@@ -1,6 +1,7 @@
 #pragma once
 
 #include "entity.hpp"
+#include "matrix.hpp"
 #include "vector.hpp"
 
 namespace SF {
@@ -26,6 +27,8 @@ class Transform : public Component {
   void set_position(Math::Vector3f position);
   void set_scale(Math::Vector3f scale);
   void set_euler_angle(Math::Vector3f euler_angle);
+
+  Math::Matrix4x4f get_world_matrix();
 };
 
 class TransformStore {

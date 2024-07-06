@@ -38,3 +38,44 @@ void Transform::set_scale(Math::Vector3f scale) { this->scale = scale; }
 void Transform::set_euler_angle(Math::Vector3f euler_angle) {
   this->euler_angle = euler_angle;
 }
+
+Math::Matrix4x4f Transform::get_world_matrix() {
+  const auto translate_mat = Math::Matrix4x4f({{
+      {1.0f, 0.0f, 0.0f, position.x},
+      {0.0f, 1.0f, 0.0f, position.y},
+      {0.0f, 0.0f, 1.0f, position.z},
+      {0.0f, 0.0f, 0.0f, 1.0f},
+  }});
+
+  const auto scale_mat = Math::Matrix4x4f({{
+      {scale.x, 0.0f, 0.0f, 0.0f},
+      {0.0f, scale.y, 0.0f, 0.0f},
+      {0.0f, 0.0f, scale.z, 0.0f},
+      {0.0f, 0.0f, 0.0f, 1.0f},
+  }});
+
+  const auto rotate_x = Math::Matrix4x4f({{
+      {1.0f, 0.0f, 0.0f, 0.0f},
+      {0.0f, cos(euler_angle.x), -sin(euler_angle.x), 0.0f},
+      {0.0f, sin(euler_angle.x), cos(euler_angle.x), 0.0f},
+      {0.0f, 0.0f, 0.0f, 1.0f},
+  }});
+
+  const auto rotate_y = Math::Matrix4x4f({{
+      {cos(euler_angle.y), 0.0f, sin(euler_angle.y), 0.0f},
+      {0.0f, 1.0f, 0.0f, 0.0f},
+      {-sin(euler_angle.y), 0.0f, cos(euler_angle.y), 0.0f},
+      {0.0f, 0.0f, 0.0f, 1.0f},
+  }});
+
+  const auto rotate_z = Math::Matrix4x4f({{
+      {cos(euler_angle.z), -sin(euler_angle.z), 0.0f, 0.0f},
+      {sin(euler_angle.z), cos(euler_angle.z), 0.0f, 0.0f},
+      {0.0f, 0.0f, 1.0f, 0.0f},
+      {0.0f, 0.0f, 0.0f, 1.0f},
+  }});
+
+  const auto world_mat =
+      translate_mat * rotate_z * rotate_y * rotate_x * scale_mat;
+  return world_mat;
+}

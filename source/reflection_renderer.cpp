@@ -5,8 +5,11 @@
 #include <initializer_list>
 
 #include "engine.hpp"
+#include "entity.hpp"
 #include "graphics.hpp"
 #include "matrix.hpp"
+#include "mesh.hpp"
+#include "transform.hpp"
 #include "vector.hpp"
 
 using namespace SF;
@@ -314,69 +317,87 @@ void ReflectionRenderer::initialize() {
 
 void ReflectionRenderer::render(wgpu::TextureView render_target) {
   // update constants
-  auto theta = 0.01f * (count++);
-  auto scale = Math::Vector3f({0.3f, 0.3f, 0.3f});
-  auto scale_mat = Math::Matrix4x4f({{
-      {scale.x, 0.0f, 0.0f, 0.0f},
-      {0.0f, scale.y, 0.0f, 0.0f},
-      {0.0f, 0.0f, scale.z, 0.0f},
-      {0.0f, 0.0f, 0.0f, 1.0f},
-  }});
+  auto entity_list = Engine::get_module<EntityStore>()->get_all();
 
-  auto translation = Math::Vector3f({0.5f, 0.0f, 0.0f});
-  auto translation_mat = Math::Matrix4x4f({{
-      {1.0f, 0.0f, 0.0f, translation.x},
-      {0.0f, 1.0f, 0.0f, translation.y},
-      {0.0f, 0.0f, 1.0f, translation.z},
-      {0, 0, 0, 1.0f},
-  }});
+  // create gpu resources
+  for (const auto& entity : entity_list) {
+    const auto& mesh = entity->get_component<Mesh>();
+    const auto& transform = entity->get_component<Transform>();
 
-  auto rotation0 = Math::Matrix4x4f({{
-      {std::cosf(theta), -std::sinf(theta), 0.0f, 0.0f},
-      {std::sinf(theta), std::cosf(theta), 0.0f, 0.0f},
-      {0.0f, 0.0f, 1.0f, 0.0f},
-      {0.0f, 0.0f, 0.0f, 1.0f},
-  }});
+    auto entity_id = entity->get_id();
+    if (mesh == nullptr || transform == nullptr) {
+      dispose_gpu_resource(entity_id);
+      continue;
+    }
 
-  auto angle = 3.0f * 3.1415f / 4.0f;
-  auto rotation1 = Math::Matrix4x4f({{
-      {1.0f, 0.0f, 0.0f, 0.0f},
-      {0.0f, std::cosf(angle), std::sinf(angle), 0.0f},
-      {0.0f, -std::sinf(angle), std::cosf(angle), 0.0f},
-      {0.0f, 0.0f, 0.0f, 1.0f},
-  }});
+    if (!gpu_resources.contains(entity_id)) {
+      GPUResource resource{};
+      resource.mesh_buffer = create_mesh_buffer(entity_id);
+      resource.transform_buffer = create_constant_buffer(entity_id);
 
-  auto world_mat = rotation1 * rotation0 * translation_mat * scale_mat;
-  auto mat_vec = std::vector<float>();
-  for (auto i = 0; i < 4; i++) {
-    for (auto j = 0; j < 4; j++) {
-      mat_vec.push_back(world_mat.internal_data.at(j).at(i));
+      gpu_resources.insert_or_assign(entity_id, resource);
     }
   }
 
-  Engine::get_module<Graphics>()->update_buffer(mesh_constant_buffer, mat_vec);
+  // update constants
+  int idx = 0;
+  for (auto rendered : gpu_resources) {
+    const auto entity = Engine::get_module<EntityStore>()->get(rendered.first);
 
-  // camera
-  auto ratio = 1080.0f / 1080.0f;
-  auto focal_length = 2.0f;
-  auto near = 0.01f;
-  auto far = 100.0f;
-  auto divides = 1.0f / (focal_length * (far - near));
-  auto view = Math::Matrix4x4f({{
-      {1.0f, 0.0f, 0.0f, 0.0f},
-      {0.0f, ratio, 0.0f, 0.0f},
-      {0.0f, 0.0f, far * divides, -far * near * divides},
-      {0.0f, 0.0f, 1.0f / focal_length, 1.0f},
-  }});
-  auto proj_vec = std::vector<float>();
-  for (auto i = 0; i < 4; i++) {
-    for (auto j = 0; j < 4; j++) {
-      proj_vec.push_back(view.internal_data.at(j).at(i));
+    // update constant buffer
+    auto& gpu_transform_buffer = rendered.second.transform_buffer;
+    auto transform = entity->get_component<Transform>();
+    const auto translate = Math::Matrix4x4f({{
+        {1.0f, 0.0f, 0.0f, transform->get_position().x},
+        {0.0f, 1.0f, 0.0f, transform->get_position().y},
+        {0.0f, 0.0f, 1.0f, transform->get_position().z},
+        {0.0f, 0.0f, 0.0f, 1.0f},
+    }});
+
+    const auto scale = Math::Matrix4x4f({{
+        {transform->get_scale().x, 0.0f, 0.0f, 0.0f},
+        {0.0f, transform->get_scale().y, 0.0f, 0.0f},
+        {0.0f, 0.0f, transform->get_scale().z, 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f},
+    }});
+
+    const auto ax = transform->get_euler_angle().x;
+    const auto ay = transform->get_euler_angle().y;
+    const auto az = transform->get_euler_angle().z;
+    const auto rotate_x = Math::Matrix4x4f({{
+        {1.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, cos(ax), -sin(ax), 0.0f},
+        {0.0f, sin(ax), cos(ax), 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f},
+    }});
+
+    const auto rotate_y = Math::Matrix4x4f({{
+        {cos(ay), 0.0f, sin(ay), 0.0f},
+        {0.0f, 1.0f, 0.0f, 0.0f},
+        {-sin(ay), 0.0f, cos(ay), 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f},
+    }});
+
+    const auto rotate_z = Math::Matrix4x4f({{
+        {cos(az), -sin(az), 0.0f, 0.0f},
+        {sin(az), cos(az), 0.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f},
+    }});
+
+    const auto world_mat = translate * rotate_z * rotate_y * rotate_x * scale;
+    auto world_mat_vec = std::vector<float>();
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 4; j++) {
+        world_mat_vec.push_back(world_mat.internal_data.at(j).at(i));
+      }
     }
+
+    Engine::get_module<Graphics>()->update_buffer(gpu_transform_buffer.buffer,
+                                                  world_mat_vec);
   }
 
-  Engine::get_module<Graphics>()->update_buffer(camera_buffer, proj_vec);
-
+  // render
   wgpu::RenderPassColorAttachment attachment{
       .view = render_target,
       .loadOp = wgpu::LoadOp::Clear,
@@ -416,4 +437,76 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
   wgpu::CommandBuffer commands = encoder.Finish();
 
   Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1, &commands);
+}
+
+GPUMeshBuffer ReflectionRenderer::create_mesh_buffer(EntityID id) {
+  auto mesh = Engine::get_module<MeshStore>()->get(id);
+  auto vertices = mesh->get_vertices();
+  auto indices = mesh->get_indices();
+
+  GPUMeshBuffer gpu_mesh_buffer{};
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+        .nextInChain = nullptr,
+        .label = "vertex buffer",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
+        .size = vertices.size() * sizeof(Vertex),
+        .mappedAtCreation = false};
+
+    gpu_mesh_buffer.vertex_buffer =
+        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+    Engine::get_module<Graphics>()->update_buffer(gpu_mesh_buffer.vertex_buffer,
+                                                  vertices);
+  }
+
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+        .nextInChain = nullptr,
+        .label = "index buffer",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Index,
+        .size = indices.size() * sizeof(uint32_t),
+        .mappedAtCreation = false};
+
+    gpu_mesh_buffer.index_buffer =
+        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+    Engine::get_module<Graphics>()->update_buffer(gpu_mesh_buffer.index_buffer,
+                                                  indices);
+  }
+  return gpu_mesh_buffer;
+}
+
+GPUTransformBuffer ReflectionRenderer::create_constant_buffer(
+    EntityID entity_id) {
+  auto transform = Engine::get_module<TransformStore>()->get(entity_id);
+  auto position = transform->get_position();
+  auto angle = transform->get_euler_angle();
+  auto scale = transform->get_scale();
+
+  GPUTransformBuffer gpu_transform_buffer{};
+  wgpu::BufferDescriptor buffer_desc{
+      .nextInChain = nullptr,
+      .label = "constant",
+      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+      .size = Engine::get_module<Graphics>()->get_buffer_stride(
+          sizeof(Math::Matrix4x4f)),
+      .mappedAtCreation = false,
+  };
+
+  auto buffer = Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+
+  auto binding = wgpu::BindGroupEntry{.binding = 0,
+                                      .buffer = buffer,
+                                      .offset = 0,
+                                      .size = sizeof(Math::Matrix4x4f)};
+  wgpu::BindGroupDescriptor bind_group_desc{
+      .layout = mesh_constant_bind_group_layout,
+      .entryCount = 1,
+      .entries = &binding};
+
+  gpu_transform_buffer.buffer = buffer;
+  gpu_transform_buffer.bindgroup =
+      Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+          &bind_group_desc);
+
+  return gpu_transform_buffer;
 }
