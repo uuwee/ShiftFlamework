@@ -48,8 +48,7 @@ void ReflectionRenderer::initialize() {
         var p: vec4f;
         p = view_proj_mat * world_mat * in.position;
         p /= p.w;
-        p = vec4f(p.xy, p.z * 0.5 + 0.5, 1.0);
-        out.position = p;
+        out.position = vec4f(p.xy, p.z * 0.5 + 0.5, 1.0);
         out.texcoord0 = in.texcoord0;
         return out;
     }
@@ -358,11 +357,16 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
   Engine::get_module<Graphics>()->update_buffer(mesh_constant_buffer, mat_vec);
 
   // camera
+  auto ratio = 1080.0f / 1080.0f;
+  auto focal_length = 2.0f;
+  auto near = 0.01f;
+  auto far = 100.0f;
+  auto divides = 1.0f / (focal_length * (far - near));
   auto view = Math::Matrix4x4f({{
       {1.0f, 0.0f, 0.0f, 0.0f},
-      {0.0f, 1.0f, 0.0f, 0.0f},
-      {0.0f, 0.0f, 1.0f, 0.0f},
-      {0.0f, 0.0f, 0.0f, 1.0f},
+      {0.0f, ratio, 0.0f, 0.0f},
+      {0.0f, 0.0f, far * divides, -far * near * divides},
+      {0.0f, 0.0f, 1.0f / focal_length, 1.0f},
   }});
   auto proj_vec = std::vector<float>();
   for (auto i = 0; i < 4; i++) {
