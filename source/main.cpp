@@ -14,6 +14,7 @@
 #include "graphics.hpp"
 #include "input.hpp"
 #include "material.hpp"
+#include "reflection_renderer.hpp"
 #include "screenspace_mesh.hpp"
 #include "screenspace_mesh_renderer.hpp"
 #include "script.hpp"
@@ -67,10 +68,12 @@ void import() {
 
 void main_loop() {
   // user script
-  e->get_component<Script>()->update();
+  // e->get_component<Script>()->update();
 
   Engine::get_module<Input>()->update();
-  Engine::get_module<ScreenSpaceMeshRenderer>()->render(
+  // Engine::get_module<ScreenSpaceMeshRenderer>()->render(
+  //  Engine::get_module<Window>()->get_swap_chain().GetCurrentTextureView());
+  Engine::get_module<ReflectionRenderer>()->render(
       Engine::get_module<Window>()->get_swap_chain().GetCurrentTextureView());
 }
 
@@ -87,11 +90,12 @@ void start() {
   Engine::get_module<Window>()->initialize_swap_chain(
       Engine::get_module<Graphics>()->get_instance(),
       Engine::get_module<Graphics>()->get_device());
-  Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
+  // Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
+  Engine::get_module<ReflectionRenderer>()->initialize();
 
   // e = std::make_shared<Entity>();
   e = Engine::get_module<EntityStore>()->create();
-  e->add_component<Script>();
+  // e->add_component<Script>();
 
   import();
 
@@ -103,7 +107,8 @@ int main() {
   // initialize modules
   Engine::add_module<Graphics>();
   Engine::add_module<Input>();
-  Engine::add_module<ScreenSpaceMeshRenderer>();
+  // Engine::add_module<ScreenSpaceMeshRenderer>();
+  Engine::add_module<ReflectionRenderer>();
 
   Engine::add_module<EntityStore>();
   Engine::add_module<ScriptStore>();

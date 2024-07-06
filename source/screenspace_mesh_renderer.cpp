@@ -131,7 +131,6 @@ void ScreenSpaceMeshRenderer::initialize() {
       .entryCount = 4,
       .entries = texture_layout_entries.data(),
   };
-
   texture_bind_group_layout =
       Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
           &texture_bind_group_layout_desc);
