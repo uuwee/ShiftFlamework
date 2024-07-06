@@ -97,7 +97,7 @@ void start() {
   e = Engine::get_module<EntityStore>()->create();
   // e->add_component<Script>();
 
-  import();
+  // import();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);

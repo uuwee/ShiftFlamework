@@ -20,6 +20,8 @@ class ReflectionRenderer {
   wgpu::BindGroup mesh_constant_bind_group;
   wgpu::BindGroup camera_constant_bind_group;
 
+  int count = 0;
+
  public:
   static std::string get_name() { return "ReflectionRenderer"; }
   void initialize();

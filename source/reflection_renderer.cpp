@@ -146,15 +146,15 @@ void ReflectionRenderer::initialize() {
       Math::Vector2f texcoord;
     };
     std::vector<Vertex> vertices = {
-        Vertex{.position = Math::Vector4f({-0.5f, -0.5f, -0.3f, 1.0f}),
+        Vertex{.position = Math::Vector4f({-0.4f, -0.4f, -0.2f, 1.0f}),
                .texcoord = Math::Vector2f({0.0f, 0.0f})},
-        Vertex{.position = Math::Vector4f({0.5f, -0.5f, -0.3f, 1.0f}),
+        Vertex{.position = Math::Vector4f({0.4f, -0.4f, -0.2f, 1.0f}),
                .texcoord = Math::Vector2f({1.0f, 0.0f})},
-        Vertex{.position = Math::Vector4f({0.5f, 0.5f, -0.3f, 1.0f}),
+        Vertex{.position = Math::Vector4f({0.4f, 0.4f, -0.2f, 1.0f}),
                .texcoord = Math::Vector2f({1.0f, 1.0f})},
-        Vertex{.position = Math::Vector4f({-0.5f, 0.5f, -0.3f, 1.0f}),
+        Vertex{.position = Math::Vector4f({-0.4f, 0.4f, -0.2f, 1.0f}),
                .texcoord = Math::Vector2f({0.0f, 1.0f})},
-        Vertex{.position = Math::Vector4f({0.0f, 0.0f, 0.5f, 1.0f}),
+        Vertex{.position = Math::Vector4f({0.0f, 0.0f, 0.3f, 1.0f}),
                .texcoord = Math::Vector2f({0.5f, 0.5f})}};
 
     // mesh vertex buffer
@@ -261,6 +261,29 @@ void ReflectionRenderer::initialize() {
 }
 
 void ReflectionRenderer::render(wgpu::TextureView render_target) {
+  // update constants
+  auto theta = 0.01f * (count++);
+  auto world_mat = std::vector<float>{
+      1.0f,
+      0.0f,
+      0.0f,
+      0.0f,
+      0.0f,
+      std::cosf(theta),
+      -std::sinf(theta),
+      0.0f,
+      0.0f,
+      std::sinf(theta),
+      std::cosf(theta),
+      0.0f,
+      0.0f,
+      0.0f,
+      0.0f,
+      1.0f,
+  };
+  Engine::get_module<Graphics>()->update_buffer(mesh_constant_buffer,
+                                                world_mat);
+
   wgpu::RenderPassColorAttachment attachment{
       .view = render_target,
       .loadOp = wgpu::LoadOp::Clear,
