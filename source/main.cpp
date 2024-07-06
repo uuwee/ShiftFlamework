@@ -1,5 +1,8 @@
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
 #include <windows.h>
 
+#include <assimp/Importer.hpp>
 #include <iostream>
 #include <memory>
 #include <queue>
@@ -17,10 +20,50 @@
 #include "test_image.h"
 #include "vector.hpp"
 #include "window.hpp"
-
 using namespace SF;
 
 std::shared_ptr<Entity> e;
+
+std::string transform_to_string(aiMatrix4x4 transform) {
+  std::string result = "";
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      result += std::to_string(transform[i][j]) + " ";
+    }
+    result += "\n";
+  }
+  return result;
+}
+
+void search_node(aiNode* node, int depth = 0) {
+  for (int i = 0; i < depth; i++) {
+    std::cout << "  ";
+  }
+  std::cout << "name=" << node->mName.C_Str()
+            << " transform=" << transform_to_string(node->mTransformation)
+            << std::endl;
+  if (node->mNumChildren > 0) {
+    for (int i = 0; i < node->mNumChildren; i++) {
+      search_node(node->mChildren[i], depth + 1);
+    }
+  }
+  return;
+}
+
+void import() {
+  const auto filePath =
+      "E:/resources/models/Bistro_v5_2/Bistro_v5_2/BistroExterior.fbx";
+  Assimp::Importer importer;
+  const aiScene* scene = importer.ReadFile(
+      filePath, aiProcess_Triangulate | aiProcess_CalcTangentSpace |
+                    aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
+  if (scene == nullptr) {
+    std::cerr << "failed to load: " << filePath
+              << "assimp error: " << importer.GetErrorString() << std::endl;
+  } else {
+    search_node(scene->mRootNode);
+  }
+}
 
 void main_loop() {
   // user script
@@ -46,9 +89,11 @@ void start() {
       Engine::get_module<Graphics>()->get_device());
   Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
 
-  //e = std::make_shared<Entity>();
+  // e = std::make_shared<Entity>();
   e = Engine::get_module<EntityStore>()->create();
   e->add_component<Script>();
+
+  import();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
