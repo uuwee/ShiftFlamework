@@ -199,15 +199,15 @@ void ReflectionRenderer::initialize() {
       Math::Vector2f texcoord;
     };
     std::vector<Vertex> vertices = {
-        Vertex{.position = Math::Vector4f({-0.4f, -0.4f, -0.2f, 1.0f}),
+        Vertex{.position = Math::Vector4f({-0.5f, -0.5f, -0.3f, 1.0f}),
                .texcoord = Math::Vector2f({0.0f, 0.0f})},
-        Vertex{.position = Math::Vector4f({0.4f, -0.4f, -0.2f, 1.0f}),
+        Vertex{.position = Math::Vector4f({0.5f, -0.5f, -0.3f, 1.0f}),
                .texcoord = Math::Vector2f({1.0f, 0.0f})},
-        Vertex{.position = Math::Vector4f({0.4f, 0.4f, -0.2f, 1.0f}),
+        Vertex{.position = Math::Vector4f({0.5f, 0.5f, -0.3f, 1.0f}),
                .texcoord = Math::Vector2f({1.0f, 1.0f})},
-        Vertex{.position = Math::Vector4f({-0.4f, 0.4f, -0.2f, 1.0f}),
+        Vertex{.position = Math::Vector4f({-0.5f, 0.5f, -0.3f, 1.0f}),
                .texcoord = Math::Vector2f({0.0f, 1.0f})},
-        Vertex{.position = Math::Vector4f({0.0f, 0.0f, 0.3f, 1.0f}),
+        Vertex{.position = Math::Vector4f({0.0f, 0.0f, 0.5f, 1.0f}),
                .texcoord = Math::Vector2f({0.5f, 0.5f})}};
 
     // mesh vertex buffer
@@ -316,26 +316,62 @@ void ReflectionRenderer::initialize() {
 void ReflectionRenderer::render(wgpu::TextureView render_target) {
   // update constants
   auto theta = 0.01f * (count++);
-  auto world_mat = std::vector<float>{
-      1.0f,
-      0.0f,
-      0.0f,
-      0.0f,
-      0.0f,
-      std::cosf(theta),
-      -std::sinf(theta),
-      0.0f,
-      0.0f,
-      std::sinf(theta),
-      std::cosf(theta),
-      0.0f,
-      0.0f,
-      0.0f,
-      0.0f,
-      1.0f,
-  };
-  Engine::get_module<Graphics>()->update_buffer(mesh_constant_buffer,
-                                                world_mat);
+  auto scale = Math::Vector3f({0.3f, 0.3f, 0.3f});
+  auto scale_mat = Math::Matrix4x4f({{
+      {scale.x, 0.0f, 0.0f, 0.0f},
+      {0.0f, scale.y, 0.0f, 0.0f},
+      {0.0f, 0.0f, scale.z, 0.0f},
+      {0.0f, 0.0f, 0.0f, 1.0f},
+  }});
+
+  auto translation = Math::Vector3f({0.5f, 0.0f, 0.0f});
+  auto translation_mat = Math::Matrix4x4f({{
+      {1.0f, 0.0f, 0.0f, translation.x},
+      {0.0f, 1.0f, 0.0f, translation.y},
+      {0.0f, 0.0f, 1.0f, translation.z},
+      {0, 0, 0, 1.0f},
+  }});
+
+  auto rotation0 = Math::Matrix4x4f({{
+      {std::cosf(theta), -std::sinf(theta), 0.0f, 0.0f},
+      {std::sinf(theta), std::cosf(theta), 0.0f, 0.0f},
+      {0.0f, 0.0f, 1.0f, 0.0f},
+      {0.0f, 0.0f, 0.0f, 1.0f},
+  }});
+
+  auto angle = 3.0f * 3.1415f / 4.0f;
+  auto rotation1 = Math::Matrix4x4f({{
+      {1.0f, 0.0f, 0.0f, 0.0f},
+      {0.0f, std::cosf(angle), std::sinf(angle), 0.0f},
+      {0.0f, -std::sinf(angle), std::cosf(angle), 0.0f},
+      {0.0f, 0.0f, 0.0f, 1.0f},
+  }});
+
+  auto world_mat = rotation1 * rotation0 * translation_mat * scale_mat;
+  auto mat_vec = std::vector<float>();
+  for (auto i = 0; i < 4; i++) {
+    for (auto j = 0; j < 4; j++) {
+      mat_vec.push_back(world_mat.internal_data.at(j).at(i));
+    }
+  }
+
+  Engine::get_module<Graphics>()->update_buffer(mesh_constant_buffer, mat_vec);
+
+  // camera
+  auto view = Math::Matrix4x4f({{
+      {1.0f, 0.0f, 0.0f, 0.0f},
+      {0.0f, 1.0f, 0.0f, 0.0f},
+      {0.0f, 0.0f, 1.0f, 0.0f},
+      {0.0f, 0.0f, 0.0f, 1.0f},
+  }});
+  auto proj_vec = std::vector<float>();
+  for (auto i = 0; i < 4; i++) {
+    for (auto j = 0; j < 4; j++) {
+      proj_vec.push_back(view.internal_data.at(j).at(i));
+    }
+  }
+
+  Engine::get_module<Graphics>()->update_buffer(camera_buffer, proj_vec);
 
   wgpu::RenderPassColorAttachment attachment{
       .view = render_target,
