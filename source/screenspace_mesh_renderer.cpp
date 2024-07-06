@@ -158,8 +158,8 @@ void ScreenSpaceMeshRenderer::initialize() {
 }
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
-  std::cout << "Rendering: #gpu_resources=" << gpu_resources.size()
-            << std::endl;
+  //   std::cout << "Rendering: #gpu_resources=" << gpu_resources.size()
+  // << std::endl;
 
   auto entity_list = Engine::get_module<EntityStore>()->get_all();
 
@@ -188,7 +188,7 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   // update constant
   int idx = 0;
   for (auto rendered : gpu_resources) {
-      const auto entity = Engine::get_module<EntityStore>()->get(rendered.first);
+    const auto entity = Engine::get_module<EntityStore>()->get(rendered.first);
     const auto& mesh = entity->get_component<ScreenSpaceMesh>();
     update_constant_buffer(mesh->get_entity()->get_id());
 
@@ -296,8 +296,8 @@ wgpu::BindGroup ScreenSpaceMeshRenderer::create_texture_bind_group(
 
 GPUMeshBuffer ScreenSpaceMeshRenderer::register_mesh(
     std::shared_ptr<ScreenSpaceMesh> mesh_component) {
-  //auto gpu_resource = std::make_shared<GPUMeshBuffer>();
-    GPUMeshBuffer gpu_resource{};
+  // auto gpu_resource = std::make_shared<GPUMeshBuffer>();
+  GPUMeshBuffer gpu_resource{};
   {
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
@@ -448,8 +448,8 @@ GPUMaterialBuffer ScreenSpaceMeshRenderer::create_material_buffer(
 
   material.bindgroup =
       Engine::get_module<ScreenSpaceMeshRenderer>()->create_texture_bind_group(
-          material.texture_view, material.sampler,
-          material.tex_offset_buffer, material.tile_scale_buffer);
+          material.texture_view, material.sampler, material.tex_offset_buffer,
+          material.tile_scale_buffer);
 
   return material;
 }
