@@ -15,7 +15,7 @@
 #include "entity.hpp"
 #include "graphics.hpp"
 #include "input.hpp"
-#include "material.hpp"
+#include "screenspace_material.hpp"
 #include "mesh.hpp"
 #include "reflection_renderer.hpp"
 #include "screenspace_mesh.hpp"
@@ -195,7 +195,7 @@ int main() {
   Engine::add_module<EntityStore>();
   Engine::add_module<ScriptStore>();
   Engine::add_module<ScreenSpaceMeshStore>();
-  Engine::add_module<MaterialStore>();
+  Engine::add_module<ScreenSpaceMaterialStore>();
   Engine::add_module<ScreenSpaceTransformStore>();
   Engine::add_module<MeshStore>();
   Engine::add_module<TransformStore>();
@@ -208,6 +208,6 @@ int main() {
   Engine::get_module<ScreenSpaceMeshStore>()->initialize();
   Engine::get_module<MeshStore>()->initialize();
   Engine::get_module<TransformStore>()->initialize();
-  Engine::get_module<MaterialStore>()->initialize();
+  Engine::get_module<ScreenSpaceMaterialStore>()->initialize();
   Engine::get_module<ScreenSpaceTransformStore>()->initialize();
 }

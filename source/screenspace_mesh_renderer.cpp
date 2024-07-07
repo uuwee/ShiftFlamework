@@ -2,7 +2,7 @@
 
 #include "engine.hpp"
 #include "graphics.hpp"
-#include "material.hpp"
+#include "screenspace_material.hpp"
 #include "matrix.hpp"
 #include "test_image.h"
 
@@ -165,7 +165,7 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   // create gpu resource
   for (const auto& entity : entity_list) {
     const auto& mesh = entity->get_component<ScreenSpaceMesh>();
-    const auto& material = entity->get_component<Material>();
+    const auto& material = entity->get_component<ScreenSpaceMaterial>();
     const auto& transform = entity->get_component<ScreenSpaceTransform>();
 
     auto entity_id = entity->get_id();
@@ -194,7 +194,7 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
     // update texture sampling buffer
     {
       auto entity_id = mesh->get_entity()->get_id();
-      auto material = mesh->get_entity()->get_component<Material>();
+      auto material = mesh->get_entity()->get_component<ScreenSpaceMaterial>();
       if (gpu_resources.contains(entity_id) && material != nullptr) {
         // auto gpu_material_buffer = gpu_material_buffers.at(entity_id);
         auto& gpu_material_buffer = gpu_resources.at(entity_id).material;

@@ -5,8 +5,8 @@
 #include "vector.hpp"
 
 namespace SF {
-class Material : public Component {
-  friend class MaterialStore;
+class ScreenSpaceMaterial : public Component {
+  friend class ScreenSpaceMaterialStore;
 
  private:
   friend class ScreenSpaceMeshRenderer;
@@ -17,9 +17,9 @@ class Material : public Component {
   uint32_t width = 0;
 
  public:
-  static std::shared_ptr<MaterialStore> get_store();
-  Material(){};
-  ~Material(){};
+  static std::shared_ptr<ScreenSpaceMaterialStore> get_store();
+  ScreenSpaceMaterial(){};
+  ~ScreenSpaceMaterial(){};
 
   void create_gpu_buffer(uint32_t height, uint32_t width, const uint8_t* data);
 
@@ -27,18 +27,18 @@ class Material : public Component {
   const Math::Vector2f get_tile_scale();
 };
 
-class MaterialStore {
+class ScreenSpaceMaterialStore {
  private:
-  std::unordered_map<EntityID, std::shared_ptr<Material>> instances{};
+  std::unordered_map<EntityID, std::shared_ptr<ScreenSpaceMaterial>> instances{};
 
  public:
-  static std::string get_name() { return "MaterialStore"; }
+  static std::string get_name() { return "ScreenSpaceMaterialStore"; }
   void initialize() {
     instances = {};
     instances.clear();
   }
-  std::shared_ptr<Material> create(EntityID id);
-  std::shared_ptr<Material> get(EntityID id);
+  std::shared_ptr<ScreenSpaceMaterial> create(EntityID id);
+  std::shared_ptr<ScreenSpaceMaterial> get(EntityID id);
   void remove(EntityID id);
   int size() { return instances.size(); };
 };

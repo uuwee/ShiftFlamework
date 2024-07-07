@@ -19,8 +19,8 @@ extern "C" __declspec(dllexport) void on_start() {
   e = create_entity();
   e->add_component<ScreenSpaceMesh>();
   e->add_component<ScreenSpaceTransform>();
-  e->add_component<Material>();
-  e->get_component<Material>()->create_gpu_buffer(
+  e->add_component<ScreenSpaceMaterial>();
+  e->get_component<ScreenSpaceMaterial>()->create_gpu_buffer(
       test_image_height, test_image_width, test_image_data);
 }
 
@@ -30,8 +30,8 @@ extern "C" __declspec(dllexport) void on_update() {
     auto tmp = create_entity();
     tmp->add_component<ScreenSpaceMesh>();
     tmp->add_component<ScreenSpaceTransform>();
-    tmp->add_component<Material>();
-    tmp->get_component<Material>()->create_gpu_buffer(
+    tmp->add_component<ScreenSpaceMaterial>();
+    tmp->get_component<ScreenSpaceMaterial>()->create_gpu_buffer(
         test_image_height, test_image_width, test_image_data);
     entities.push(tmp);
   }

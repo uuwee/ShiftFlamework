@@ -1,4 +1,4 @@
-#include "material.hpp"
+#include "screenspace_material.hpp"
 
 #include <memory>
 
@@ -6,15 +6,15 @@
 #include "screenspace_mesh_renderer.hpp"
 using namespace SF;
 
-const Math::Vector2f Material::get_uv_offset() { return uv_offset; }
+const Math::Vector2f ScreenSpaceMaterial::get_uv_offset() { return uv_offset; }
 
-const Math::Vector2f Material::get_tile_scale() { return tile_scale; }
+const Math::Vector2f ScreenSpaceMaterial::get_tile_scale() { return tile_scale; }
 
-std::shared_ptr<MaterialStore> Material::get_store() {
-  return Engine::get_module<MaterialStore>();
+std::shared_ptr<ScreenSpaceMaterialStore> ScreenSpaceMaterial::get_store() {
+  return Engine::get_module<ScreenSpaceMaterialStore>();
 }
 
-void Material::create_gpu_buffer(uint32_t height, uint32_t width,
+void ScreenSpaceMaterial::create_gpu_buffer(uint32_t height, uint32_t width,
                                  const uint8_t* data) {
   this->height = height;
   this->width = width;
@@ -25,20 +25,20 @@ void Material::create_gpu_buffer(uint32_t height, uint32_t width,
       entity_id);
 }
 
-std::shared_ptr<SF::Material> SF::MaterialStore::create(
+std::shared_ptr<SF::ScreenSpaceMaterial> SF::ScreenSpaceMaterialStore::create(
     EntityID id) {
-  auto instance = std::make_shared<Material>();
+  auto instance = std::make_shared<ScreenSpaceMaterial>();
   instance->entity_id = id;
   instances.insert_or_assign(id, instance);
   return instance;
 }
 
-std::shared_ptr<SF::Material> SF::MaterialStore::get(
+std::shared_ptr<SF::ScreenSpaceMaterial> SF::ScreenSpaceMaterialStore::get(
     EntityID id) {
   return instances.at(id);
 }
 
-void SF::MaterialStore::remove(EntityID id) {
+void SF::ScreenSpaceMaterialStore::remove(EntityID id) {
   auto removed = instances.at(id);
   Engine::get_module<ScreenSpaceMeshRenderer>()->remove_material_buffer(id);
 

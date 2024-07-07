@@ -3,7 +3,6 @@
 
 #include <memory>
 
-#include "Material.hpp"
 #include "engine.hpp"
 
 #define EXPORT extern "C" __declspec(dllexport)

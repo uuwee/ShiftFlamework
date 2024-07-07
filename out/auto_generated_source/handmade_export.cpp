@@ -1,7 +1,7 @@
 #include "engine.hpp"
 #include "entity.hpp"
 #include "export_object.hpp"
-#include "material.hpp"
+#include "screenspace_material.hpp"
 #include "screenspace_mesh.hpp"
 #include "screenspace_transform.hpp"
 #include "script.hpp"
@@ -67,7 +67,7 @@ EXPORT ExportObject*
 ShiftFlamework_Entity_add_component_ShiftFlamework_Material(
     ExportObject* self) {
   auto component =
-      std::static_pointer_cast<Entity>(self->object)->add_component<Material>();
+      std::static_pointer_cast<Entity>(self->object)->add_component<ScreenSpaceMaterial>();
   auto container = new ExportObject(component);
   return container;
 }
@@ -76,7 +76,7 @@ EXPORT ExportObject*
 ShiftFlamework_Entity_get_component_ShiftFlamework_Material(
     ExportObject* self) {
   auto component =
-      std::static_pointer_cast<Entity>(self->object)->get_component<Material>();
+      std::static_pointer_cast<Entity>(self->object)->get_component<ScreenSpaceMaterial>();
   auto container = new ExportObject(component);
   return container;
 }
@@ -86,7 +86,7 @@ EXPORT void ShiftFlamework_Material_create_gpu_buffer(ExportObject* self,
                                                       const uint32_t width,
                                                       const uint8_t* data) {
   // std::cout << "create gpu buffer" << std::endl;
-  std::static_pointer_cast<Material>(self->object)
+  std::static_pointer_cast<ScreenSpaceMaterial>(self->object)
       ->create_gpu_buffer(height, width, data);
   // std::cout << "create gpu buffer done. mat count: "
   // << Engine::get_module<MaterialStore>()->size()
