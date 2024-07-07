@@ -24,9 +24,6 @@ class ReflectionRenderer {
 
   wgpu::RenderPipeline render_pipeline;
 
-  wgpu::Buffer mesh_vertex_buffer;
-  wgpu::Buffer mesh_index_buffer;
-  wgpu::Buffer mesh_constant_buffer;
   wgpu::Buffer camera_buffer;
 
   wgpu::BindGroup mesh_constant_bind_group;

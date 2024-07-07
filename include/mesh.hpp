@@ -10,8 +10,7 @@ using namespace SF::Math;
 
 namespace SF {
 struct Vertex {
- public:
-  Vector3f position;
+  Vector4f position;
   Vector3f normal;
   Vector4f tangent;
   Vector2f texture_coord0;
@@ -28,6 +27,9 @@ class Mesh : public Component {
   static std::shared_ptr<MeshStore> get_store();
   Mesh(){};
   ~Mesh(){};
+
+  void set_vertices(std::vector<Vertex> vertices);
+  void set_indices(std::vector<uint32_t> indices);
 
   const std::vector<Vertex> get_vertices();
   const std::vector<uint32_t> get_indices();

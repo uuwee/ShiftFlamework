@@ -15,18 +15,26 @@
 using namespace SF;
 
 void ReflectionRenderer::initialize() {
-  std::vector<wgpu::VertexAttribute> vertex_attributes(2);
+  std::vector<wgpu::VertexAttribute> vertex_attributes(4);
   // position
   vertex_attributes.at(0).format = wgpu::VertexFormat::Float32x4;
   vertex_attributes.at(0).offset = 0;
   vertex_attributes.at(0).shaderLocation = 0;
-  // texcoord
-  vertex_attributes.at(1).format = wgpu::VertexFormat::Float32x2;
-  vertex_attributes.at(1).offset = 4 * 4;  // 2 * sizeof(Float32)
+  // normal
+  vertex_attributes.at(1).format = wgpu::VertexFormat::Float32x3;
+  vertex_attributes.at(1).offset = 4 * 4;  // 4 * sizeof(Float32)
   vertex_attributes.at(1).shaderLocation = 1;
+  // tangent
+  vertex_attributes.at(2).format = wgpu::VertexFormat::Float32x4;
+  vertex_attributes.at(2).offset = 7 * 4;  // (4 + 3)  * sizeof(Float32)
+  vertex_attributes.at(2).shaderLocation = 2;
+  // texcoord
+  vertex_attributes.at(3).format = wgpu::VertexFormat::Float32x2;
+  vertex_attributes.at(3).offset = 11 * 4;  // (4 + 3 + 4) * sizeof(Float32)
+  vertex_attributes.at(3).shaderLocation = 3;
 
   wgpu::VertexBufferLayout vertex_buffer_layout{
-      .arrayStride = (4 + 2) * 4,  // 4 * sizeof(Float32) + 2 * sizeof(Float32)
+      .arrayStride = 13 * 4,  // (4 + 3 + 4 + 2) * sizeof(Float32)
       .stepMode = wgpu::VertexStepMode::Vertex,
       .attributeCount = static_cast<uint32_t>(vertex_attributes.size()),
       .attributes = vertex_attributes.data()};
@@ -38,7 +46,9 @@ void ReflectionRenderer::initialize() {
 
     struct VertexInput{
       @location(0) position: vec4f,
-      @location(1) texcoord0: vec2f,
+      @location(1) normal: vec3f,
+      @location(2) tangent: vec4f,
+      @location(3) texcoord0: vec2f,
     };
 
     struct VertexOutput{
@@ -196,93 +206,6 @@ void ReflectionRenderer::initialize() {
 
   // set up sample data
   {
-    struct Vertex {
-      Math::Vector4f position;
-      Math::Vector2f texcoord;
-    };
-    std::vector<Vertex> vertices = {
-        Vertex{.position = Math::Vector4f({-0.5f, -0.5f, -0.3f, 1.0f}),
-               .texcoord = Math::Vector2f({0.0f, 0.0f})},
-        Vertex{.position = Math::Vector4f({0.5f, -0.5f, -0.3f, 1.0f}),
-               .texcoord = Math::Vector2f({1.0f, 0.0f})},
-        Vertex{.position = Math::Vector4f({0.5f, 0.5f, -0.3f, 1.0f}),
-               .texcoord = Math::Vector2f({1.0f, 1.0f})},
-        Vertex{.position = Math::Vector4f({-0.5f, 0.5f, -0.3f, 1.0f}),
-               .texcoord = Math::Vector2f({0.0f, 1.0f})},
-        Vertex{.position = Math::Vector4f({0.0f, 0.0f, 0.5f, 1.0f}),
-               .texcoord = Math::Vector2f({0.5f, 0.5f})}};
-
-    // mesh vertex buffer
-    const wgpu::BufferDescriptor buffer_desc{
-        .nextInChain = nullptr,
-        .label = "vertex buffer",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
-        .size = vertices.size() * sizeof(Vertex),
-        .mappedAtCreation = false};
-
-    mesh_vertex_buffer =
-        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
-    Engine::get_module<Graphics>()->update_buffer(mesh_vertex_buffer, vertices);
-  }
-
-  {
-    struct Index {
-      uint32_t value;
-    };
-    std::vector<Index> indices = {
-        Index{0}, Index{1}, Index{2}, Index{0}, Index{2}, Index{3},
-        Index{0}, Index{1}, Index{4}, Index{1}, Index{2}, Index{4},
-        Index{2}, Index{3}, Index{4}, Index{3}, Index{0}, Index{4},
-    };
-
-    // mesh index buffer
-    const wgpu::BufferDescriptor buffer_desc{
-        .nextInChain = nullptr,
-        .label = "index buffer",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Index,
-        .size = indices.size() * sizeof(Index),
-        .mappedAtCreation = false};
-
-    mesh_index_buffer =
-        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
-    Engine::get_module<Graphics>()->update_buffer(mesh_index_buffer, indices);
-  }
-
-  {
-    auto world_mat = std::vector<float>{
-        1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-    };
-    // mesh constant buffer
-    const wgpu::BufferDescriptor buffer_desc{
-        .nextInChain = nullptr,
-        .label = "mesh constant buffer",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
-        .size = sizeof(float) * 16,
-        .mappedAtCreation = false};
-
-    mesh_constant_buffer =
-        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
-    Engine::get_module<Graphics>()->update_buffer(mesh_constant_buffer,
-                                                  world_mat);
-
-    // mesh constant bind group
-    auto constant_binding = wgpu::BindGroupEntry{.binding = 0,
-                                                 .buffer = mesh_constant_buffer,
-                                                 .offset = 0,
-                                                 .size = sizeof(float) * 16};
-
-    wgpu::BindGroupDescriptor bind_group_desc{
-        .layout = mesh_constant_bind_group_layout,
-        .entryCount = 1,
-        .entries = &constant_binding};
-
-    mesh_constant_bind_group =
-        Engine::get_module<Graphics>()->get_device().CreateBindGroup(
-            &bind_group_desc);
-  }
-
-  {
     auto view_proj_mat = std::vector<float>{
         1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
@@ -386,6 +309,10 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     }});
 
     const auto world_mat = translate * rotate_z * rotate_y * rotate_x * scale;
+    // const auto world_mat = Matrix4x4f({{{1.0f, 0.0f, 0.0f, 0.0f},
+    //                                     {0.0f, 1.0f, 0.0f, 0.0f},
+    //                                     {0.0f, 0.0f, 1.0f, 0.0f},
+    //                                     {0.0f, 0.0f, 0.0f, 1.0f}}});
     auto world_mat_vec = std::vector<float>();
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
@@ -426,12 +353,23 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
   wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
   pass.SetPipeline(render_pipeline);
 
-  pass.SetVertexBuffer(0, mesh_vertex_buffer, 0, mesh_vertex_buffer.GetSize());
-  pass.SetIndexBuffer(mesh_index_buffer, wgpu::IndexFormat::Uint32, 0,
-                      mesh_index_buffer.GetSize());
-  pass.SetBindGroup(0, mesh_constant_bind_group, 0, nullptr);
-  pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
-  pass.DrawIndexed(mesh_index_buffer.GetSize() / sizeof(uint32_t), 1, 0, 0, 0);
+  for (const auto& rendered : gpu_resources) {
+    std::cout << "rendered: " << rendered.first << " #indice: "
+              << rendered.second.mesh_buffer.index_buffer.GetSize() /
+                     sizeof(uint32_t)
+              << std::endl;
+    pass.SetVertexBuffer(0, rendered.second.mesh_buffer.vertex_buffer, 0,
+                         rendered.second.mesh_buffer.vertex_buffer.GetSize());
+    pass.SetIndexBuffer(rendered.second.mesh_buffer.index_buffer,
+                        wgpu::IndexFormat::Uint32, 0,
+                        rendered.second.mesh_buffer.index_buffer.GetSize());
+    pass.SetBindGroup(0, rendered.second.transform_buffer.bindgroup, 0,
+                      nullptr);
+    pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
+    pass.DrawIndexed(
+        rendered.second.mesh_buffer.index_buffer.GetSize() / sizeof(uint32_t),
+        1, 0, 0, 0);
+  }
 
   pass.End();
   wgpu::CommandBuffer commands = encoder.Finish();
@@ -509,4 +447,14 @@ GPUTransformBuffer ReflectionRenderer::create_constant_buffer(
           &bind_group_desc);
 
   return gpu_transform_buffer;
+}
+
+void ReflectionRenderer::dispose_gpu_resource(EntityID id) {
+  if (gpu_resources.contains(id)) {
+    auto& gpu_resource = gpu_resources.at(id);
+    gpu_resource.mesh_buffer.vertex_buffer.Destroy();
+    gpu_resource.mesh_buffer.index_buffer.Destroy();
+    gpu_resource.transform_buffer.buffer.Destroy();
+    gpu_resources.erase(id);
+  }
 }

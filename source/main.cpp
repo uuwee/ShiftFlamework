@@ -8,22 +8,23 @@
 #include <queue>
 #include <random>
 #include <tuple>
+#include <vector>
 
 #include "engine.hpp"
 #include "entity.hpp"
 #include "graphics.hpp"
 #include "input.hpp"
 #include "material.hpp"
+#include "mesh.hpp"
 #include "reflection_renderer.hpp"
 #include "screenspace_mesh.hpp"
 #include "screenspace_mesh_renderer.hpp"
 #include "script.hpp"
 #include "test_image.h"
+#include "transform.hpp"
 #include "vector.hpp"
 #include "window.hpp"
 using namespace SF;
-
-std::shared_ptr<Entity> e;
 
 std::string transform_to_string(aiMatrix4x4 transform) {
   std::string result = "";
@@ -36,16 +37,25 @@ std::string transform_to_string(aiMatrix4x4 transform) {
   return result;
 }
 
-void search_node(aiNode* node, int depth = 0) {
+void search_node(const aiScene* scene, aiNode* node, aiMatrix4x4 transform,
+                 int depth = 0) {
   for (int i = 0; i < depth; i++) {
     std::cout << "  ";
   }
   std::cout << "name=" << node->mName.C_Str()
-            << " transform=" << transform_to_string(node->mTransformation)
-            << std::endl;
+            << " mesh_count=" << node->mNumMeshes << std::endl;
+
+  const aiMatrix4x4 local_transform = node->mTransformation;
+  const aiMatrix4x4 global_transform = transform * local_transform;
+
+  if (node->mNumMeshes > 0) {
+    const auto mesh = scene->mMeshes[node->mMeshes[0]];
+    std::cout << mesh->mFaces[0].mNumIndices << std::endl;
+  }
+
   if (node->mNumChildren > 0) {
     for (int i = 0; i < node->mNumChildren; i++) {
-      search_node(node->mChildren[i], depth + 1);
+      search_node(scene, node->mChildren[i], global_transform, depth + 1);
     }
   }
   return;
@@ -62,13 +72,64 @@ void import() {
     std::cerr << "failed to load: " << filePath
               << "assimp error: " << importer.GetErrorString() << std::endl;
   } else {
-    search_node(scene->mRootNode);
+    aiMatrix4x4 t;
+    t.a1 = 1;
+    t.b2 = 1;
+    t.c3 = 1;
+    t.d4 = 1;
+
+    // search_node(scene, scene->mRootNode, t);
+
+    for (int child = 0; child < scene->mRootNode->mChildren[0]->mNumChildren;
+         child++) {
+      auto node = scene->mRootNode->mChildren[0]->mChildren[child];
+      // std::cout << "name=" << node->mName.C_Str()
+      //           << " #children=" << node->mNumChildren
+      //           << " #meshes=" << node->mNumMeshes << std::endl;
+      if (node->mNumChildren > 1) {
+        // in bistro scene, this is camera and directional light
+        continue;
+      }
+
+      for (int i = 0; i < node->mNumMeshes; i++) {
+        auto mesh_index = node->mMeshes[i];
+        auto mesh = scene->mMeshes[mesh_index];
+        std::cout << "  mesh=" << mesh->mName.C_Str() << std::endl;
+        std::cout << "  num vertices=" << mesh->mNumVertices << std::endl;
+        std::cout << "  num faces=" << mesh->mNumFaces << std::endl;
+
+        // auto e = Engine::get_module<EntityStore>()->create();
+        // e->add_component<Transform>()->set_position(Math::Vector3f({0, 0,
+        // 0})); e->get_component<Transform>()->set_scale(Math::Vector3f({1, 1,
+        // 1})); e->get_component<Transform>()->set_euler_angle(
+        //     Math::Vector3f({0, 0, 0}));
+        // e->add_component<Mesh>()->set_indices(
+        //     std::vector<uint32_t>(mesh->mNumFaces * 3));
+        // std::vector<Vertex> vertices(mesh->mNumVertices);
+        // for (int i = 0; i < mesh->mNumVertices; i++) {
+        //   vertices[i].position =
+        //       Math::Vector3f({mesh->mVertices[i].x, mesh->mVertices[i].y,
+        //                       mesh->mVertices[i].z});
+        //   vertices[i].texture_coord0 = Math::Vector2f(
+        //       {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y});
+        // }
+        // e->add_component<Mesh>()->set_vertices(
+        //     std::vector<Vertex>(mesh->mNumVertices));
+
+        return;
+      }
+    }
   }
 }
 
+int frame_count = 0;
+std::shared_ptr<Entity> e;
+
 void main_loop() {
   // user script
-  // e->get_component<Script>()->update();
+  e->get_component<Transform>()->set_euler_angle(
+      e->get_component<Transform>()->get_euler_angle() +
+      Math::Vector3f({0.0f, 0.01f, 0.0f}));
 
   Engine::get_module<Input>()->update();
   // Engine::get_module<ScreenSpaceMeshRenderer>()->render(
@@ -93,11 +154,45 @@ void start() {
   // Engine::get_module<ScreenSpaceMeshRenderer>()->initialize();
   Engine::get_module<ReflectionRenderer>()->initialize();
 
-  // e = std::make_shared<Entity>();
-  e = Engine::get_module<EntityStore>()->create();
-  // e->add_component<Script>();
-
   // import();
+  e = Engine::get_module<EntityStore>()->create();
+  e->add_component<Transform>()->set_position(
+      Math::Vector3f({0.5f, 0.0f, 0.0f}));
+  e->get_component<Transform>()->set_scale(Math::Vector3f({0.3f, 0.3f, 0.3f}));
+  e->get_component<Transform>()->set_euler_angle(Math::Vector3f({0.1f, 0, 0}));
+  e->add_component<Mesh>()->set_indices(
+      {0, 1, 2, 0, 2, 3, 0, 1, 4, 1, 2, 4, 2, 3, 4, 3, 0, 4});
+  e->get_component<Mesh>()->set_vertices(
+      {Vertex{
+           .position = Math::Vector4f({-0.5f, -0.5f, -0.3f, 1.0f}),
+           .normal = Math::Vector3f({0.0f, 0.0f, 1.0f}),
+           .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
+           .texture_coord0 = Math::Vector2f({0.0f, 0.0f}),
+       },
+       Vertex{
+           .position = Math::Vector4f({0.5f, -0.5f, -0.3f, 1.0f}),
+           .normal = Math::Vector3f({0.0f, 0.0f, 1.0f}),
+           .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
+           .texture_coord0 = Math::Vector2f({1.0f, 0.0f}),
+       },
+       Vertex{
+           .position = Math::Vector4f({0.5f, 0.5f, -0.3f, 1.0f}),
+           .normal = Math::Vector3f({0.0f, 0.0f, 1.0f}),
+           .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
+           .texture_coord0 = Math::Vector2f({1.0f, 1.0f}),
+       },
+       Vertex{
+           .position = Math::Vector4f({-0.5f, 0.5f, -0.3f, 1.0f}),
+           .normal = Math::Vector3f({0.0f, 0.0f, 1.0f}),
+           .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
+           .texture_coord0 = Math::Vector2f({0.0f, 1.0f}),
+       },
+       Vertex{
+           .position = Math::Vector4f({0.0f, 0.0f, 0.5f, 1.0f}),
+           .normal = Math::Vector3f({0.0f, 0.0f, 1.0f}),
+           .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
+           .texture_coord0 = Math::Vector2f({0.5f, 0.5f}),
+       }});
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
@@ -115,6 +210,8 @@ int main() {
   Engine::add_module<ScreenSpaceMeshStore>();
   Engine::add_module<MaterialStore>();
   Engine::add_module<ScreenSpaceTransformStore>();
+  Engine::add_module<MeshStore>();
+  Engine::add_module<TransformStore>();
 
   Engine::get_module<Input>()->initialize();
   Engine::get_module<Graphics>()->initialize([]() { start(); });
@@ -122,6 +219,8 @@ int main() {
   Engine::get_module<EntityStore>()->initialize();
   Engine::get_module<ScriptStore>()->initialize();
   Engine::get_module<ScreenSpaceMeshStore>()->initialize();
+  Engine::get_module<MeshStore>()->initialize();
+  Engine::get_module<TransformStore>()->initialize();
   Engine::get_module<MaterialStore>()->initialize();
   Engine::get_module<ScreenSpaceTransformStore>()->initialize();
 }
