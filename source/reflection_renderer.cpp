@@ -206,10 +206,23 @@ void ReflectionRenderer::initialize() {
 
   // set up sample data
   {
-    auto view_proj_mat = std::vector<float>{
-        1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-    };
+    auto ratio = 1080.0f / 1080.0f;
+    auto focal_length = 2.0f;
+    auto near = 0.01f;
+    auto far = 100.0f;
+    auto divides = 1.0f / (focal_length * (far - near));
+    auto view_proj_mat = Math::Matrix4x4f({{
+        {1.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, ratio, 0.0f, 0.0f},
+        {0.0f, 0.0f, far * divides, -far * near * divides},
+        {0.0f, 0.0f, 1.0f / focal_length, 1.0f},
+    }});
+    auto view_proj_mat_vec = std::vector<float>();
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 4; j++) {
+        view_proj_mat_vec.push_back(view_proj_mat.internal_data.at(j).at(i));
+      }
+    }
     // camera buffer
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
@@ -219,7 +232,8 @@ void ReflectionRenderer::initialize() {
         .mappedAtCreation = false};
 
     camera_buffer = Engine::get_module<Graphics>()->create_buffer(buffer_desc);
-    Engine::get_module<Graphics>()->update_buffer(camera_buffer, view_proj_mat);
+    Engine::get_module<Graphics>()->update_buffer(camera_buffer,
+                                                  view_proj_mat_vec);
 
     // camera constant bind group
     auto constant_binding = wgpu::BindGroupEntry{.binding = 0,
@@ -309,10 +323,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     }});
 
     const auto world_mat = translate * rotate_z * rotate_y * rotate_x * scale;
-    // const auto world_mat = Matrix4x4f({{{1.0f, 0.0f, 0.0f, 0.0f},
-    //                                     {0.0f, 1.0f, 0.0f, 0.0f},
-    //                                     {0.0f, 0.0f, 1.0f, 0.0f},
-    //                                     {0.0f, 0.0f, 0.0f, 1.0f}}});
     auto world_mat_vec = std::vector<float>();
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
@@ -354,10 +364,10 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
   pass.SetPipeline(render_pipeline);
 
   for (const auto& rendered : gpu_resources) {
-    std::cout << "rendered: " << rendered.first << " #indice: "
-              << rendered.second.mesh_buffer.index_buffer.GetSize() /
-                     sizeof(uint32_t)
-              << std::endl;
+    // std::cout << "rendered: " << rendered.first << " #indice: "
+    //           << rendered.second.mesh_buffer.index_buffer.GetSize() /
+    //                  sizeof(uint32_t)
+    //           << std::endl;
     pass.SetVertexBuffer(0, rendered.second.mesh_buffer.vertex_buffer, 0,
                          rendered.second.mesh_buffer.vertex_buffer.GetSize());
     pass.SetIndexBuffer(rendered.second.mesh_buffer.index_buffer,
