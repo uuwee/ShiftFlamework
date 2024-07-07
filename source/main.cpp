@@ -60,16 +60,20 @@ void import() {
       for (int i = 0; i < node->mNumMeshes; i++) {
         auto mesh_index = node->mMeshes[i];
         auto mesh = scene->mMeshes[mesh_index];
-        std::cout << "  mesh=" << mesh->mName.C_Str() << std::endl;
-        std::cout << "  num vertices=" << mesh->mNumVertices << std::endl;
-        std::cout << "  num faces=" << mesh->mNumFaces << std::endl;
+        // std::cout << "  mesh=" << mesh->mName.C_Str() << std::endl;
+        // std::cout << "  num vertices=" << mesh->mNumVertices << std::endl;
+        // std::cout << "  num faces=" << mesh->mNumFaces << std::endl;
 
         auto e = Engine::get_module<EntityStore>()->create();
+
+        // transform
         e->add_component<Transform>()->set_position(Math::Vector3f({0, 0, 10}));
         e->get_component<Transform>()->set_scale(
             Math::Vector3f({0.001f, 0.001f, 0.001f}));
         e->get_component<Transform>()->set_euler_angle(
             Math::Vector3f({0, 0, 0}));
+
+        // mesh
         std::vector<uint32_t> indices{};
         for (int i = 0; i < mesh->mNumFaces; i++) {
           indices.push_back(mesh->mFaces[i].mIndices[0]);
@@ -93,6 +97,14 @@ void import() {
           vert.push_back(vertex);
         }
         e->get_component<Mesh>()->set_vertices(vert);
+
+        // material
+        auto material = scene->mMaterials[mesh->mMaterialIndex];
+        aiString name;
+        auto ret =
+            material->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), name);
+
+        std::cout << "  texture=" << name.C_Str() << std::endl;
       }
     }
   }
@@ -105,7 +117,7 @@ void main_loop() {
   auto duration =
       std::chrono::duration_cast<std::chrono::milliseconds>(now - last_time);
   last_time = now;
-  std::cout << "frame time: " << duration.count() << "ms" << std::endl;
+  // std::cout << "frame time: " << duration.count() << "ms" << std::endl;
 
   // user script
 
