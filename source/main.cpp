@@ -27,41 +27,6 @@
 #include "window.hpp"
 using namespace SF;
 
-std::string transform_to_string(aiMatrix4x4 transform) {
-  std::string result = "";
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
-      result += std::to_string(transform[i][j]) + " ";
-    }
-    result += "\n";
-  }
-  return result;
-}
-
-void search_node(const aiScene* scene, aiNode* node, aiMatrix4x4 transform,
-                 int depth = 0) {
-  for (int i = 0; i < depth; i++) {
-    std::cout << "  ";
-  }
-  std::cout << "name=" << node->mName.C_Str()
-            << " mesh_count=" << node->mNumMeshes << std::endl;
-
-  const aiMatrix4x4 local_transform = node->mTransformation;
-  const aiMatrix4x4 global_transform = transform * local_transform;
-
-  if (node->mNumMeshes > 0) {
-    const auto mesh = scene->mMeshes[node->mMeshes[0]];
-    std::cout << mesh->mFaces[0].mNumIndices << std::endl;
-  }
-
-  if (node->mNumChildren > 0) {
-    for (int i = 0; i < node->mNumChildren; i++) {
-      search_node(scene, node->mChildren[i], global_transform, depth + 1);
-    }
-  }
-  return;
-}
-
 void import() {
   const auto filePath =
       "E:/resources/models/Bistro_v5_2/Bistro_v5_2/BistroExterior.fbx";
@@ -122,9 +87,8 @@ void import() {
                   Math::Vector3f({mesh->mNormals[i].x, mesh->mNormals[i].y,
                                   mesh->mNormals[i].z}),
               .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
-              .texture_coord0 =
-                  Math::Vector2f({mesh->mTextureCoords[0][i].x * 0.5f + 0.5f,
-                                  mesh->mTextureCoords[0][i].y * 0.5f + 0.5f}),
+              .texture_coord0 = Math::Vector2f(
+                  {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y}),
           };
           vert.push_back(vertex);
         }

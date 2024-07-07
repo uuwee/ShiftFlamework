@@ -55,6 +55,7 @@ void ReflectionRenderer::initialize() {
     struct VertexOutput{
         @builtin(position) position: vec4f,
         @location(0) texcoord0: vec2f,
+        @location(1) normal: vec3f,
     }
 
     @vertex fn vertexMain(in: VertexInput) -> VertexOutput{
@@ -64,6 +65,7 @@ void ReflectionRenderer::initialize() {
         // see https://eliemichel.github.io/LearnWebGPU/basic-3d-rendering/3d-meshes/projection-matrices.html#perspective-matrix
 
         out.texcoord0 = in.texcoord0;
+        out.normal = in.normal;
         return out;
     }
 
