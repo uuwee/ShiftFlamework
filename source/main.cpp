@@ -15,9 +15,9 @@
 #include "entity.hpp"
 #include "graphics.hpp"
 #include "input.hpp"
-#include "screenspace_material.hpp"
 #include "mesh.hpp"
 #include "reflection_renderer.hpp"
+#include "screenspace_material.hpp"
 #include "screenspace_mesh.hpp"
 #include "screenspace_mesh_renderer.hpp"
 #include "script.hpp"
@@ -142,44 +142,6 @@ void start() {
   Engine::get_module<ReflectionRenderer>()->initialize();
 
   import();
-  // e = Engine::get_module<EntityStore>()->create();
-  // e->add_component<Transform>()->set_position(
-  //     Math::Vector3f({0.0f, 0.0f, 1.3f}));
-  // e->get_component<Transform>()->set_scale(Math::Vector3f({1.f, 1.f, 1.f}));
-  // e->get_component<Transform>()->set_euler_angle(Math::Vector3f({0.1f, 0,
-  // 0})); e->add_component<Mesh>()->set_indices(
-  //     {0, 1, 2, 0, 2, 3, 0, 1, 4, 1, 2, 4, 2, 3, 4, 3, 0, 4});
-  // e->get_component<Mesh>()->set_vertices(
-  //     {Vertex{
-  //          .position = Math::Vector4f({-0.5f, -0.5f, -0.3f, 1.0f}),
-  //          .normal = Math::Vector3f({0.0f, 0.0f, 1.0f}),
-  //          .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
-  //          .texture_coord0 = Math::Vector2f({0.0f, 0.0f}),
-  //      },
-  //      Vertex{
-  //          .position = Math::Vector4f({0.5f, -0.5f, -0.3f, 1.0f}),
-  //          .normal = Math::Vector3f({0.0f, 0.0f, 1.0f}),
-  //          .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
-  //          .texture_coord0 = Math::Vector2f({1.0f, 0.0f}),
-  //      },
-  //      Vertex{
-  //          .position = Math::Vector4f({0.5f, 0.5f, -0.3f, 1.0f}),
-  //          .normal = Math::Vector3f({0.0f, 0.0f, 1.0f}),
-  //          .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
-  //          .texture_coord0 = Math::Vector2f({1.0f, 1.0f}),
-  //      },
-  //      Vertex{
-  //          .position = Math::Vector4f({-0.5f, 0.5f, -0.3f, 1.0f}),
-  //          .normal = Math::Vector3f({0.0f, 0.0f, 1.0f}),
-  //          .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
-  //          .texture_coord0 = Math::Vector2f({0.0f, 1.0f}),
-  //      },
-  //      Vertex{
-  //          .position = Math::Vector4f({0.0f, 0.0f, 0.5f, 1.0f}),
-  //          .normal = Math::Vector3f({0.0f, 0.0f, 1.0f}),
-  //          .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
-  //          .texture_coord0 = Math::Vector2f({0.5f, 0.5f}),
-  //      }});
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
