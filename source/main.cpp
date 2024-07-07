@@ -114,9 +114,6 @@ void import() {
         e->add_component<Mesh>()->set_indices(indices);
         std::vector<Vertex> vert{};
         for (int i = 0; i < mesh->mNumVertices; i++) {
-          // std::cout << "    vertex={" << mesh->mVertices[i].x << " ,"
-          //           << mesh->mVertices[i].y << " ," << mesh->mVertices[i].z
-          //           << "}" << std::endl;
           Vertex vertex{
               .position =
                   Math::Vector4f({mesh->mVertices[i].x, mesh->mVertices[i].z,

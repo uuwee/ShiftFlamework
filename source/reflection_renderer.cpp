@@ -59,10 +59,10 @@ void ReflectionRenderer::initialize() {
 
     @vertex fn vertexMain(in: VertexInput) -> VertexOutput{
         var out: VertexOutput;
-        var p: vec4f;
-        p = view_proj_mat * world_mat * in.position;
-        p /= p.w;
-        out.position = vec4f(p.xy, p.z, 1.0);
+        out.position = view_proj_mat * world_mat * in.position;
+        // note that normalizing w is automatically done by the hardware
+        // see https://eliemichel.github.io/LearnWebGPU/basic-3d-rendering/3d-meshes/projection-matrices.html#perspective-matrix
+
         out.texcoord0 = in.texcoord0;
         return out;
     }
