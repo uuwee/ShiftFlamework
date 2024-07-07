@@ -372,7 +372,15 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         {0.0f, 0.0f, far * divides, -far * near * divides},
         {0.0f, 0.0f, 1.0f / focal_length, 1.0f},
     }});
+    auto scale = 10.0f;
+    auto ortho_proj_mat = Math::Matrix4x4f({{
+        {1.0f / scale, 0.0f, 0.0f, 0.0f},
+        {0.0f, 1.0f / scale, 0.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f / (far - near), -near / (far - near)},
+        {0.0f, 0.0f, 0.0f, 1.0f},
+    }});
 
+    // auto view_proj_mat = ortho_proj_mat * view_mat;
     auto view_proj_mat = proj_mat * view_mat;
 
     auto view_proj_mat_vec = std::vector<float>();

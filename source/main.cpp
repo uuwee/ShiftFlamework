@@ -3,6 +3,7 @@
 #include <windows.h>
 
 #include <assimp/Importer.hpp>
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <queue>
@@ -25,8 +26,6 @@
 #include "vector.hpp"
 #include "window.hpp"
 using namespace SF;
-
-std::shared_ptr<Entity> e;
 
 std::string transform_to_string(aiMatrix4x4 transform) {
   std::string result = "";
@@ -100,7 +99,7 @@ void import() {
         std::cout << "  num vertices=" << mesh->mNumVertices << std::endl;
         std::cout << "  num faces=" << mesh->mNumFaces << std::endl;
 
-        e = Engine::get_module<EntityStore>()->create();
+        auto e = Engine::get_module<EntityStore>()->create();
         e->add_component<Transform>()->set_position(Math::Vector3f({0, 0, 10}));
         e->get_component<Transform>()->set_scale(
             Math::Vector3f({0.001f, 0.001f, 0.001f}));
@@ -138,15 +137,16 @@ void import() {
   }
 }
 
+std::chrono::system_clock::time_point last_time;
 void main_loop() {
+  // frame time
+  auto now = std::chrono::system_clock::now();
+  auto duration =
+      std::chrono::duration_cast<std::chrono::milliseconds>(now - last_time);
+  last_time = now;
+  std::cout << "frame time: " << duration.count() << "ms" << std::endl;
+
   // user script
-  e->get_component<Transform>()->set_position(
-      e->get_component<Transform>()->get_position() +
-      Math::Vector3f({0.0f, 0.0f, 0.005f}));
-  e->get_component<Transform>()->set_euler_angle(
-      e->get_component<Transform>()->get_euler_angle() +
-      Math::Vector3f({0.0f, 0.01f, 0.0f}));
-  std::cout << e->get_component<Transform>()->get_position().z << std::endl;
 
   Engine::get_module<Input>()->update();
   Engine::get_module<ReflectionRenderer>()->render(
