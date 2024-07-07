@@ -8,6 +8,7 @@
 #include "gpu_mesh_buffer.hpp"
 #include "gpu_transform_buffer.hpp"
 #include "graphics.hpp"
+#include "vector.hpp"
 
 namespace SF {
 class ReflectionRenderer {
@@ -24,6 +25,8 @@ class ReflectionRenderer {
 
   wgpu::RenderPipeline render_pipeline;
 
+  Math::Vector3f camera_position = Math::Vector3f({0, 3, 0});
+  Math::Vector3f camera_angle = Math::Vector3f({0, 0, 0});
   wgpu::Buffer camera_buffer;
 
   wgpu::BindGroup mesh_constant_bind_group;

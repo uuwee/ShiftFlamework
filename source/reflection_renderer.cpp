@@ -7,6 +7,7 @@
 #include "engine.hpp"
 #include "entity.hpp"
 #include "graphics.hpp"
+#include "input.hpp"
 #include "matrix.hpp"
 #include "mesh.hpp"
 #include "transform.hpp"
@@ -61,7 +62,7 @@ void ReflectionRenderer::initialize() {
         var p: vec4f;
         p = view_proj_mat * world_mat * in.position;
         p /= p.w;
-        out.position = vec4f(p.xy, p.z * 0.5 + 0.5, 1.0);
+        out.position = vec4f(p.xy, p.z, 1.0);
         out.texcoord0 = in.texcoord0;
         return out;
     }
@@ -332,6 +333,56 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
 
     Engine::get_module<Graphics>()->update_buffer(gpu_transform_buffer.buffer,
                                                   world_mat_vec);
+  }
+
+  // update camera
+  {
+    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::A) ==
+        ButtonState::HOLD) {
+      camera_position.x -= 0.1f;
+    }
+    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::D) ==
+        ButtonState::HOLD) {
+      camera_position.x += 0.1f;
+    }
+    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::W) ==
+        ButtonState::HOLD) {
+      camera_position.z += 0.1f;
+    }
+    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::S) ==
+        ButtonState::HOLD) {
+      camera_position.z -= 0.1f;
+    }
+
+    auto view_mat = Math::Matrix4x4f({{
+        {1.0f, 0.0f, 0.0f, -camera_position.x},
+        {0.0f, 1.0f, 0.0f, -camera_position.y},
+        {0.0f, 0.0f, 1.0f, -camera_position.z},
+        {0.0f, 0.0f, 0.0f, 1.0f},
+    }});
+
+    auto ratio = 1080.0f / 1080.0f;
+    auto focal_length = 2.0f;
+    auto near = 0.01f;
+    auto far = 100.0f;
+    auto divides = 1.0f / (focal_length * (far - near));
+    auto proj_mat = Math::Matrix4x4f({{
+        {1.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, ratio, 0.0f, 0.0f},
+        {0.0f, 0.0f, far * divides, -far * near * divides},
+        {0.0f, 0.0f, 1.0f / focal_length, 1.0f},
+    }});
+
+    auto view_proj_mat = proj_mat * view_mat;
+
+    auto view_proj_mat_vec = std::vector<float>();
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 4; j++) {
+        view_proj_mat_vec.push_back(view_proj_mat.internal_data.at(j).at(i));
+      }
+    }
+    Engine::get_module<Graphics>()->update_buffer(camera_buffer,
+                                                  view_proj_mat_vec);
   }
 
   // render

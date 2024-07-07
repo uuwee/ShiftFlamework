@@ -126,8 +126,9 @@ void import() {
                   Math::Vector3f({mesh->mNormals[i].x, mesh->mNormals[i].y,
                                   mesh->mNormals[i].z}),
               .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
-              .texture_coord0 = Math::Vector2f(
-                  {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y}),
+              .texture_coord0 =
+                  Math::Vector2f({mesh->mTextureCoords[0][i].x * 0.5f + 0.5f,
+                                  mesh->mTextureCoords[0][i].y * 0.5f + 0.5f}),
           };
           vert.push_back(vertex);
         }
