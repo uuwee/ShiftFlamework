@@ -1,29 +1,31 @@
 #pragma once
+#include <stdint.h>
+
 #include <bit>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <vector>
 namespace SF::DDSLoader {
+struct RGBA8888 {
+  uint8_t r, g, b, a;
+};
 struct DDSData {
   uint32_t width, height;
-  std::vector<uint8_t> data;
-};
-struct Color {
-  float r, g, b, a;
+  std::vector<RGBA8888> data;
 };
 
-Color fromRGB565(unsigned short rgb565) {
-  Color color;
-  color.r = ((rgb565 >> 11) & 0x1F) * 1.0f / 31.0f;
-  color.g = ((rgb565 >> 5) & 0x3F) * 1.0f / 63.0f;
-  color.b = (rgb565 & 0x1F) * 1.0f / 31.0f;
-  color.a = 1.0f;
+RGBA8888 fromRGB565(unsigned short rgb565) {
+  RGBA8888 color;
+  color.r = ((rgb565 >> 11) & 0x1F) * 1.0f / 31.0f * 255.0f;
+  color.g = ((rgb565 >> 5) & 0x3F) * 1.0f / 63.0f * 255.0f;
+  color.b = (rgb565 & 0x1F) * 1.0f / 31.0f * 255.0f;
+  color.a = 255;
   return color;
 };
 
-Color Lerp(Color x, Color y, float s) {
-  Color result;
+RGBA8888 Lerp(RGBA8888 x, RGBA8888 y, float s) {
+  RGBA8888 result;
   result.r = x.r + s * (y.r - x.r);
   result.g = x.g + s * (y.g - x.g);
   result.b = x.b + s * (y.b - x.b);
@@ -77,8 +79,8 @@ DDSData load(const std::filesystem::path& path) {
   auto block_count = ((dds_data.width + 3) / 4) * ((dds_data.height + 3) / 4);
   std::cout << "Block count: " << block_count << std::endl;
 
-  std::vector<std::vector<Color>> bitmap(dds_data.height,
-                                         std::vector<Color>(dds_data.width));
+  std::vector<std::vector<RGBA8888>> bitmap(
+      dds_data.height, std::vector<RGBA8888>(dds_data.width));
 
   uint32_t row = (dds_data.width + 3) / 4;
   uint32_t col = (dds_data.height + 3) / 4;
@@ -87,13 +89,15 @@ DDSData load(const std::filesystem::path& path) {
       std::vector<uint8_t> block(8);
       file.read(reinterpret_cast<char*>(block.data()), 8);
 
-      Color color0 = fromRGB565(*reinterpret_cast<unsigned short*>(&block[0]));
-      Color color1 = fromRGB565(*reinterpret_cast<unsigned short*>(&block[2]));
+      RGBA8888 color0 =
+          fromRGB565(*reinterpret_cast<unsigned short*>(&block[0]));
+      RGBA8888 color1 =
+          fromRGB565(*reinterpret_cast<unsigned short*>(&block[2]));
 
       auto c0 = *reinterpret_cast<uint16_t*>(&block[0]);
       auto c1 = *reinterpret_cast<uint16_t*>(&block[2]);
 
-      auto color_table = std::vector<Color>(4);
+      auto color_table = std::vector<RGBA8888>(4);
       color_table[0] = color0;
       color_table[1] = color1;
       if (c0 > c1) {
@@ -101,7 +105,7 @@ DDSData load(const std::filesystem::path& path) {
         color_table[3] = Lerp(color0, color1, 2.0f / 3.0f);
       } else {
         color_table[2] = Lerp(color0, color1, 0.5f);
-        color_table[3] = Color({0, 0, 0, 1});
+        color_table[3] = RGBA8888({0, 0, 0, 1});
       }
 
       auto index_bits = *reinterpret_cast<uint32_t*>(&block[4]);
@@ -109,8 +113,8 @@ DDSData load(const std::filesystem::path& path) {
         for (int x = 0; x < 4; x++) {
           auto idx = index_bits & 0x03;
 
-          int xx = i * 4 + x;
-          int yy = j * 4 + y;
+          int xx = j * 4 + x;
+          int yy = i * 4 + y;
           if (xx >= dds_data.width || yy >= dds_data.height) {
             continue;
           }
@@ -132,9 +136,9 @@ DDSData load(const std::filesystem::path& path) {
   for (int i = 0; i < dds_data.height; i++) {
     for (int j = 0; j < dds_data.width; j++) {
       auto color = bitmap[i][j];
-      output_file << static_cast<int>(color.r * 255) << " "
-                  << static_cast<int>(color.g * 255) << " "
-                  << static_cast<int>(color.b * 255) << " ";
+      output_file << static_cast<int>(color.r) << " "
+                  << static_cast<int>(color.g) << " "
+                  << static_cast<int>(color.b) << " ";
     }
     output_file << std::endl;
   }
