@@ -143,13 +143,13 @@ void start() {
       Engine::get_module<Graphics>()->get_device());
   Engine::get_module<ReflectionRenderer>()->initialize();
 
-  // import();
-  auto path =
-      std::filesystem::directory_entry(
-          "E:/resources/models/Bistro_v5_2/Bistro_v5_2/Textures/ElectricBox_"
-          "BaseColor.dds")
-          .path();
-  DDSLoader::load(path);
+  import();
+  // auto path =
+  //     std::filesystem::directory_entry(
+  //         "E:/resources/models/Bistro_v5_2/Bistro_v5_2/Textures/ElectricBox_"
+  //         "BaseColor.dds")
+  //         .path();
+  // DDSLoader::load(path);
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);

@@ -22,6 +22,7 @@ class ReflectionRenderer {
 
   wgpu::BindGroupLayout mesh_constant_bind_group_layout;
   wgpu::BindGroupLayout camera_constant_bind_group_layout;
+  wgpu::BindGroupLayout texture_bind_group_layout;
 
   wgpu::RenderPipeline render_pipeline;
 
@@ -29,8 +30,13 @@ class ReflectionRenderer {
   Math::Vector3f camera_angle = Math::Vector3f({0, 0, 0});
   wgpu::Buffer camera_buffer;
 
-  wgpu::BindGroup mesh_constant_bind_group;
   wgpu::BindGroup camera_constant_bind_group;
+
+  // dummpy texture
+  wgpu::Texture texture;
+  wgpu::Sampler sampler;
+  wgpu::TextureView texture_view;
+  wgpu::BindGroup texture_bind_group;
 
   wgpu::TextureView depthTextureView;
 

@@ -44,6 +44,8 @@ void ReflectionRenderer::initialize() {
   wgsl_desc.code = R"(
     @group(0) @binding(0) var<uniform> world_mat: mat4x4f;
     @group(1) @binding(0) var<uniform> view_proj_mat: mat4x4f;
+    @group(2) @binding(0) var tex: texture_2d<f32>;
+    @group(2) @binding(1) var tex_sampler: sampler;
 
     struct VertexInput{
       @location(0) position: vec4f,
@@ -70,7 +72,8 @@ void ReflectionRenderer::initialize() {
     }
 
     @fragment fn fragmentMain(in: VertexOutput) -> @location(0) vec4f{
-        return vec4f(in.texcoord0, 0.0, 1.0);
+        // return vec4f(in.texcoord0, 0.0, 1.0);
+        return vec4f(textureSample(tex, tex_sampler, in.texcoord0).xyz, 1.0);
     }
   )";
 
@@ -90,7 +93,7 @@ void ReflectionRenderer::initialize() {
       .targets = &color_target_state,
   };
 
-  auto binding_layout_entries = std::vector<wgpu::BindGroupLayoutEntry>(2);
+  auto binding_layout_entries = std::vector<wgpu::BindGroupLayoutEntry>(4);
   // mesh constant
   binding_layout_entries.at(0) =
       wgpu::BindGroupLayoutEntry{.binding = 0,
@@ -110,6 +113,25 @@ void ReflectionRenderer::initialize() {
                                      .hasDynamicOffset = false,
                                      .minBindingSize = sizeof(Math::Matrix4x4f),
                                  }};
+
+  // texture
+  binding_layout_entries.at(2) = wgpu::BindGroupLayoutEntry{
+      .binding = 0,
+      .visibility = wgpu::ShaderStage::Fragment,
+      .texture =
+          wgpu::TextureBindingLayout{
+              .sampleType = wgpu::TextureSampleType::Float,
+              .viewDimension = wgpu::TextureViewDimension::e2D},
+  };
+
+  // sampler
+  binding_layout_entries.at(3) = wgpu::BindGroupLayoutEntry{
+      .binding = 1,
+      .visibility = wgpu::ShaderStage::Fragment,
+      .sampler =
+          wgpu::SamplerBindingLayout{.type =
+                                         wgpu::SamplerBindingType::Filtering},
+  };
 
   std::vector<wgpu::BindGroupLayoutEntry> mesh_constant_layout_entries(
       binding_layout_entries.begin(), binding_layout_entries.begin() + 1);
@@ -131,10 +153,21 @@ void ReflectionRenderer::initialize() {
       Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
           &camera_layout_desc);
 
+  std::vector<wgpu::BindGroupLayoutEntry> texture_layout_entries(
+      binding_layout_entries.begin() + 2, binding_layout_entries.begin() + 4);
+  wgpu::BindGroupLayoutDescriptor texture_layout_desc = {
+      .entryCount = static_cast<uint32_t>(texture_layout_entries.size()),
+      .entries = texture_layout_entries.data(),
+  };
+  texture_bind_group_layout =
+      Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
+          &texture_layout_desc);
+
   std::vector<wgpu::BindGroupLayout> layouts = {
-      mesh_constant_bind_group_layout, camera_constant_bind_group_layout};
+      mesh_constant_bind_group_layout, camera_constant_bind_group_layout,
+      texture_bind_group_layout};
   wgpu::PipelineLayoutDescriptor layout_desc{
-      .bindGroupLayoutCount = 2,
+      .bindGroupLayoutCount = static_cast<uint32_t>(layouts.size()),
       .bindGroupLayouts = layouts.data(),
   };
 
@@ -252,6 +285,88 @@ void ReflectionRenderer::initialize() {
     camera_constant_bind_group =
         Engine::get_module<Graphics>()->get_device().CreateBindGroup(
             &bind_group_desc);
+
+    // dummy texture
+    std::vector<uint8_t> texture_data(1 * 1 * 4, 0xff);
+    const wgpu::TextureDescriptor texture_desc{
+        .nextInChain = nullptr,
+        .usage =
+            wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding,
+        .dimension = wgpu::TextureDimension::e2D,
+        .size = {1, 1, 1},
+        .format = wgpu::TextureFormat::RGBA8Unorm,
+        .mipLevelCount = 1,
+        .sampleCount = 1,
+        .viewFormatCount = 0,
+        .viewFormats = nullptr,
+    };
+
+    texture = Engine::get_module<Graphics>()->get_device().CreateTexture(
+        &texture_desc);
+
+    wgpu::ImageCopyTexture dest{
+        .texture = texture,
+        .mipLevel = 0,
+        .origin = {0, 0, 0},
+        .aspect = wgpu::TextureAspect::All,
+    };
+
+    wgpu::TextureDataLayout source{
+        .offset = 0,
+        .bytesPerRow = 4 * 1,
+        .rowsPerImage = 1,
+    };
+
+    Engine::get_module<Graphics>()->get_device().GetQueue().WriteTexture(
+        &dest, texture_data.data(), texture_data.size(), &source,
+        &texture_desc.size);
+
+    auto texture_view_desc = wgpu::TextureViewDescriptor{
+        .format = wgpu::TextureFormat::RGBA8Unorm,
+        .dimension = wgpu::TextureViewDimension::e2D,
+        .baseMipLevel = 0,
+        .mipLevelCount = 1,
+        .baseArrayLayer = 0,
+        .arrayLayerCount = 1,
+        .aspect = wgpu::TextureAspect::All,
+    };
+
+    texture_view = texture.CreateView(&texture_view_desc);
+
+    auto sampler_desc = wgpu::SamplerDescriptor{
+        .addressModeU = wgpu::AddressMode::Repeat,
+        .addressModeV = wgpu::AddressMode::Repeat,
+        .addressModeW = wgpu::AddressMode::Repeat,
+        .magFilter = wgpu::FilterMode::Linear,
+        .minFilter = wgpu::FilterMode::Linear,
+        .mipmapFilter = wgpu::MipmapFilterMode::Linear,
+        .lodMinClamp = 0.0f,
+        .lodMaxClamp = 0.0f,
+        .compare = wgpu::CompareFunction::Undefined,
+        .maxAnisotropy = 1,
+    };
+    sampler = Engine::get_module<Graphics>()->get_device().CreateSampler(
+        &sampler_desc);
+
+    auto texture_bindings = std::vector<wgpu::BindGroupEntry>(2);
+    texture_bindings.at(0) = wgpu::BindGroupEntry{
+        .binding = 0,
+        .textureView = texture_view,
+    };
+    texture_bindings.at(1) = wgpu::BindGroupEntry{
+        .binding = 1,
+        .sampler = sampler,
+    };
+
+    wgpu::BindGroupDescriptor texture_bind_group_desc{
+        .layout = texture_bind_group_layout,
+        .entryCount = static_cast<uint32_t>(texture_bindings.size()),
+        .entries = texture_bindings.data(),
+    };
+
+    texture_bind_group =
+        Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+            &texture_bind_group_desc);
   }
 }
 
@@ -437,6 +552,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     pass.SetBindGroup(0, rendered.second.transform_buffer.bindgroup, 0,
                       nullptr);
     pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
+    pass.SetBindGroup(2, texture_bind_group, 0, nullptr);
     pass.DrawIndexed(
         rendered.second.mesh_buffer.index_buffer.GetSize() / sizeof(uint32_t),
         1, 0, 0, 0);
