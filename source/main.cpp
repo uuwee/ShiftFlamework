@@ -4,6 +4,7 @@
 
 #include <assimp/Importer.hpp>
 #include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <queue>
@@ -11,6 +12,7 @@
 #include <tuple>
 #include <vector>
 
+#include "dds_loader.hpp"
 #include "engine.hpp"
 #include "entity.hpp"
 #include "graphics.hpp"
@@ -141,7 +143,13 @@ void start() {
       Engine::get_module<Graphics>()->get_device());
   Engine::get_module<ReflectionRenderer>()->initialize();
 
-  import();
+  // import();
+  auto path =
+      std::filesystem::directory_entry(
+          "E:/resources/models/Bistro_v5_2/Bistro_v5_2/Textures/ElectricBox_"
+          "BaseColor.dds")
+          .path();
+  DDSLoader::load(path);
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
