@@ -6,7 +6,7 @@
 #include <vector>
 namespace SF::DDSLoader {
 struct DDSData {
-  uint32_t width, height, channels;
+  uint32_t width, height;
   std::vector<uint8_t> data;
 };
 struct Color {
@@ -36,15 +36,17 @@ DDSData load(const std::filesystem::path& path) {
   // see
   // https://techblog.sega.jp/entry/2016/12/26/100000#BC1%E5%BD%A2%E5%BC%8F%E3%81%AB%E3%82%82%E5%AF%BE%E5%BF%9C%E3%81%99%E3%82%8B
   // todo: read formal spec and implement all sub-versions
-  // I think this is only for DXT1
+  // I think current implementation is only for DXT1
 
   std::ifstream file(path, std::ios::binary);
   if (!file.is_open()) {
     throw std::runtime_error("Failed to open file");
   }
   DDSData dds_data{};
-  std::vector<uint8_t> header(128);
-  file.read(reinterpret_cast<char*>(header.data()), 128);
+
+  const int header_size = 128;
+  std::vector<uint8_t> header(header_size);
+  file.read(reinterpret_cast<char*>(header.data()), header_size);
 
   dds_data.height = *reinterpret_cast<uint32_t*>(&header[12]);
   dds_data.width = *reinterpret_cast<uint32_t*>(&header[16]);
@@ -63,9 +65,14 @@ DDSData load(const std::filesystem::path& path) {
   bool is_dxt1 =
       type[0] == 0x44 && type[1] == 0x58 && type[2] == 0x54 && type[3] == 0x31;
 
-  std::cout << "Width: " << dds_data.width << std::endl;
-  std::cout << "Height: " << dds_data.height << std::endl;
-  std::cout << "is_dxt1: " << (is_dxt1 ? "true" : "false") << std::endl;
+  //   std::cout << "Width: " << dds_data.width << std::endl;
+  //   std::cout << "Height: " << dds_data.height << std::endl;
+  //   std::cout << "is_dxt1: " << (is_dxt1 ? "true" : "false") << std::endl;
+
+  if (!is_dxt1) {
+    std::cout << "Not a DXT1 file" << std::endl;
+    return dds_data;
+  }
 
   auto block_count = ((dds_data.width + 3) / 4) * ((dds_data.height + 3) / 4);
   std::cout << "Block count: " << block_count << std::endl;
@@ -132,6 +139,7 @@ DDSData load(const std::filesystem::path& path) {
     output_file << std::endl;
   }
   output_file.close();
+
   return dds_data;
 }
 }  // namespace SF::DDSLoader
