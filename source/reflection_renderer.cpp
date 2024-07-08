@@ -4,8 +4,10 @@
 
 #include <initializer_list>
 
+#include "dds_loader.hpp"
 #include "engine.hpp"
 #include "entity.hpp"
+#include "gpu_mesh_buffer.hpp"
 #include "graphics.hpp"
 #include "input.hpp"
 #include "matrix.hpp"
@@ -395,7 +397,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
   }
 
   // update constants
-  int idx = 0;
   for (auto rendered : gpu_resources) {
     const auto entity = Engine::get_module<EntityStore>()->get(rendered.first);
 
@@ -552,7 +553,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     pass.SetBindGroup(0, rendered.second.transform_buffer.bindgroup, 0,
                       nullptr);
     pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
-    pass.SetBindGroup(2, texture_bind_group, 0, nullptr);
+    pass.SetBindGroup(2, textures["test"].bind_group, 0, nullptr);
     pass.DrawIndexed(
         rendered.second.mesh_buffer.index_buffer.GetSize() / sizeof(uint32_t),
         1, 0, 0, 0);
@@ -644,4 +645,96 @@ void ReflectionRenderer::dispose_gpu_resource(EntityID id) {
     gpu_resource.transform_buffer.buffer.Destroy();
     gpu_resources.erase(id);
   }
+}
+
+void ReflectionRenderer::load_texture(std::string name, std::string path) {
+  auto texture_data = DDSLoader::load(path);
+
+  const wgpu::TextureDescriptor texture_desc{
+      .nextInChain = nullptr,
+      .usage = wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding,
+      .dimension = wgpu::TextureDimension::e2D,
+      .size = {texture_data.width, texture_data.height, 1},
+      .format = wgpu::TextureFormat::RGBA8Unorm,
+      .mipLevelCount = 1,
+      .sampleCount = 1,
+      .viewFormatCount = 0,
+      .viewFormats = nullptr,
+  };
+
+  auto texture =
+      Engine::get_module<Graphics>()->get_device().CreateTexture(&texture_desc);
+
+  wgpu::ImageCopyTexture dest{
+      .texture = texture,
+      .mipLevel = 0,
+      .origin = {0, 0, 0},
+      .aspect = wgpu::TextureAspect::All,
+  };
+
+  wgpu::TextureDataLayout source{
+      .offset = 0,
+      .bytesPerRow = sizeof(DDSLoader::RGBA8888) * texture_data.width,
+      .rowsPerImage = texture_data.height,
+  };
+
+  Engine::get_module<Graphics>()->get_device().GetQueue().WriteTexture(
+      &dest, texture_data.data.data(), texture_data.data.size() * 4, &source,
+      &texture_desc.size);
+
+  auto texture_view_desc = wgpu::TextureViewDescriptor{
+      .format = wgpu::TextureFormat::RGBA8Unorm,
+      .dimension = wgpu::TextureViewDimension::e2D,
+      .baseMipLevel = 0,
+      .mipLevelCount = 1,
+      .baseArrayLayer = 0,
+      .arrayLayerCount = 1,
+      .aspect = wgpu::TextureAspect::All,
+  };
+
+  auto texture_view = texture.CreateView(&texture_view_desc);
+
+  auto sampler_desc = wgpu::SamplerDescriptor{
+      .addressModeU = wgpu::AddressMode::Repeat,
+      .addressModeV = wgpu::AddressMode::Repeat,
+      .addressModeW = wgpu::AddressMode::Repeat,
+      .magFilter = wgpu::FilterMode::Linear,
+      .minFilter = wgpu::FilterMode::Linear,
+      .mipmapFilter = wgpu::MipmapFilterMode::Linear,
+      .lodMinClamp = 0.0f,
+      .lodMaxClamp = 0.0f,
+      .compare = wgpu::CompareFunction::Undefined,
+      .maxAnisotropy = 1,
+  };
+  sampler =
+      Engine::get_module<Graphics>()->get_device().CreateSampler(&sampler_desc);
+
+  auto texture_bindings = std::vector<wgpu::BindGroupEntry>(2);
+  texture_bindings.at(0) = wgpu::BindGroupEntry{
+      .binding = 0,
+      .textureView = texture_view,
+  };
+  texture_bindings.at(1) = wgpu::BindGroupEntry{
+      .binding = 1,
+      .sampler = sampler,
+  };
+
+  wgpu::BindGroupDescriptor texture_bind_group_desc{
+      .layout = texture_bind_group_layout,
+      .entryCount = static_cast<uint32_t>(texture_bindings.size()),
+      .entries = texture_bindings.data(),
+  };
+
+  auto texture_bind_group =
+      Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+          &texture_bind_group_desc);
+
+  GPUTexture gpu_texture{
+      .texture = texture,
+      .sampler = sampler,
+      .texture_view = texture_view,
+      .bind_group = texture_bind_group,
+  };
+
+  textures.insert_or_assign(name, gpu_texture);
 }

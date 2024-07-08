@@ -12,7 +12,6 @@
 #include <tuple>
 #include <vector>
 
-#include "dds_loader.hpp"
 #include "engine.hpp"
 #include "entity.hpp"
 #include "graphics.hpp"
@@ -119,7 +118,7 @@ void main_loop() {
   auto duration =
       std::chrono::duration_cast<std::chrono::milliseconds>(now - last_time);
   last_time = now;
-  // std::cout << "frame time: " << duration.count() << "ms" << std::endl;
+  std::cout << "frame time: " << duration.count() << "ms" << std::endl;
 
   // user script
 
@@ -143,13 +142,12 @@ void start() {
       Engine::get_module<Graphics>()->get_device());
   Engine::get_module<ReflectionRenderer>()->initialize();
 
-  // import();
-  auto path =
-      std::filesystem::directory_entry(
-          "E:/resources/models/Bistro_v5_2/Bistro_v5_2/Textures/ElectricBox_"
-          "BaseColor.dds")
-          .path();
-  DDSLoader::load(path);
+  import();
+  auto path = std::filesystem::directory_entry(
+                  "E:/resources/models/Bistro_v5_2/Bistro_v5_2/Textures/MASTER_"
+                  "Roofing_Shingle_Grey_BaseColor.dds")
+                  .path();
+  Engine::get_module<ReflectionRenderer>()->load_texture("test", path.string());
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);

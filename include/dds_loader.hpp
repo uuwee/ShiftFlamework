@@ -128,22 +128,29 @@ DDSData load(const std::filesystem::path& path) {
 
   file.close();
 
-  auto output_file = std::ofstream("output.ppm");
-  output_file << "P3" << std::endl;
-  output_file << dds_data.width << " " << dds_data.height << std::endl;
-  output_file << "255" << std::endl;
-
+  dds_data.data = std::vector<RGBA8888>(dds_data.width * dds_data.height);
   for (int i = 0; i < dds_data.height; i++) {
     for (int j = 0; j < dds_data.width; j++) {
-      auto color = bitmap[i][j];
-      output_file << static_cast<int>(color.r) << " "
-                  << static_cast<int>(color.g) << " "
-                  << static_cast<int>(color.b) << " ";
+      dds_data.data[i * dds_data.width + j] = bitmap[i][j];
     }
-    output_file << std::endl;
   }
-  output_file.close();
+  /*
+auto output_file = std::ofstream("output.ppm");
+output_file << "P3" << std::endl;
+output_file << dds_data.width << " " << dds_data.height << std::endl;
+output_file << "255" << std::endl;
 
+for (int i = 0; i < dds_data.height; i++) {
+  for (int j = 0; j < dds_data.width; j++) {
+    auto color = bitmap[i][j];
+    output_file << static_cast<int>(color.r) << " "
+                << static_cast<int>(color.g) << " "
+                << static_cast<int>(color.b) << " ";
+  }
+  output_file << std::endl;
+}
+output_file.close();
+*/
   return dds_data;
 }
 }  // namespace SF::DDSLoader

@@ -13,12 +13,19 @@
 namespace SF {
 class ReflectionRenderer {
  private:
+  struct GPUTexture {
+    wgpu::Texture texture;
+    wgpu::Sampler sampler;
+    wgpu::TextureView texture_view;
+    wgpu::BindGroup bind_group;
+  };
   struct GPUResource {
     GPUMeshBuffer mesh_buffer;
     GPUTransformBuffer transform_buffer;
   };
 
   std::unordered_map<EntityID, GPUResource> gpu_resources{};
+  std::unordered_map<std::string, GPUTexture> textures{};
 
   wgpu::BindGroupLayout mesh_constant_bind_group_layout;
   wgpu::BindGroupLayout camera_constant_bind_group_layout;
@@ -50,6 +57,7 @@ class ReflectionRenderer {
   static std::string get_name() { return "ReflectionRenderer"; }
   void initialize();
   void render(wgpu::TextureView render_target);
+  void load_texture(std::string name, std::string path);
 
   void remove_mesh(EntityID id);
   void remove_constant(EntityID id);
