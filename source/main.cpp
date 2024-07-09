@@ -71,7 +71,7 @@ void import() {
         // transform
         e->add_component<Transform>()->set_position(Math::Vector3f({0, 0, 10}));
         e->get_component<Transform>()->set_scale(
-            Math::Vector3f({0.001f, 0.001f, 0.001f}));
+            Math::Vector3f({0.01f, 0.01f, 0.01f}));
         e->get_component<Transform>()->set_euler_angle(
             Math::Vector3f({0, 0, 0}));
 

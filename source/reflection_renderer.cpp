@@ -472,6 +472,30 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         ButtonState::HOLD) {
       camera_position.z -= 0.1f;
     }
+    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::Q) ==
+		ButtonState::HOLD) {
+		camera_position.y += 0.1f;
+	}
+    	if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::E) == ButtonState::HOLD) {
+camera_position.y -= 0.1f;
+}
+
+
+    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::H) ==
+        ButtonState::HOLD) {
+        camera_angle.y += 0.1f;
+    }
+    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::L) ==
+		ButtonState::HOLD) {
+		camera_angle.y -= 0.1f;
+	}
+	if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::J) ==
+		ButtonState::HOLD) {
+		camera_angle.x += 0.1f;
+	}
+    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::K) == ButtonState::HOLD) {
+        camera_angle.x -= 0.1f;
+    }
 
     auto view_mat = Math::Matrix4x4f({{
         {1.0f, 0.0f, 0.0f, -camera_position.x},
