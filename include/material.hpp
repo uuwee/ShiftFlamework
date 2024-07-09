@@ -15,6 +15,7 @@ class Material : public Component {
  public:
   static std::shared_ptr<MaterialStore> get_store();
   std::string id = "";
+  bool is_transparent = false;
   Material(){};
   ~Material(){};
 };

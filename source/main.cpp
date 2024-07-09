@@ -93,8 +93,8 @@ void import() {
                   Math::Vector3f({mesh->mNormals[i].x, mesh->mNormals[i].y,
                                   mesh->mNormals[i].z}),
               .tangent = Math::Vector4f({0.0f, 0.0f, 0.0f, 0.0f}),
-              .texture_coord0 = Math::Vector2f(
-                  {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y}),
+              .texture_coord0 = Math::Vector2f({mesh->mTextureCoords[0][i].x,
+                                                -mesh->mTextureCoords[0][i].y}),
           };
           vert.push_back(vertex);
         }
@@ -113,10 +113,11 @@ void import() {
                         std::string(name.C_Str()).replace(pos, len, "/"))
                         .path();
 
-        Engine::get_module<ReflectionRenderer>()->load_texture(name.C_Str(),
-                                                               path.string());
+        auto r = Engine::get_module<ReflectionRenderer>()->load_texture(
+            name.C_Str(), path.string());
 
-        e->add_component<Material>()->id = name.C_Str();
+        e->add_component<Material>()->id = std::get<0>(r);
+        e->get_component<Material>()->is_transparent = std::get<1>(r);
       }
     }
   }
@@ -155,8 +156,8 @@ void start() {
 
   import();
   // auto path = std::filesystem::directory_entry(
-  //                 "E:/resources/models/Bistro_v5_2/Bistro_v5_2/Textures/MASTER_"
-  //                 "Roofing_Shingle_Grey_BaseColor.dds")
+  //                 "E:/resources/models/Bistro_v5_2/Bistro_v5_"
+  //                 "2/Textures/Foliage_Ivy_leaf_a_BaseColor.dds")
   //                 .path();
   // Engine::get_module<ReflectionRenderer>()->load_texture("test",
   // path.string());

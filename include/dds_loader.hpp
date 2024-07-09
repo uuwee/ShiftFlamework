@@ -13,6 +13,7 @@ struct RGBA8888 {
 struct DDSData {
   uint32_t width, height;
   std::vector<RGBA8888> data;
+  bool alpha = false;
 };
 
 RGBA8888 fromRGB565(unsigned short rgb565) {
@@ -156,7 +157,7 @@ DDSData load(const std::filesystem::path& path) {
                     index_bits.begin());
           for (int y = 0; y < 4; y++) {
             for (int x = 0; x < 4; x++) {
-              auto idx = *index_bits.data() & 0x07;
+              auto idx = (int)(*index_bits.data() & 0x07);
 
               int xx = j * 4 + x;
               int yy = i * 4 + y;
@@ -222,23 +223,24 @@ DDSData load(const std::filesystem::path& path) {
       dds_data.data[i * dds_data.width + j] = bitmap[i][j];
     }
   }
-  /*
-auto output_file = std::ofstream("output.ppm");
-output_file << "P3" << std::endl;
-output_file << dds_data.width << " " << dds_data.height << std::endl;
-output_file << "255" << std::endl;
 
-for (int i = 0; i < dds_data.height; i++) {
-  for (int j = 0; j < dds_data.width; j++) {
-    auto color = bitmap[i][j];
-    output_file << static_cast<int>(color.r) << " "
-                << static_cast<int>(color.g) << " "
-                << static_cast<int>(color.b) << " ";
-  }
-  output_file << std::endl;
-}
-output_file.close();
-*/
+  dds_data.alpha = is_dxt5;
+
+  // auto output_file = std::ofstream("output.ppm");
+  // output_file << "P3" << std::endl;
+  // output_file << dds_data.width << " " << dds_data.height << std::endl;
+  // output_file << "255" << std::endl;
+
+  // for (int i = 0; i < dds_data.height; i++) {
+  //   for (int j = 0; j < dds_data.width; j++) {
+  //     auto color = bitmap[i][j];
+  //     output_file << static_cast<int>(color.r) << " "
+  //                 << static_cast<int>(color.g) << " "
+  //                 << static_cast<int>(color.b) << " ";
+  //   }
+  //   output_file << std::endl;
+  // }
+  // output_file.close();
   return dds_data;
 }
 }  // namespace SF::DDSLoader

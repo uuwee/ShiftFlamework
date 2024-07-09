@@ -18,6 +18,7 @@ class ReflectionRenderer {
     wgpu::Sampler sampler;
     wgpu::TextureView texture_view;
     wgpu::BindGroup bind_group;
+    bool is_transparent;
   };
   struct GPUResource {
     GPUMeshBuffer mesh_buffer;
@@ -57,7 +58,7 @@ class ReflectionRenderer {
   static std::string get_name() { return "ReflectionRenderer"; }
   void initialize();
   void render(wgpu::TextureView render_target);
-  void load_texture(std::string name, std::string path);
+  std::pair<std::string, bool> load_texture(std::string name, std::string path);
 
   void remove_mesh(EntityID id);
   void remove_constant(EntityID id);

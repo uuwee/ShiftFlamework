@@ -97,8 +97,8 @@ void ReflectionRenderer::initialize() {
       .alpha =
           wgpu::BlendComponent{
               .operation = wgpu::BlendOperation::Add,
-              .srcFactor = wgpu::BlendFactor::Zero,
-              .dstFactor = wgpu::BlendFactor::One,
+              .srcFactor = wgpu::BlendFactor::One,
+              .dstFactor = wgpu::BlendFactor::Zero,
           },
   };
 
@@ -586,13 +586,32 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
   pass.SetPipeline(render_pipeline);
 
   for (const auto& rendered : gpu_resources) {
-    // std::cout << "rendered: " << rendered.first << " #indice: "
-    //           << rendered.second.mesh_buffer.index_buffer.GetSize() /
-    //                  sizeof(uint32_t)
-    //           << std::endl;
     auto id = rendered.first;
-    auto mat_id = Engine::get_module<MaterialStore>()->get(id)->id;
-    if (!textures.contains(mat_id)) {
+    auto mat = Engine::get_module<MaterialStore>()->get(id);
+    auto mat_id = mat->id;
+    if (!textures.contains(mat_id) || mat->is_transparent) {
+      continue;
+    }
+    pass.SetVertexBuffer(0, rendered.second.mesh_buffer.vertex_buffer, 0,
+                         rendered.second.mesh_buffer.vertex_buffer.GetSize());
+    pass.SetIndexBuffer(rendered.second.mesh_buffer.index_buffer,
+                        wgpu::IndexFormat::Uint32, 0,
+                        rendered.second.mesh_buffer.index_buffer.GetSize());
+    pass.SetBindGroup(0, rendered.second.transform_buffer.bindgroup, 0,
+                      nullptr);
+    pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
+    pass.SetBindGroup(2, textures[mat_id].bind_group, 0, nullptr);
+    pass.DrawIndexed(
+        rendered.second.mesh_buffer.index_buffer.GetSize() / sizeof(uint32_t),
+        1, 0, 0, 0);
+  }
+
+  // transparent
+  for (const auto& rendered : gpu_resources) {
+    auto id = rendered.first;
+    auto mat = Engine::get_module<MaterialStore>()->get(id);
+    auto mat_id = mat->id;
+    if (!textures.contains(mat_id) || (!mat->is_transparent)) {
       continue;
     }
     pass.SetVertexBuffer(0, rendered.second.mesh_buffer.vertex_buffer, 0,
@@ -697,9 +716,10 @@ void ReflectionRenderer::dispose_gpu_resource(EntityID id) {
   }
 }
 
-void ReflectionRenderer::load_texture(std::string name, std::string path) {
+std::pair<std::string, bool> ReflectionRenderer::load_texture(
+    std::string name, std::string path) {
   if (textures.contains(name)) {
-    return;
+    return {name, textures[name].is_transparent};
   }
   auto texture_data = DDSLoader::load(path);
 
@@ -787,7 +807,10 @@ void ReflectionRenderer::load_texture(std::string name, std::string path) {
       .sampler = sampler,
       .texture_view = texture_view,
       .bind_group = texture_bind_group,
+      .is_transparent = texture_data.alpha,
   };
 
   textures.insert_or_assign(name, gpu_texture);
+
+  return {name, texture_data.alpha};
 }
