@@ -107,7 +107,7 @@ DDSData load(const std::filesystem::path& path) {
         color_table[3] = Lerp(color0, color1, 2.0f / 3.0f);
       } else {
         color_table[2] = Lerp(color0, color1, 0.5f);
-        color_table[3] = RGBA8888({0, 0, 0, 1});
+        color_table[3] = RGBA8888({0, 0, 0, 0});
       }
 
       auto index_bits = *reinterpret_cast<uint32_t*>(&block[4]);

@@ -105,7 +105,9 @@ void import() {
         aiString name;
         auto ret =
             material->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), name);
-
+        if (std::string(name.C_Str()).find("leaf") != std::string::npos) {
+          std::cout << "leaf tex!" << std::endl;
+		}
         std::cout << "  texture=" << name.C_Str() << std::endl;
         auto pos = std::string(name.C_Str()).find_last_of("\\");
         auto len = 1;
