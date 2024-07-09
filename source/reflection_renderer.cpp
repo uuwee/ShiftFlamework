@@ -75,9 +75,12 @@ void ReflectionRenderer::initialize() {
     }
 
     @fragment fn fragmentMain(in: VertexOutput) -> @location(0) vec4f{
-        // return vec4f(in.texcoord0, 0.0, 1.0);
-        return vec4f(textureSample(tex, tex_sampler, in.texcoord0));
-        // return vec4f(textureSample(tex, tex_sampler, in.texcoord0).a, 0.0, 0.0, 1.0);
+        var p: vec4f;
+        p = textureSample(tex, tex_sampler, in.texcoord0);
+        if (p.a > 0){
+            p.a = 1.0;
+        }
+        return p;
     }
   )";
 
@@ -97,8 +100,8 @@ void ReflectionRenderer::initialize() {
       .alpha =
           wgpu::BlendComponent{
               .operation = wgpu::BlendOperation::Add,
-              .srcFactor = wgpu::BlendFactor::One,
-              .dstFactor = wgpu::BlendFactor::Zero,
+              .srcFactor = wgpu::BlendFactor::SrcAlpha,
+              .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
           },
   };
 
@@ -555,81 +558,117 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
                                                   view_proj_mat_vec);
   }
 
-  // render
-  wgpu::RenderPassColorAttachment attachment{
-      .view = render_target,
-      .loadOp = wgpu::LoadOp::Clear,
-      .storeOp = wgpu::StoreOp::Store,
-      .clearValue = {0.0f, 0.0f, 0.0f, 1.0f},
-  };
+  if (!lock_command) {
+    wgpu::CommandEncoder encoder =
+        Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
 
-  wgpu::RenderPassDepthStencilAttachment depth_stencil_attachment{
-      .view = depthTextureView,
-      .depthLoadOp = wgpu::LoadOp::Clear,
-      .depthStoreOp = wgpu::StoreOp::Store,
-      .depthClearValue = 1.0f,
-      .depthReadOnly = false,
-      .stencilLoadOp = wgpu::LoadOp::Undefined,
-      .stencilStoreOp = wgpu::StoreOp::Undefined,
-      .stencilClearValue = 0,
-      .stencilReadOnly = true,
-  };
+    // render
+    {
+      wgpu::RenderPassColorAttachment attachment{
+          .view = render_target,
+          .loadOp = wgpu::LoadOp::Clear,
+          .storeOp = wgpu::StoreOp::Store,
+          .clearValue = {0.0f, 0.0f, 0.0f, 0.0f},
+      };
 
-  wgpu::RenderPassDescriptor renderpass_desc{
-      .colorAttachmentCount = 1,
-      .colorAttachments = &attachment,
-      .depthStencilAttachment = &depth_stencil_attachment};
+      wgpu::RenderPassDepthStencilAttachment depth_stencil_attachment{
+          .view = depthTextureView,
+          .depthLoadOp = wgpu::LoadOp::Clear,
+          .depthStoreOp = wgpu::StoreOp::Store,
+          .depthClearValue = 1.0f,
+          .depthReadOnly = false,
+          .stencilLoadOp = wgpu::LoadOp::Undefined,
+          .stencilStoreOp = wgpu::StoreOp::Undefined,
+          .stencilClearValue = 0,
+          .stencilReadOnly = true,
+      };
 
-  wgpu::CommandEncoder encoder =
-      Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
-  wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
-  pass.SetPipeline(render_pipeline);
+      wgpu::RenderPassDescriptor renderpass_desc{
+          .colorAttachmentCount = 1,
+          .colorAttachments = &attachment,
+          .depthStencilAttachment = &depth_stencil_attachment};
 
-  for (const auto& rendered : gpu_resources) {
-    auto id = rendered.first;
-    auto mat = Engine::get_module<MaterialStore>()->get(id);
-    auto mat_id = mat->id;
-    if (!textures.contains(mat_id) || mat->is_transparent) {
-      continue;
+      wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
+      pass.SetPipeline(render_pipeline);
+
+      for (const auto& rendered : gpu_resources) {
+        auto id = rendered.first;
+        auto mat = Engine::get_module<MaterialStore>()->get(id);
+        auto mat_id = mat->id;
+        if (!textures.contains(mat_id) || mat->is_transparent) {
+          continue;
+        }
+        pass.SetVertexBuffer(
+            0, rendered.second.mesh_buffer.vertex_buffer, 0,
+            rendered.second.mesh_buffer.vertex_buffer.GetSize());
+        pass.SetIndexBuffer(rendered.second.mesh_buffer.index_buffer,
+                            wgpu::IndexFormat::Uint32, 0,
+                            rendered.second.mesh_buffer.index_buffer.GetSize());
+        pass.SetBindGroup(0, rendered.second.transform_buffer.bindgroup, 0,
+                          nullptr);
+        pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
+        pass.SetBindGroup(2, textures[mat_id].bind_group, 0, nullptr);
+        pass.DrawIndexed(rendered.second.mesh_buffer.index_buffer.GetSize() /
+                             sizeof(uint32_t),
+                         1, 0, 0, 0);
+      }
+      pass.End();
     }
-    pass.SetVertexBuffer(0, rendered.second.mesh_buffer.vertex_buffer, 0,
-                         rendered.second.mesh_buffer.vertex_buffer.GetSize());
-    pass.SetIndexBuffer(rendered.second.mesh_buffer.index_buffer,
-                        wgpu::IndexFormat::Uint32, 0,
-                        rendered.second.mesh_buffer.index_buffer.GetSize());
-    pass.SetBindGroup(0, rendered.second.transform_buffer.bindgroup, 0,
-                      nullptr);
-    pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
-    pass.SetBindGroup(2, textures[mat_id].bind_group, 0, nullptr);
-    pass.DrawIndexed(
-        rendered.second.mesh_buffer.index_buffer.GetSize() / sizeof(uint32_t),
-        1, 0, 0, 0);
-  }
 
-  // transparent
-  for (const auto& rendered : gpu_resources) {
-    auto id = rendered.first;
-    auto mat = Engine::get_module<MaterialStore>()->get(id);
-    auto mat_id = mat->id;
-    if (!textures.contains(mat_id) || (!mat->is_transparent)) {
-      continue;
+    // transparent
+    {
+      wgpu::RenderPassColorAttachment attachment{
+          .view = render_target,
+          .loadOp = wgpu::LoadOp::Load,
+          .storeOp = wgpu::StoreOp::Store,
+          .clearValue = {1.0f, 1.0f, 0.0f, 0.0f},
+      };
+
+      wgpu::RenderPassDepthStencilAttachment depth_stencil_attachment{
+          .view = depthTextureView,
+          .depthLoadOp = wgpu::LoadOp::Load,
+          .depthStoreOp = wgpu::StoreOp::Discard,
+          .depthClearValue = 1.0f,
+          .depthReadOnly = false,
+          .stencilLoadOp = wgpu::LoadOp::Undefined,
+          .stencilStoreOp = wgpu::StoreOp::Undefined,
+          .stencilClearValue = 0,
+          .stencilReadOnly = true,
+      };
+
+      wgpu::RenderPassDescriptor renderpass_desc{
+          .colorAttachmentCount = 1,
+          .colorAttachments = &attachment,
+          .depthStencilAttachment = &depth_stencil_attachment};
+
+      wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
+      pass.SetPipeline(render_pipeline);
+      for (const auto& rendered : gpu_resources) {
+        auto id = rendered.first;
+        auto mat = Engine::get_module<MaterialStore>()->get(id);
+        auto mat_id = mat->id;
+        if (!textures.contains(mat_id) || (!mat->is_transparent)) {
+          continue;
+        }
+        pass.SetVertexBuffer(
+            0, rendered.second.mesh_buffer.vertex_buffer, 0,
+            rendered.second.mesh_buffer.vertex_buffer.GetSize());
+        pass.SetIndexBuffer(rendered.second.mesh_buffer.index_buffer,
+                            wgpu::IndexFormat::Uint32, 0,
+                            rendered.second.mesh_buffer.index_buffer.GetSize());
+        pass.SetBindGroup(0, rendered.second.transform_buffer.bindgroup, 0,
+                          nullptr);
+        pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
+        pass.SetBindGroup(2, textures[mat_id].bind_group, 0, nullptr);
+        pass.DrawIndexed(rendered.second.mesh_buffer.index_buffer.GetSize() /
+                             sizeof(uint32_t),
+                         1, 0, 0, 0);
+      }
+      pass.End();
     }
-    pass.SetVertexBuffer(0, rendered.second.mesh_buffer.vertex_buffer, 0,
-                         rendered.second.mesh_buffer.vertex_buffer.GetSize());
-    pass.SetIndexBuffer(rendered.second.mesh_buffer.index_buffer,
-                        wgpu::IndexFormat::Uint32, 0,
-                        rendered.second.mesh_buffer.index_buffer.GetSize());
-    pass.SetBindGroup(0, rendered.second.transform_buffer.bindgroup, 0,
-                      nullptr);
-    pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
-    pass.SetBindGroup(2, textures[mat_id].bind_group, 0, nullptr);
-    pass.DrawIndexed(
-        rendered.second.mesh_buffer.index_buffer.GetSize() / sizeof(uint32_t),
-        1, 0, 0, 0);
-  }
 
-  pass.End();
-  wgpu::CommandBuffer commands = encoder.Finish();
+    commands = encoder.Finish();
+  }
 
   Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1, &commands);
 }

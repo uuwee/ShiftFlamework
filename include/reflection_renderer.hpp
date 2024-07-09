@@ -48,6 +48,7 @@ class ReflectionRenderer {
 
   wgpu::TextureView depthTextureView;
 
+  wgpu::CommandBuffer commands;
   int count = 0;
 
   void dispose_gpu_resource(EntityID id);
@@ -62,5 +63,7 @@ class ReflectionRenderer {
 
   void remove_mesh(EntityID id);
   void remove_constant(EntityID id);
+
+  bool lock_command = false;
 };
 }  // namespace SF

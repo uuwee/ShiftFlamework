@@ -138,17 +138,17 @@ DDSData load(const std::filesystem::path& path) {
           alpha_table[1] = a1;
 
           if (a0 > a1) {
-            alpha_table[2] = (6 * a0 + 1 * a1) / 7;
-            alpha_table[3] = (5 * a0 + 2 * a1) / 7;
-            alpha_table[4] = (4 * a0 + 3 * a1) / 7;
-            alpha_table[5] = (3 * a0 + 4 * a1) / 7;
-            alpha_table[6] = (2 * a0 + 5 * a1) / 7;
-            alpha_table[7] = (1 * a0 + 6 * a1) / 7;
+            alpha_table[2] = (6.0f * a0 + 1.0f * a1) / 7.0f;
+            alpha_table[3] = (5.0f * a0 + 2.0f * a1) / 7.0f;
+            alpha_table[4] = (4.0f * a0 + 3.0f * a1) / 7.0f;
+            alpha_table[5] = (3.0f * a0 + 4.0f * a1) / 7.0f;
+            alpha_table[6] = (2.0f * a0 + 5.0f * a1) / 7.0f;
+            alpha_table[7] = (1.0f * a0 + 6.0f * a1) / 7.0f;
           } else {
-            alpha_table[2] = (4 * a0 + 1 * a1) / 5;
-            alpha_table[3] = (3 * a0 + 2 * a1) / 5;
-            alpha_table[4] = (2 * a0 + 3 * a1) / 5;
-            alpha_table[5] = (1 * a0 + 4 * a1) / 5;
+            alpha_table[2] = (4.0f * a0 + 1.0f * a1) / 5.0f;
+            alpha_table[3] = (3.0f * a0 + 2.0f * a1) / 5.0f;
+            alpha_table[4] = (2.0f * a0 + 3.0f * a1) / 5.0f;
+            alpha_table[5] = (1.0f * a0 + 4.0f * a1) / 5.0f;
             alpha_table[6] = 0;
             alpha_table[7] = 255;
           }
