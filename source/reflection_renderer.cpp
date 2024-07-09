@@ -10,6 +10,7 @@
 #include "gpu_mesh_buffer.hpp"
 #include "graphics.hpp"
 #include "input.hpp"
+#include "material.hpp"
 #include "matrix.hpp"
 #include "mesh.hpp"
 #include "transform.hpp"
@@ -545,6 +546,11 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     //           << rendered.second.mesh_buffer.index_buffer.GetSize() /
     //                  sizeof(uint32_t)
     //           << std::endl;
+    auto id = rendered.first;
+    auto mat_id = Engine::get_module<MaterialStore>()->get(id)->id;
+    if (!textures.contains(mat_id)) {
+      continue;
+    }
     pass.SetVertexBuffer(0, rendered.second.mesh_buffer.vertex_buffer, 0,
                          rendered.second.mesh_buffer.vertex_buffer.GetSize());
     pass.SetIndexBuffer(rendered.second.mesh_buffer.index_buffer,
@@ -553,7 +559,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     pass.SetBindGroup(0, rendered.second.transform_buffer.bindgroup, 0,
                       nullptr);
     pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
-    pass.SetBindGroup(2, textures["test"].bind_group, 0, nullptr);
+    pass.SetBindGroup(2, textures[mat_id].bind_group, 0, nullptr);
     pass.DrawIndexed(
         rendered.second.mesh_buffer.index_buffer.GetSize() / sizeof(uint32_t),
         1, 0, 0, 0);
@@ -648,6 +654,9 @@ void ReflectionRenderer::dispose_gpu_resource(EntityID id) {
 }
 
 void ReflectionRenderer::load_texture(std::string name, std::string path) {
+  if (textures.contains(name)) {
+    return;
+  }
   auto texture_data = DDSLoader::load(path);
 
   const wgpu::TextureDescriptor texture_desc{

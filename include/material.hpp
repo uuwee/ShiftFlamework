@@ -2,20 +2,19 @@
 
 #include <stdint.h>
 
+#include <string>
+
 #include "entity.hpp"
 
 namespace SF {
-
-using MaterialID = uint32_t;
 
 class Material : public Component {
   friend class MaterialStore;
 
  private:
-  MaterialID id = 0;
-
  public:
   static std::shared_ptr<MaterialStore> get_store();
+  std::string id = "";
   Material(){};
   ~Material(){};
 };

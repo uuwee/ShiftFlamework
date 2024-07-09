@@ -16,6 +16,7 @@
 #include "entity.hpp"
 #include "graphics.hpp"
 #include "input.hpp"
+#include "material.hpp"
 #include "mesh.hpp"
 #include "reflection_renderer.hpp"
 #include "screenspace_material.hpp"
@@ -106,6 +107,18 @@ void import() {
             material->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), name);
 
         std::cout << "  texture=" << name.C_Str() << std::endl;
+        auto pos = std::string(name.C_Str()).find_last_of("\\");
+        auto len = 1;
+        auto path =
+            std::filesystem::directory_entry(
+                "E:/resources/models/Bistro_v5_2/Bistro_v5_2/" +
+                std::string(name.C_Str()).replace(pos, len, "/"))
+                .path();
+
+        Engine::get_module<ReflectionRenderer>()->load_texture(name.C_Str(),
+                                                               path.string());
+
+        e->add_component<Material>()->id = name.C_Str();
       }
     }
   }
@@ -143,11 +156,12 @@ void start() {
   Engine::get_module<ReflectionRenderer>()->initialize();
 
   import();
-  auto path = std::filesystem::directory_entry(
-                  "E:/resources/models/Bistro_v5_2/Bistro_v5_2/Textures/MASTER_"
-                  "Roofing_Shingle_Grey_BaseColor.dds")
-                  .path();
-  Engine::get_module<ReflectionRenderer>()->load_texture("test", path.string());
+  // auto path = std::filesystem::directory_entry(
+  //                 "E:/resources/models/Bistro_v5_2/Bistro_v5_2/Textures/MASTER_"
+  //                 "Roofing_Shingle_Grey_BaseColor.dds")
+  //                 .path();
+  // Engine::get_module<ReflectionRenderer>()->load_texture("test",
+  // path.string());
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
@@ -167,6 +181,7 @@ int main() {
   Engine::add_module<ScreenSpaceTransformStore>();
   Engine::add_module<MeshStore>();
   Engine::add_module<TransformStore>();
+  Engine::add_module<MaterialStore>();
 
   Engine::get_module<Input>()->initialize();
   Engine::get_module<Graphics>()->initialize([]() { start(); });
@@ -176,6 +191,7 @@ int main() {
   Engine::get_module<ScreenSpaceMeshStore>()->initialize();
   Engine::get_module<MeshStore>()->initialize();
   Engine::get_module<TransformStore>()->initialize();
+  Engine::get_module<MaterialStore>()->initialize();
   Engine::get_module<ScreenSpaceMaterialStore>()->initialize();
   Engine::get_module<ScreenSpaceTransformStore>()->initialize();
 }

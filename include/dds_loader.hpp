@@ -39,10 +39,12 @@ DDSData load(const std::filesystem::path& path) {
   // https://techblog.sega.jp/entry/2016/12/26/100000#BC1%E5%BD%A2%E5%BC%8F%E3%81%AB%E3%82%82%E5%AF%BE%E5%BF%9C%E3%81%99%E3%82%8B
   // todo: read formal spec and implement all sub-versions
   // I think current implementation is only for DXT1
-
+  std::cout << "loading dds file: " << path << std::endl;
   std::ifstream file(path, std::ios::binary);
   if (!file.is_open()) {
-    throw std::runtime_error("Failed to open file");
+    return DDSData{
+        .width = 0, .height = 0,
+    };
   }
   DDSData dds_data{};
 
