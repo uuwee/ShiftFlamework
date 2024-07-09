@@ -39,11 +39,12 @@ DDSData load(const std::filesystem::path& path) {
   // https://techblog.sega.jp/entry/2016/12/26/100000#BC1%E5%BD%A2%E5%BC%8F%E3%81%AB%E3%82%82%E5%AF%BE%E5%BF%9C%E3%81%99%E3%82%8B
   // todo: read formal spec and implement all sub-versions
   // I think current implementation is only for DXT1
-  std::cout << "loading dds file: " << path << std::endl;
+  // std::cout << "loading dds file: " << path << std::endl;
   std::ifstream file(path, std::ios::binary);
   if (!file.is_open()) {
     return DDSData{
-        .width = 0, .height = 0,
+        .width = 0,
+        .height = 0,
     };
   }
   DDSData dds_data{};
@@ -68,18 +69,16 @@ DDSData load(const std::filesystem::path& path) {
 
   bool is_dxt1 =
       type[0] == 0x44 && type[1] == 0x58 && type[2] == 0x54 && type[3] == 0x31;
-
-  //   std::cout << "Width: " << dds_data.width << std::endl;
-  //   std::cout << "Height: " << dds_data.height << std::endl;
-  //   std::cout << "is_dxt1: " << (is_dxt1 ? "true" : "false") << std::endl;
-
-  if (!is_dxt1) {
-    std::cout << "Not a DXT1 file" << std::endl;
-    return dds_data;
-  }
+  bool is_dxt5 =
+      type[0] == 0x44 && type[1] == 0x58 && type[2] == 0x54 && type[3] == 0x35;
 
   auto block_count = ((dds_data.width + 3) / 4) * ((dds_data.height + 3) / 4);
   std::cout << "Block count: " << block_count << std::endl;
+
+  if ((!is_dxt1) && (!is_dxt5)) {
+    std::cout << "Not a DXT1 nor DXT5 file" << std::endl;
+    return dds_data;
+  }
 
   std::vector<std::vector<RGBA8888>> bitmap(
       dds_data.height, std::vector<RGBA8888>(dds_data.width));
@@ -88,41 +87,128 @@ DDSData load(const std::filesystem::path& path) {
   uint32_t col = (dds_data.height + 3) / 4;
   for (size_t i = 0; i < row; i++) {
     for (size_t j = 0; j < col; j++) {
-      std::vector<uint8_t> block(8);
-      file.read(reinterpret_cast<char*>(block.data()), 8);
+      if (is_dxt1) {
+        std::vector<uint8_t> block(8);
+        file.read(reinterpret_cast<char*>(block.data()), 8);
 
-      RGBA8888 color0 =
-          fromRGB565(*reinterpret_cast<unsigned short*>(&block[0]));
-      RGBA8888 color1 =
-          fromRGB565(*reinterpret_cast<unsigned short*>(&block[2]));
+        RGBA8888 color0 =
+            fromRGB565(*reinterpret_cast<unsigned short*>(&block[0]));
+        RGBA8888 color1 =
+            fromRGB565(*reinterpret_cast<unsigned short*>(&block[2]));
 
-      auto c0 = *reinterpret_cast<uint16_t*>(&block[0]);
-      auto c1 = *reinterpret_cast<uint16_t*>(&block[2]);
+        auto c0 = *reinterpret_cast<uint16_t*>(&block[0]);
+        auto c1 = *reinterpret_cast<uint16_t*>(&block[2]);
 
-      auto color_table = std::vector<RGBA8888>(4);
-      color_table[0] = color0;
-      color_table[1] = color1;
-      if (c0 > c1) {
-        color_table[2] = Lerp(color0, color1, 1.0f / 3.0f);
-        color_table[3] = Lerp(color0, color1, 2.0f / 3.0f);
-      } else {
-        color_table[2] = Lerp(color0, color1, 0.5f);
-        color_table[3] = RGBA8888({0, 0, 0, 0});
-      }
+        auto color_table = std::vector<RGBA8888>(4);
+        color_table[0] = color0;
+        color_table[1] = color1;
+        if (c0 > c1) {
+          color_table[2] = Lerp(color0, color1, 1.0f / 3.0f);
+          color_table[3] = Lerp(color0, color1, 2.0f / 3.0f);
+        } else {
+          color_table[2] = Lerp(color0, color1, 0.5f);
+          color_table[3] = RGBA8888({0, 0, 0, 0});
+        }
+        auto index_bits = *reinterpret_cast<uint32_t*>(&block[4]);
+        for (int y = 0; y < 4; y++) {
+          for (int x = 0; x < 4; x++) {
+            auto idx = index_bits & 0x03;  // see lower 2 bits
 
-      auto index_bits = *reinterpret_cast<uint32_t*>(&block[4]);
-      for (int y = 0; y < 4; y++) {
-        for (int x = 0; x < 4; x++) {
-          auto idx = index_bits & 0x03;
+            int xx = j * 4 + x;
+            int yy = i * 4 + y;
+            if (xx >= dds_data.width || yy >= dds_data.height) {
+              continue;
+            }
 
-          int xx = j * 4 + x;
-          int yy = i * 4 + y;
-          if (xx >= dds_data.width || yy >= dds_data.height) {
-            continue;
+            bitmap[yy][xx] = color_table[idx];
+            index_bits >>= 2;  // see next lower 2 bits
           }
+        }
+      } else if (is_dxt5) {
+        {
+          std::vector<uint8_t> alpha_block(8);
+          file.read(reinterpret_cast<char*>(alpha_block.data()), 8);
 
-          bitmap[yy][xx] = color_table[idx];
-          index_bits >>= 2;
+          auto a0 = alpha_block[0];
+          auto a1 = alpha_block[1];
+
+          auto alpha_table = std::vector<uint8_t>(8);
+          alpha_table[0] = a0;
+          alpha_table[1] = a1;
+
+          if (a0 > a1) {
+            alpha_table[2] = (6 * a0 + 1 * a1) / 7;
+            alpha_table[3] = (5 * a0 + 2 * a1) / 7;
+            alpha_table[4] = (4 * a0 + 3 * a1) / 7;
+            alpha_table[5] = (3 * a0 + 4 * a1) / 7;
+            alpha_table[6] = (2 * a0 + 5 * a1) / 7;
+            alpha_table[7] = (1 * a0 + 6 * a1) / 7;
+          } else {
+            alpha_table[2] = (4 * a0 + 1 * a1) / 5;
+            alpha_table[3] = (3 * a0 + 2 * a1) / 5;
+            alpha_table[4] = (2 * a0 + 3 * a1) / 5;
+            alpha_table[5] = (1 * a0 + 4 * a1) / 5;
+            alpha_table[6] = 0;
+            alpha_table[7] = 255;
+          }
+          auto index_bits = std::vector<uint8_t>(6);
+          std::copy(alpha_block.begin() + 2, alpha_block.end(),
+                    index_bits.begin());
+          for (int y = 0; y < 4; y++) {
+            for (int x = 0; x < 4; x++) {
+              auto idx = *index_bits.data() & 0x07;
+
+              int xx = j * 4 + x;
+              int yy = i * 4 + y;
+              if (xx >= dds_data.width || yy >= dds_data.height) {
+                continue;
+              }
+
+              bitmap[yy][xx].a = alpha_table[idx];
+              *index_bits.data() >>= 3;
+            }
+          }
+        }
+        {
+          std::vector<uint8_t> col_block(8);
+          file.read(reinterpret_cast<char*>(col_block.data()), 8);
+
+          RGBA8888 color0 =
+              fromRGB565(*reinterpret_cast<unsigned short*>(&col_block[0]));
+          RGBA8888 color1 =
+              fromRGB565(*reinterpret_cast<unsigned short*>(&col_block[2]));
+
+          auto c0 = *reinterpret_cast<uint16_t*>(&col_block[0]);
+          auto c1 = *reinterpret_cast<uint16_t*>(&col_block[2]);
+
+          auto color_table = std::vector<RGBA8888>(4);
+          color_table[0] = color0;
+          color_table[1] = color1;
+          if (c0 > c1) {
+            color_table[2] = Lerp(color0, color1, 1.0f / 3.0f);
+            color_table[3] = Lerp(color0, color1, 2.0f / 3.0f);
+          } else {
+            color_table[2] = Lerp(color0, color1, 0.5f);
+            color_table[3] = RGBA8888({0, 0, 0, 0});
+          }
+          auto index_bits = *reinterpret_cast<uint32_t*>(&col_block[4]);
+          for (int y = 0; y < 4; y++) {
+            for (int x = 0; x < 4; x++) {
+              auto idx = index_bits & 0x03;
+
+              int xx = j * 4 + x;
+              int yy = i * 4 + y;
+              if (xx >= dds_data.width || yy >= dds_data.height) {
+                continue;
+              }
+
+              bitmap[yy][xx].r = color_table[idx].r;
+              bitmap[yy][xx].g = color_table[idx].g;
+              bitmap[yy][xx].b = color_table[idx].b;
+
+              index_bits >>= 2;
+            }
+          }
         }
       }
     }

@@ -76,7 +76,8 @@ void ReflectionRenderer::initialize() {
 
     @fragment fn fragmentMain(in: VertexOutput) -> @location(0) vec4f{
         // return vec4f(in.texcoord0, 0.0, 1.0);
-        return vec4f(textureSample(tex, tex_sampler, in.texcoord0).xyz, 1.0);
+        return vec4f(textureSample(tex, tex_sampler, in.texcoord0));
+        // return vec4f(textureSample(tex, tex_sampler, in.texcoord0).a, 0.0, 0.0, 1.0);
     }
   )";
 
@@ -85,8 +86,25 @@ void ReflectionRenderer::initialize() {
       Engine::get_module<Graphics>()->get_device().CreateShaderModule(
           &shader_module_desc);
 
+  std::vector<wgpu::BlendState> blend_states(1);
+  blend_states.at(0) = wgpu::BlendState{
+      .color =
+          wgpu::BlendComponent{
+              .operation = wgpu::BlendOperation::Add,
+              .srcFactor = wgpu::BlendFactor::SrcAlpha,
+              .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
+          },
+      .alpha =
+          wgpu::BlendComponent{
+              .operation = wgpu::BlendOperation::Add,
+              .srcFactor = wgpu::BlendFactor::Zero,
+              .dstFactor = wgpu::BlendFactor::One,
+          },
+  };
+
   wgpu::ColorTargetState color_target_state{
       .format = wgpu::TextureFormat::BGRA8Unorm,
+      .blend = blend_states.data(),
   };
 
   wgpu::FragmentState fragment_state{
@@ -473,28 +491,29 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
       camera_position.z -= 0.1f;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::Q) ==
-		ButtonState::HOLD) {
-		camera_position.y += 0.1f;
-	}
-    	if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::E) == ButtonState::HOLD) {
-camera_position.y -= 0.1f;
-}
-
+        ButtonState::HOLD) {
+      camera_position.y += 0.1f;
+    }
+    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::E) ==
+        ButtonState::HOLD) {
+      camera_position.y -= 0.1f;
+    }
 
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::H) ==
         ButtonState::HOLD) {
-        camera_angle.y += 0.1f;
+      camera_angle.y += 0.1f;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::L) ==
-		ButtonState::HOLD) {
-		camera_angle.y -= 0.1f;
-	}
-	if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::J) ==
-		ButtonState::HOLD) {
-		camera_angle.x += 0.1f;
-	}
-    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::K) == ButtonState::HOLD) {
-        camera_angle.x -= 0.1f;
+        ButtonState::HOLD) {
+      camera_angle.y -= 0.1f;
+    }
+    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::J) ==
+        ButtonState::HOLD) {
+      camera_angle.x += 0.1f;
+    }
+    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::K) ==
+        ButtonState::HOLD) {
+      camera_angle.x -= 0.1f;
     }
 
     auto view_mat = Math::Matrix4x4f({{
@@ -541,6 +560,7 @@ camera_position.y -= 0.1f;
       .view = render_target,
       .loadOp = wgpu::LoadOp::Clear,
       .storeOp = wgpu::StoreOp::Store,
+      .clearValue = {0.0f, 0.0f, 0.0f, 1.0f},
   };
 
   wgpu::RenderPassDepthStencilAttachment depth_stencil_attachment{

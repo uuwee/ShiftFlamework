@@ -105,17 +105,13 @@ void import() {
         aiString name;
         auto ret =
             material->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), name);
-        if (std::string(name.C_Str()).find("leaf") != std::string::npos) {
-          std::cout << "leaf tex!" << std::endl;
-		}
-        std::cout << "  texture=" << name.C_Str() << std::endl;
+        // std::cout << "  texture=" << name.C_Str() << std::endl;
         auto pos = std::string(name.C_Str()).find_last_of("\\");
         auto len = 1;
-        auto path =
-            std::filesystem::directory_entry(
-                "E:/resources/models/Bistro_v5_2/Bistro_v5_2/" +
-                std::string(name.C_Str()).replace(pos, len, "/"))
-                .path();
+        auto path = std::filesystem::directory_entry(
+                        "E:/resources/models/Bistro_v5_2/Bistro_v5_2/" +
+                        std::string(name.C_Str()).replace(pos, len, "/"))
+                        .path();
 
         Engine::get_module<ReflectionRenderer>()->load_texture(name.C_Str(),
                                                                path.string());
