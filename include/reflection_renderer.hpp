@@ -47,8 +47,8 @@ class ReflectionRenderer {
   wgpu::BindGroup texture_bind_group;
 
   wgpu::TextureView depthTextureView;
+  wgpu::RenderBundle render_bundle;
 
-  wgpu::CommandBuffer commands;
   int count = 0;
 
   void dispose_gpu_resource(EntityID id);

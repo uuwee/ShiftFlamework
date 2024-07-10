@@ -559,37 +559,23 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
   }
 
   if (!lock_command) {
-    wgpu::CommandEncoder encoder =
-        Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
+    auto color_format = wgpu::TextureFormat::BGRA8Unorm;
+    wgpu::RenderBundleEncoderDescriptor render_bundle_encoder_desc{
+        .label = "render bundle encoder",
+        .colorFormatCount = 1,
+        .colorFormats = &color_format,
+        .depthStencilFormat = wgpu::TextureFormat::Depth24Plus,
+        .sampleCount = 1,
+        .depthReadOnly = false,
+        .stencilReadOnly = true,
+    };
+    auto render_bundle_encoder =
+        Engine::get_module<Graphics>()->get_device().CreateRenderBundleEncoder(
+            &render_bundle_encoder_desc);
 
     // render
     {
-      wgpu::RenderPassColorAttachment attachment{
-          .view = render_target,
-          .loadOp = wgpu::LoadOp::Clear,
-          .storeOp = wgpu::StoreOp::Store,
-          .clearValue = {0.0f, 0.0f, 0.0f, 0.0f},
-      };
-
-      wgpu::RenderPassDepthStencilAttachment depth_stencil_attachment{
-          .view = depthTextureView,
-          .depthLoadOp = wgpu::LoadOp::Clear,
-          .depthStoreOp = wgpu::StoreOp::Store,
-          .depthClearValue = 1.0f,
-          .depthReadOnly = false,
-          .stencilLoadOp = wgpu::LoadOp::Undefined,
-          .stencilStoreOp = wgpu::StoreOp::Undefined,
-          .stencilClearValue = 0,
-          .stencilReadOnly = true,
-      };
-
-      wgpu::RenderPassDescriptor renderpass_desc{
-          .colorAttachmentCount = 1,
-          .colorAttachments = &attachment,
-          .depthStencilAttachment = &depth_stencil_attachment};
-
-      wgpu::RenderPassEncoder pass = encoder.BeginRenderPass(&renderpass_desc);
-      pass.SetPipeline(render_pipeline);
+      render_bundle_encoder.SetPipeline(render_pipeline);
 
       for (const auto& rendered : gpu_resources) {
         auto id = rendered.first;
@@ -598,27 +584,59 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         if (!textures.contains(mat_id) || mat->is_transparent) {
           continue;
         }
-        pass.SetVertexBuffer(
+        render_bundle_encoder.SetVertexBuffer(
             0, rendered.second.mesh_buffer.vertex_buffer, 0,
             rendered.second.mesh_buffer.vertex_buffer.GetSize());
-        pass.SetIndexBuffer(rendered.second.mesh_buffer.index_buffer,
-                            wgpu::IndexFormat::Uint32, 0,
-                            rendered.second.mesh_buffer.index_buffer.GetSize());
-        pass.SetBindGroup(0, rendered.second.transform_buffer.bindgroup, 0,
-                          nullptr);
-        pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
-        pass.SetBindGroup(2, textures[mat_id].bind_group, 0, nullptr);
-        pass.DrawIndexed(rendered.second.mesh_buffer.index_buffer.GetSize() /
-                             sizeof(uint32_t),
-                         1, 0, 0, 0);
+        render_bundle_encoder.SetIndexBuffer(
+            rendered.second.mesh_buffer.index_buffer, wgpu::IndexFormat::Uint32,
+            0, rendered.second.mesh_buffer.index_buffer.GetSize());
+        render_bundle_encoder.SetBindGroup(
+            0, rendered.second.transform_buffer.bindgroup, 0, nullptr);
+        render_bundle_encoder.SetBindGroup(1, camera_constant_bind_group, 0,
+                                           nullptr);
+        render_bundle_encoder.SetBindGroup(2, textures[mat_id].bind_group, 0,
+                                           nullptr);
+        render_bundle_encoder.DrawIndexed(
+            rendered.second.mesh_buffer.index_buffer.GetSize() /
+                sizeof(uint32_t),
+            1, 0, 0, 0);
       }
-      pass.End();
+      render_bundle = render_bundle_encoder.Finish();
     }
-
-    commands = encoder.Finish();
   }
 
-  Engine::get_module<Graphics>()->get_device().GetQueue().Submit(1, &commands);
+  wgpu::RenderPassColorAttachment attachment{
+      .view = render_target,
+      .loadOp = wgpu::LoadOp::Clear,
+      .storeOp = wgpu::StoreOp::Store,
+      .clearValue = {0.0f, 0.0f, 0.0f, 0.0f},
+  };
+
+  wgpu::RenderPassDepthStencilAttachment depth_stencil_attachment{
+      .view = depthTextureView,
+      .depthLoadOp = wgpu::LoadOp::Clear,
+      .depthStoreOp = wgpu::StoreOp::Store,
+      .depthClearValue = 1.0f,
+      .depthReadOnly = false,
+      .stencilLoadOp = wgpu::LoadOp::Undefined,
+      .stencilStoreOp = wgpu::StoreOp::Undefined,
+      .stencilClearValue = 0,
+      .stencilReadOnly = true,
+  };
+
+  wgpu::RenderPassDescriptor renderpass_desc{
+      .colorAttachmentCount = 1,
+      .colorAttachments = &attachment,
+      .depthStencilAttachment = &depth_stencil_attachment};
+  auto commandEncoder =
+      Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
+  auto pass = commandEncoder.BeginRenderPass(&renderpass_desc);
+  pass.ExecuteBundles(1, &render_bundle);
+  pass.End();
+
+  auto command_buffer = commandEncoder.Finish();
+  Engine::get_module<Graphics>()->get_device().GetQueue().Submit(
+      1, &command_buffer);
 }
 
 GPUMeshBuffer ReflectionRenderer::create_mesh_buffer(EntityID id) {
