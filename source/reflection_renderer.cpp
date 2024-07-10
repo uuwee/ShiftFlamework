@@ -419,60 +419,63 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
   }
 
   // update constants
-  for (auto rendered : gpu_resources) {
-    const auto entity = Engine::get_module<EntityStore>()->get(rendered.first);
+  if (!lock_command) {
+    for (auto rendered : gpu_resources) {
+      const auto entity =
+          Engine::get_module<EntityStore>()->get(rendered.first);
 
-    // update constant buffer
-    auto& gpu_transform_buffer = rendered.second.transform_buffer;
-    auto transform = entity->get_component<Transform>();
-    const auto translate = Math::Matrix4x4f({{
-        {1.0f, 0.0f, 0.0f, transform->get_position().x},
-        {0.0f, 1.0f, 0.0f, transform->get_position().y},
-        {0.0f, 0.0f, 1.0f, transform->get_position().z},
-        {0.0f, 0.0f, 0.0f, 1.0f},
-    }});
+      // update constant buffer
+      auto& gpu_transform_buffer = rendered.second.transform_buffer;
+      auto transform = entity->get_component<Transform>();
+      const auto translate = Math::Matrix4x4f({{
+          {1.0f, 0.0f, 0.0f, transform->get_position().x},
+          {0.0f, 1.0f, 0.0f, transform->get_position().y},
+          {0.0f, 0.0f, 1.0f, transform->get_position().z},
+          {0.0f, 0.0f, 0.0f, 1.0f},
+      }});
 
-    const auto scale = Math::Matrix4x4f({{
-        {transform->get_scale().x, 0.0f, 0.0f, 0.0f},
-        {0.0f, transform->get_scale().y, 0.0f, 0.0f},
-        {0.0f, 0.0f, transform->get_scale().z, 0.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f},
-    }});
+      const auto scale = Math::Matrix4x4f({{
+          {transform->get_scale().x, 0.0f, 0.0f, 0.0f},
+          {0.0f, transform->get_scale().y, 0.0f, 0.0f},
+          {0.0f, 0.0f, transform->get_scale().z, 0.0f},
+          {0.0f, 0.0f, 0.0f, 1.0f},
+      }});
 
-    const auto ax = transform->get_euler_angle().x;
-    const auto ay = transform->get_euler_angle().y;
-    const auto az = transform->get_euler_angle().z;
-    const auto rotate_x = Math::Matrix4x4f({{
-        {1.0f, 0.0f, 0.0f, 0.0f},
-        {0.0f, cos(ax), -sin(ax), 0.0f},
-        {0.0f, sin(ax), cos(ax), 0.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f},
-    }});
+      const auto ax = transform->get_euler_angle().x;
+      const auto ay = transform->get_euler_angle().y;
+      const auto az = transform->get_euler_angle().z;
+      const auto rotate_x = Math::Matrix4x4f({{
+          {1.0f, 0.0f, 0.0f, 0.0f},
+          {0.0f, cos(ax), -sin(ax), 0.0f},
+          {0.0f, sin(ax), cos(ax), 0.0f},
+          {0.0f, 0.0f, 0.0f, 1.0f},
+      }});
 
-    const auto rotate_y = Math::Matrix4x4f({{
-        {cos(ay), 0.0f, sin(ay), 0.0f},
-        {0.0f, 1.0f, 0.0f, 0.0f},
-        {-sin(ay), 0.0f, cos(ay), 0.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f},
-    }});
+      const auto rotate_y = Math::Matrix4x4f({{
+          {cos(ay), 0.0f, sin(ay), 0.0f},
+          {0.0f, 1.0f, 0.0f, 0.0f},
+          {-sin(ay), 0.0f, cos(ay), 0.0f},
+          {0.0f, 0.0f, 0.0f, 1.0f},
+      }});
 
-    const auto rotate_z = Math::Matrix4x4f({{
-        {cos(az), -sin(az), 0.0f, 0.0f},
-        {sin(az), cos(az), 0.0f, 0.0f},
-        {0.0f, 0.0f, 1.0f, 0.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f},
-    }});
+      const auto rotate_z = Math::Matrix4x4f({{
+          {cos(az), -sin(az), 0.0f, 0.0f},
+          {sin(az), cos(az), 0.0f, 0.0f},
+          {0.0f, 0.0f, 1.0f, 0.0f},
+          {0.0f, 0.0f, 0.0f, 1.0f},
+      }});
 
-    const auto world_mat = translate * rotate_z * rotate_y * rotate_x * scale;
-    auto world_mat_vec = std::vector<float>();
-    for (int i = 0; i < 4; i++) {
-      for (int j = 0; j < 4; j++) {
-        world_mat_vec.push_back(world_mat.internal_data.at(j).at(i));
+      const auto world_mat = translate * rotate_z * rotate_y * rotate_x * scale;
+      auto world_mat_vec = std::vector<float>();
+      for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+          world_mat_vec.push_back(world_mat.internal_data.at(j).at(i));
+        }
       }
-    }
 
-    Engine::get_module<Graphics>()->update_buffer(gpu_transform_buffer.buffer,
-                                                  world_mat_vec);
+      Engine::get_module<Graphics>()->update_buffer(gpu_transform_buffer.buffer,
+                                                    world_mat_vec);
+    }
   }
 
   // update camera
