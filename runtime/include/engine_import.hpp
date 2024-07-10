@@ -26,7 +26,7 @@ class Entity {
     return nullptr;
   };
 };
-class Material {
+class ScreenSpaceMaterial {
  public:
   void create_gpu_buffer(uint32_t height, uint32_t width, const uint8_t* data) {
     auto lib = LoadLibraryA("game.dll");
@@ -111,14 +111,14 @@ std::shared_ptr<ScreenSpaceMesh> Entity::get_component() {
 };
 
 template <>
-std::shared_ptr<Material> Entity::get_component() {
+std::shared_ptr<ScreenSpaceMaterial> Entity::get_component() {
   auto lib = LoadLibraryA("game.dll");
   auto get_component =
       (void* (*)(void*))GetProcAddress(lib,
                                        "ShiftFlamework_Entity_get_component_"
                                        "ShiftFlamework_Material");
   auto raw_ptr = get_component(this);
-  auto ptr = std::shared_ptr<Material>((Material*)raw_ptr, [&](Material* ptr) {
+  auto ptr = std::shared_ptr<ScreenSpaceMaterial>((ScreenSpaceMaterial*)raw_ptr, [&](ScreenSpaceMaterial* ptr) {
     auto lib = LoadLibraryA("game.dll");
     auto destructor = (void (*)(void*))GetProcAddress(
         lib, "ShiftFlamework_delete_ExportObject");
@@ -128,14 +128,14 @@ std::shared_ptr<Material> Entity::get_component() {
 };
 
 template <>
-std::shared_ptr<Material> Entity::add_component() {
+std::shared_ptr<ScreenSpaceMaterial> Entity::add_component() {
   auto lib = LoadLibraryA("game.dll");
   auto add_component =
       (void* (*)(void*))GetProcAddress(lib,
                                        "ShiftFlamework_Entity_add_component_"
                                        "ShiftFlamework_Material");
   auto raw_ptr = add_component(this);
-  auto ptr = std::shared_ptr<Material>((Material*)raw_ptr, [&](Material* ptr) {
+  auto ptr = std::shared_ptr<ScreenSpaceMaterial>((ScreenSpaceMaterial*)raw_ptr, [&](ScreenSpaceMaterial* ptr) {
     auto lib = LoadLibraryA("game.dll");
     auto destructor = (void (*)(void*))GetProcAddress(
         lib, "ShiftFlamework_delete_ExportObject");

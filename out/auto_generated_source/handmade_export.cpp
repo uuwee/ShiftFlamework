@@ -1,7 +1,7 @@
 #include "engine.hpp"
 #include "entity.hpp"
 #include "export_object.hpp"
-#include "material.hpp"
+#include "screenspace_material.hpp"
 #include "screenspace_mesh.hpp"
 #include "screenspace_transform.hpp"
 #include "script.hpp"
@@ -9,15 +9,14 @@
 namespace SF {
 // entity.hpp
 EXPORT ExportObject* ShiftFlamework_Entity_Constructor() {
-  auto ptr = SF::Engine::get_module<SF::EntityStore>()
-                 ->create();
+  auto ptr = SF::Engine::get_module<SF::EntityStore>()->create();
   auto container = new SF::ExportObject(ptr);
   return container;
 }
 
 EXPORT void ShiftFlamework_Entity_Destructor(ExportObject* self) {
-  std::cout << "destructor" << std::endl;
-  std::cout << "self: " << self << std::endl;
+  // std::cout << "destructor" << std::endl;
+  // std::cout << "self: " << self << std::endl;
   Engine::get_module<EntityStore>()->remove(
       std::static_pointer_cast<Entity>(self->object)->get_id());
   delete self;
@@ -68,7 +67,7 @@ EXPORT ExportObject*
 ShiftFlamework_Entity_add_component_ShiftFlamework_Material(
     ExportObject* self) {
   auto component =
-      std::static_pointer_cast<Entity>(self->object)->add_component<Material>();
+      std::static_pointer_cast<Entity>(self->object)->add_component<ScreenSpaceMaterial>();
   auto container = new ExportObject(component);
   return container;
 }
@@ -77,7 +76,7 @@ EXPORT ExportObject*
 ShiftFlamework_Entity_get_component_ShiftFlamework_Material(
     ExportObject* self) {
   auto component =
-      std::static_pointer_cast<Entity>(self->object)->get_component<Material>();
+      std::static_pointer_cast<Entity>(self->object)->get_component<ScreenSpaceMaterial>();
   auto container = new ExportObject(component);
   return container;
 }
@@ -86,12 +85,12 @@ EXPORT void ShiftFlamework_Material_create_gpu_buffer(ExportObject* self,
                                                       const uint32_t height,
                                                       const uint32_t width,
                                                       const uint8_t* data) {
-  std::cout << "create gpu buffer" << std::endl;
-  std::static_pointer_cast<Material>(self->object)
+  // std::cout << "create gpu buffer" << std::endl;
+  std::static_pointer_cast<ScreenSpaceMaterial>(self->object)
       ->create_gpu_buffer(height, width, data);
-  std::cout << "create gpu buffer done. mat count: "
-            << Engine::get_module<MaterialStore>()->size()
-            << "self state: " << self->object.use_count() << std::endl;
+  // std::cout << "create gpu buffer done. mat count: "
+  // << Engine::get_module<MaterialStore>()->size()
+  // << "self state: " << self->object.use_count() << std::endl;
 }
 
 // script.hpp
@@ -113,13 +112,13 @@ EXPORT ExportObject* ShiftFlamework_Entity_get_component_ShiftFlamework_Script(
 
 EXPORT void ShiftFlamework_delete_ExportObject(ExportObject* self) {
   if (self == nullptr) {
-    std::cout << "self is null" << std::endl;
+    // std::cout << "self is null" << std::endl;
   }
   if (self->object == nullptr) {
-    std::cout << "object is null" << std::endl;
+    // std::cout << "object is null" << std::endl;
   }
-  std::cout << "delete object use count: " << self->object.use_count()
-            << std::endl;
+  // std::cout << "delete object use count: " << self->object.use_count()
+  // << std::endl;
   delete self;
 }
-}  // namespace ShiftFlamework
+}  // namespace SF

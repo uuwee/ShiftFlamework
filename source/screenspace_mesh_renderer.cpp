@@ -2,7 +2,7 @@
 
 #include "engine.hpp"
 #include "graphics.hpp"
-#include "material.hpp"
+#include "screenspace_material.hpp"
 #include "matrix.hpp"
 #include "test_image.h"
 
@@ -131,7 +131,6 @@ void ScreenSpaceMeshRenderer::initialize() {
       .entryCount = 4,
       .entries = texture_layout_entries.data(),
   };
-
   texture_bind_group_layout =
       Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
           &texture_bind_group_layout_desc);
@@ -158,15 +157,15 @@ void ScreenSpaceMeshRenderer::initialize() {
 }
 
 void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
-  std::cout << "Rendering: #gpu_resources=" << gpu_resources.size()
-            << std::endl;
+  //   std::cout << "Rendering: #gpu_resources=" << gpu_resources.size()
+  // << std::endl;
 
   auto entity_list = Engine::get_module<EntityStore>()->get_all();
 
   // create gpu resource
   for (const auto& entity : entity_list) {
     const auto& mesh = entity->get_component<ScreenSpaceMesh>();
-    const auto& material = entity->get_component<Material>();
+    const auto& material = entity->get_component<ScreenSpaceMaterial>();
     const auto& transform = entity->get_component<ScreenSpaceTransform>();
 
     auto entity_id = entity->get_id();
@@ -188,14 +187,14 @@ void ScreenSpaceMeshRenderer::render(wgpu::TextureView render_target) {
   // update constant
   int idx = 0;
   for (auto rendered : gpu_resources) {
-      const auto entity = Engine::get_module<EntityStore>()->get(rendered.first);
+    const auto entity = Engine::get_module<EntityStore>()->get(rendered.first);
     const auto& mesh = entity->get_component<ScreenSpaceMesh>();
     update_constant_buffer(mesh->get_entity()->get_id());
 
     // update texture sampling buffer
     {
       auto entity_id = mesh->get_entity()->get_id();
-      auto material = mesh->get_entity()->get_component<Material>();
+      auto material = mesh->get_entity()->get_component<ScreenSpaceMaterial>();
       if (gpu_resources.contains(entity_id) && material != nullptr) {
         // auto gpu_material_buffer = gpu_material_buffers.at(entity_id);
         auto& gpu_material_buffer = gpu_resources.at(entity_id).material;
@@ -296,8 +295,8 @@ wgpu::BindGroup ScreenSpaceMeshRenderer::create_texture_bind_group(
 
 GPUMeshBuffer ScreenSpaceMeshRenderer::register_mesh(
     std::shared_ptr<ScreenSpaceMesh> mesh_component) {
-  //auto gpu_resource = std::make_shared<GPUMeshBuffer>();
-    GPUMeshBuffer gpu_resource{};
+  // auto gpu_resource = std::make_shared<GPUMeshBuffer>();
+  GPUMeshBuffer gpu_resource{};
   {
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
@@ -448,8 +447,8 @@ GPUMaterialBuffer ScreenSpaceMeshRenderer::create_material_buffer(
 
   material.bindgroup =
       Engine::get_module<ScreenSpaceMeshRenderer>()->create_texture_bind_group(
-          material.texture_view, material.sampler,
-          material.tex_offset_buffer, material.tile_scale_buffer);
+          material.texture_view, material.sampler, material.tex_offset_buffer,
+          material.tile_scale_buffer);
 
   return material;
 }
