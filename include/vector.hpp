@@ -79,12 +79,12 @@ inline void Vector<T, dimension>::set_vector(int i, T n) {
   internal_data.at(i) = n;
 }
 
-template<typename T>
+template <typename T>
 inline void Vector<T, 2>::set_vector(int i, T n) {
   if (i == 0) {
-	x = n;
+    x = n;
   } else if (i == 1) {
-	y = n;
+    y = n;
   }
 }
 
@@ -120,9 +120,9 @@ inline T Vector<T, dimension>::get_vector(int i) const {
 template <typename T>
 inline T Vector<T, 2>::get_vector(int i) const {
   if (i == 0) {
-	return x;
+    return x;
   } else if (i == 1) {
-	return y;
+    return y;
   }
 }
 
@@ -224,7 +224,7 @@ inline Vector<U, dimension> operator*(const T lhs,
                                       const Vector<U, dimension>& rhs) {
   auto v = rhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) * lhs);
+    v.set_vector(i, v.get_vector(i) * lhs);
   }
   return v;
 }
@@ -264,7 +264,7 @@ inline Vector<T, dimension> operator-(const Vector<T, dimension>& lhs,
                                       const Vector<U, dimension>& rhs) {
   auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) - rhs.get_vector(i));
+    v.set_vector(i, v.get_vector(i) - rhs.get_vector(i));
   }
   return v;
 }
@@ -449,4 +449,4 @@ inline void Display_Vector(const Vector<T, dimension>& v) {
   std::cout << "}" << std::endl;
 }
 
-}  // namespace ShiftFlamework::Math
+}  // namespace SF::Math
