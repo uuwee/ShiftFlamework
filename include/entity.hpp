@@ -1,21 +1,20 @@
 #pragma once
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <typeinfo>
 #include <unordered_map>
 #include <vector>
-#include <functional>
 
 namespace SF {
 class Component;
 class Entity;
 
-using EntityID = unsigned int;
+using EntityID = uint32_t;
 
-class Component{
+class Component {
  private:
-
  public:
   Component(){};
   ~Component(){};
@@ -23,7 +22,7 @@ class Component{
   std::shared_ptr<Entity> get_entity();
 };
 
-class Entity : public std::enable_shared_from_this<Entity>{
+class Entity : public std::enable_shared_from_this<Entity> {
   friend class EntityStore;
 
  private:
@@ -55,9 +54,7 @@ class Entity : public std::enable_shared_from_this<Entity>{
         std::static_pointer_cast<Component>(component);
     components.emplace(str, casted);
 
-    on_destroy_callbacks[str] = [this](){
-        T::get_store()->remove(id);
-    };
+    on_destroy_callbacks[str] = [this]() { T::get_store()->remove(id); };
     return component;
   }
 };
@@ -68,7 +65,7 @@ class EntityStore {
   int entity_count = 0;
 
  public:
- static std::string get_name() { return "EntityStore"; }
+  static std::string get_name() { return "EntityStore"; }
   void initialize() {
     instances = {};
     instances.clear();
@@ -82,19 +79,19 @@ class EntityStore {
     return e;
   }
   std::shared_ptr<Entity> get(EntityID id) { return instances[id]; }
-  void remove(EntityID id) { 
-    for (auto& [key, value] : instances[id]->on_destroy_callbacks){
-        value();
+  void remove(EntityID id) {
+    for (auto& [key, value] : instances[id]->on_destroy_callbacks) {
+      value();
     }
-    instances.erase(id); 
+    instances.erase(id);
   }
 
-  std::vector<std::shared_ptr<Entity>> get_all(){
-      std::vector<std::shared_ptr<Entity>> vec;
-      for(auto& [key, value] : instances){
-          vec.push_back(value);
-      }
-      return vec;
+  std::vector<std::shared_ptr<Entity>> get_all() {
+    std::vector<std::shared_ptr<Entity>> vec;
+    for (auto& [key, value] : instances) {
+      vec.push_back(value);
+    }
+    return vec;
   }
 };
-}  // namespace ShiftFlamework
+}  // namespace SF

@@ -395,26 +395,28 @@ void ReflectionRenderer::initialize() {
 }
 
 void ReflectionRenderer::render(wgpu::TextureView render_target) {
-  // update constants
-  auto entity_list = Engine::get_module<EntityStore>()->get_all();
+  if (!lock_command) {
+    // update constants
+    auto entity_list = Engine::get_module<EntityStore>()->get_all();
 
-  // create gpu resources
-  for (const auto& entity : entity_list) {
-    const auto& mesh = entity->get_component<Mesh>();
-    const auto& transform = entity->get_component<Transform>();
+    // create gpu resources
+    for (const auto& entity : entity_list) {
+      const auto& mesh = entity->get_component<Mesh>();
+      const auto& transform = entity->get_component<Transform>();
 
-    auto entity_id = entity->get_id();
-    if (mesh == nullptr || transform == nullptr) {
-      dispose_gpu_resource(entity_id);
-      continue;
-    }
+      auto entity_id = entity->get_id();
+      if (mesh == nullptr || transform == nullptr) {
+        dispose_gpu_resource(entity_id);
+        continue;
+      }
 
-    if (!gpu_resources.contains(entity_id)) {
-      GPUResource resource{};
-      resource.mesh_buffer = create_mesh_buffer(entity_id);
-      resource.transform_buffer = create_constant_buffer(entity_id);
+      if (!gpu_resources.contains(entity_id)) {
+        GPUResource resource{};
+        resource.mesh_buffer = create_mesh_buffer(entity_id);
+        resource.transform_buffer = create_constant_buffer(entity_id);
 
-      gpu_resources.insert_or_assign(entity_id, resource);
+        gpu_resources.insert_or_assign(entity_id, resource);
+      }
     }
   }
 
@@ -480,38 +482,42 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
 
   // update camera
   {
+    const auto right = Math::Vector3f(
+        {std::cos(-camera_angle.y), 0.0f, std::sin(-camera_angle.y)});
+    const auto forward = -Math::Vector3f(
+        {std::sin(-camera_angle.y), 0.0f, -std::cos(-camera_angle.y)});
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::A) ==
         ButtonState::HOLD) {
-      camera_position.x -= 0.1f;
+      camera_position = camera_position - 0.1f * right;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::D) ==
         ButtonState::HOLD) {
-      camera_position.x += 0.1f;
+      camera_position = camera_position + 0.1f * right;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::W) ==
         ButtonState::HOLD) {
-      camera_position.z += 0.1f;
+      camera_position = camera_position + 0.1f * forward;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::S) ==
         ButtonState::HOLD) {
-      camera_position.z -= 0.1f;
+      camera_position = camera_position - 0.1f * forward;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::Q) ==
         ButtonState::HOLD) {
-      camera_position.y += 0.1f;
+      camera_position.y -= 0.1f;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::E) ==
         ButtonState::HOLD) {
-      camera_position.y -= 0.1f;
+      camera_position.y += 0.1f;
     }
 
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::H) ==
         ButtonState::HOLD) {
-      camera_angle.y += 0.1f;
+      camera_angle.y -= 0.1f;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::L) ==
         ButtonState::HOLD) {
-      camera_angle.y -= 0.1f;
+      camera_angle.y += 0.1f;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::J) ==
         ButtonState::HOLD) {
@@ -528,6 +534,32 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         {0.0f, 0.0f, 1.0f, -camera_position.z},
         {0.0f, 0.0f, 0.0f, 1.0f},
     }});
+
+    const auto ax = -camera_angle.x;
+    const auto ay = -camera_angle.y;
+    const auto az = -camera_angle.z;
+    const auto rotate_x = Math::Matrix4x4f({{
+        {1.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, cos(ax), -sin(ax), 0.0f},
+        {0.0f, sin(ax), cos(ax), 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f},
+    }});
+
+    const auto rotate_y = Math::Matrix4x4f({{
+        {cos(ay), 0.0f, sin(ay), 0.0f},
+        {0.0f, 1.0f, 0.0f, 0.0f},
+        {-sin(ay), 0.0f, cos(ay), 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f},
+    }});
+
+    const auto rotate_z = Math::Matrix4x4f({{
+        {cos(az), -sin(az), 0.0f, 0.0f},
+        {sin(az), cos(az), 0.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f},
+    }});
+
+    view_mat = rotate_z * rotate_y * rotate_x * view_mat;
 
     auto ratio = 1080.0f / 1080.0f;
     auto focal_length = 2.0f;
