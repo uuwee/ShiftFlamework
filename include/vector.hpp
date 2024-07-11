@@ -154,7 +154,7 @@ template <typename T, int dimension>
 inline Vector<T, dimension> operator+(const Vector<T, dimension>& rhs) {
   auto v = rhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i));
+    v.set_vector(i, v.get_vector(i));
   }
   return v;
 }
@@ -163,8 +163,8 @@ template <typename T, int dimension>
 inline Vector<T, dimension> operator-(const Vector<T, dimension>& rhs) {
   auto v = rhs;
   for (int i = 0; i < dimension; i++) {
-    std::cout << i << " : " << -v.getvector(i) << std::endl;
-    v.setvector(i, -v.getvector(i));
+    std::cout << i << " : " << -v.get_vector(i) << std::endl;
+    v.set_vector(i, -v.get_vector(i));
   }
   return v;
 }
@@ -174,7 +174,7 @@ inline Vector<T, dimension> operator+(const Vector<T, dimension>& lhs,
                                       const U rhs) {
   auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) + rhs);
+    v.set_vector(i, v.get_vector(i) + rhs);
   }
   return v;
 }
@@ -184,7 +184,7 @@ inline Vector<U, dimension> operator+(const T lhs,
                                       const Vector<U, dimension>& rhs) {
   auto v = rhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) + lhs);
+    v.set_vector(i, v.get_vector(i) + lhs);
   }
   return v;
 }
@@ -194,7 +194,7 @@ inline Vector<T, dimension> operator-(const Vector<T, dimension>& lhs,
                                       const U rhs) {
   auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) - rhs);
+    v.set_vector(i, v.get_vector(i) - rhs);
   }
   return v;
 }
@@ -204,7 +204,7 @@ inline Vector<U, dimension> operator-(const T lhs,
                                       const Vector<U, dimension>& rhs) {
   auto v = rhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, lhs - v.getvector(i));
+    v.set_vector(i, lhs - v.get_vector(i));
   }
   return v;
 }
@@ -214,7 +214,7 @@ inline Vector<T, dimension> operator*(const Vector<T, dimension>& lhs,
                                       const U rhs) {
   auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) * rhs);
+    v.set_vector(i, v.get_vector(i) * rhs);
   }
   return v;
 }
@@ -244,7 +244,7 @@ inline Vector<U, dimension> operator/(const T lhs,
                                       const Vector<U, dimension>& rhs) {
   auto v = rhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, lhs / v.getvector(i));
+    v.set_vector(i, lhs / v.get_vector(i));
   }
   return v;
 }
@@ -274,7 +274,7 @@ inline Vector<T, dimension> operator*(const Vector<T, dimension>& lhs,
                                       const Vector<U, dimension>& rhs) {
   auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) * rhs.get_vector(i));
+    v.set_vector(i, v.get_vector(i) * rhs.get_vector(i));
   }
   return v;
 }
@@ -284,7 +284,7 @@ inline Vector<T, dimension> operator/(const Vector<T, dimension>& lhs,
                                       const Vector<U, dimension>& rhs) {
   auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) / rhs.get_vector(i));
+    v.set_vector(i, v.get_vector(i) / rhs.get_vector(i));
   }
   return v;
 }
@@ -294,7 +294,7 @@ inline Vector<T, dimension> operator+=(const Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
   auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) + rhs.get_vector(i));
+    v.set_vector(i, v.get_vector(i) + rhs.get_vector(i));
   }
   return v;
 }
@@ -304,7 +304,7 @@ inline Vector<T, dimension> operator-=(const Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
   auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) - rhs.get_vector(i));
+    v.set_vector(i, v.get_vector(i) - rhs.get_vector(i));
   }
   return v;
 }
@@ -314,7 +314,7 @@ inline Vector<T, dimension> operator*=(const Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
   auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) * rhs.get_vector(i));
+    v.set_vector(i, v.get_vector(i) * rhs.get_vector(i));
   }
   return v;
 }
@@ -324,7 +324,7 @@ inline Vector<T, dimension> operator/=(const Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
   auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, v.getvector(i) / rhs.get_vector(i));
+    v.set_vector(i, v.get_vector(i) / rhs.get_vector(i));
   }
   return v;
 }
@@ -366,7 +366,7 @@ template <typename T, int dimension>
 inline Vector<T, dimension> one() {
   auto v = Vector<T, dimension>{{}};
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, 1);
+    v.set_vector(i, 1);
   }
   return v;
 }
@@ -375,7 +375,7 @@ template <typename T, int dimension>
 inline Vector<T, dimension> zero() {
   auto v = Vector<T, dimension>{{}};
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, 0);
+    v.set_vector(i, 0);
   }
   return v;
 }
@@ -422,7 +422,7 @@ inline Vector<float, dimension> movetoword(const Vector<T, dimension>& from,
                                            float per) {
   auto v = Vector<float, dimension>{{}};
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, from.get_vector(i) + to.get_vector(i) * per);
+    v.set_vector(i, from.get_vector(i) + to.get_vector(i) * per);
   }
   return v;
 }
@@ -433,7 +433,7 @@ inline Vector<float, dimension> lerp(const Vector<T, dimension>& from,
                                      float per) {
   auto v = Vector<float, dimension>{{}};
   for (int i = 0; i < dimension; i++) {
-    v.setvector(i, from.get_vector(i) * (1 - per) + to.get_vector(i) * per);
+    v.set_vector(i, from.get_vector(i) * (1 - per) + to.get_vector(i) * per);
   }
   return v;
 }
