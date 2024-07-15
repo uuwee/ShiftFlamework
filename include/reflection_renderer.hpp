@@ -29,6 +29,7 @@ class ReflectionRenderer {
   std::unordered_map<std::string, GPUTexture> textures{};
 
   wgpu::BindGroupLayout mesh_constant_bind_group_layout;
+  wgpu::BindGroupLayoutEntry camera_constant_bind_group_layout_entry;
   wgpu::BindGroupLayout camera_constant_bind_group_layout;
   wgpu::BindGroupLayout texture_bind_group_layout;
 
@@ -45,6 +46,23 @@ class ReflectionRenderer {
   wgpu::Sampler sampler;
   wgpu::TextureView texture_view;
   wgpu::BindGroup texture_bind_group;
+
+  // gizmo
+  struct GizmoVertex {
+    Math::Vector4f position;
+    Math::Vector3f color;
+  };
+  wgpu::BindGroupLayout gizmo_mesh_constant_bind_group_layout;
+  wgpu::RenderPipeline gizmo_render_pipeline;
+  wgpu::Buffer gizmo_vertex_buffer;
+  wgpu::Buffer gizmo_index_buffer;
+  wgpu::Buffer gizmo_constant_buffer;
+  wgpu::BindGroup gizmo_constant_bind_group;
+
+  Math::Vector3f gizmo_color = Math::Vector3f({1, 0, 0});
+
+  // ray
+  wgpu::Buffer ray_vertex_buffer;
 
   wgpu::TextureView depthTextureView;
   wgpu::RenderBundle render_bundle;
@@ -63,6 +81,9 @@ class ReflectionRenderer {
 
   void remove_mesh(EntityID id);
   void remove_constant(EntityID id);
+
+  void draw_ray(Math::Vector3f origin, Math::Vector3f direction, float length,
+                Math::Vector3f color);
 
   bool lock_command = false;
 };
