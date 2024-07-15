@@ -61,7 +61,7 @@ void ReflectionRenderer::initialize() {
         @builtin(position) position: vec4f,
         @location(0) texcoord0: vec2f,
         @location(1) normal: vec3f,
-    }
+    };
 
     @vertex fn vertexMain(in: VertexInput) -> VertexOutput{
         var out: VertexOutput;
@@ -72,7 +72,7 @@ void ReflectionRenderer::initialize() {
         out.texcoord0 = in.texcoord0;
         out.normal = in.normal;
         return out;
-    }
+    };
 
     @fragment fn fragmentMain(in: VertexOutput) -> @location(0) vec4f{
         var p: vec4f;
@@ -81,7 +81,7 @@ void ReflectionRenderer::initialize() {
             p.a = 1.0;
         }
         return p;
-    }
+    };
   )";
 
   wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
@@ -488,19 +488,19 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         {std::sin(-camera_angle.y), 0.0f, -std::cos(-camera_angle.y)});
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::A) ==
         ButtonState::HOLD) {
-      camera_position = camera_position - 0.1f * right;
+      camera_position -= 0.1f * right;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::D) ==
         ButtonState::HOLD) {
-      camera_position = camera_position + 0.1f * right;
+      camera_position += 0.1f * right;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::W) ==
         ButtonState::HOLD) {
-      camera_position = camera_position + 0.1f * forward;
+      camera_position += 0.1f * forward;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::S) ==
         ButtonState::HOLD) {
-      camera_position = camera_position - 0.1f * forward;
+      camera_position -= 0.1f * forward;
     }
     if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::Q) ==
         ButtonState::HOLD) {

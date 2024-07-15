@@ -163,7 +163,6 @@ template <typename T, int dimension>
 inline Vector<T, dimension> operator-(const Vector<T, dimension>& rhs) {
   auto v = rhs;
   for (int i = 0; i < dimension; i++) {
-    std::cout << i << " : " << -v.get_vector(i) << std::endl;
     v.set_vector(i, -v.get_vector(i));
   }
   return v;
@@ -290,43 +289,39 @@ inline Vector<T, dimension> operator/(const Vector<T, dimension>& lhs,
 }
 
 template <typename T, int dimension, typename U>
-inline Vector<T, dimension> operator+=(const Vector<T, dimension>& lhs,
+inline Vector<T, dimension> operator+=(Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
-  auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.set_vector(i, v.get_vector(i) + rhs.get_vector(i));
+    lhs.set_vector(i, lhs.get_vector(i) + rhs.get_vector(i));
   }
-  return v;
+  return lhs;
 }
 
 template <typename T, int dimension, typename U>
-inline Vector<T, dimension> operator-=(const Vector<T, dimension>& lhs,
+inline Vector<T, dimension> operator-=(Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
-  auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.set_vector(i, v.get_vector(i) - rhs.get_vector(i));
+    lhs.set_vector(i, lhs.get_vector(i) - rhs.get_vector(i));
   }
-  return v;
+  return lhs;
 }
 
 template <typename T, int dimension, typename U>
-inline Vector<T, dimension> operator*=(const Vector<T, dimension>& lhs,
+inline Vector<T, dimension> operator*=(Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
-  auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.set_vector(i, v.get_vector(i) * rhs.get_vector(i));
+    lhs.set_vector(i, lhs.get_vector(i) * rhs.get_vector(i));
   }
-  return v;
+  return lhs;
 }
 
 template <typename T, int dimension, typename U>
-inline Vector<T, dimension> operator/=(const Vector<T, dimension>& lhs,
+inline Vector<T, dimension> operator/=(Vector<T, dimension>& lhs,
                                        const Vector<U, dimension>& rhs) {
-  auto v = lhs;
   for (int i = 0; i < dimension; i++) {
-    v.set_vector(i, v.get_vector(i) / rhs.get_vector(i));
+    lhs.set_vector(i, lhs.get_vector(i) / rhs.get_vector(i));
   }
-  return v;
+  return lhs;
 }
 
 template <typename T, int dimension>
