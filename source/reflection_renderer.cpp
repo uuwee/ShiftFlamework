@@ -561,19 +561,91 @@ void ReflectionRenderer::initialize() {
             &texture_bind_group_desc);
 
     // gizmo vertex buffer
+    float width = 0.02f;
     std::vector<GizmoVertex> gizmo_vertex{
-        GizmoVertex{.position = Math::Vector4f({0, 0, 0, 1.0}),
-                    .color = Math::Vector3f({1, 0, 0})},
-        GizmoVertex{.position = Math::Vector4f({0.5, 0, 0, 1.0}),
-                    .color = Math::Vector3f({1, 0, 0})},
-        GizmoVertex{.position = Math::Vector4f({0, 0.5, 0, 1.0}),
-                    .color = Math::Vector3f({1, 0, 0})},
-        GizmoVertex{.position = Math::Vector4f({0.5, 0, 0, 1.0}),
-                    .color = Math::Vector3f({1, 0, 0})},
-        GizmoVertex{.position = Math::Vector4f({0.5, 0.5, 0, 1.0}),
-                    .color = Math::Vector3f({1, 0, 0})},
-        GizmoVertex{.position = Math::Vector4f({0, 0.5, 0, 1.0}),
-                    .color = Math::Vector3f({1, 0, 0})},
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {1.0f + width, 1.0f + width, 1.0f + width, 1.0f}),
+            .color = Math::Vector3f({1.0f, 0.0f, 0.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {1.0f + width, -1.0f - width, 1.0f + width, 1.0f}),
+            .color = Math::Vector3f({0.0f, 1.0f, 0.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {1.0f - width, 1.0f - width, 1.0f - width, 1.0f}),
+            .color = Math::Vector3f({1.0f, 0.0f, 0.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {1.0f - width, -1.0f + width, 1.0f - width, 1.0f}),
+            .color = Math::Vector3f({0.0f, 1.0f, 0.0f}),
+        },
+
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {-1.0f - width, 1.0f + width, 1.0f + width, 1.0f}),
+            .color = Math::Vector3f({0.0f, 0.0f, 1.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {-1.0f - width, -1.0f - width, 1.0f + width, 1.0f}),
+            .color = Math::Vector3f({1.0f, 1.0f, 0.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {-1.0f + width, 1.0f - width, 1.0f - width, 1.0f}),
+            .color = Math::Vector3f({0.0f, 0.0f, 1.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {-1.0f + width, -1.0f + width, 1.0f - width, 1.0f}),
+            .color = Math::Vector3f({1.0f, 1.0f, 0.0f}),
+        },
+
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {1.0f + width, 1.0f + width, -1.0f - width, 1.0f}),
+            .color = Math::Vector3f({1.0f, 0.0f, 1.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {1.0f + width, -1.0f - width, -1.0f - width, 1.0f}),
+            .color = Math::Vector3f({0.0f, 1.0f, 1.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {1.0f - width, 1.0f - width, -1.0f + width, 1.0f}),
+            .color = Math::Vector3f({1.0f, 0.0f, 1.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {1.0f - width, -1.0f + width, -1.0f + width, 1.0f}),
+            .color = Math::Vector3f({0.0f, 1.0f, 1.0f}),
+        },
+
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {-1.0f - width, 1.0f + width, -1.0f - width, 1.0f}),
+            .color = Math::Vector3f({1.0f, 1.0f, 1.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {-1.0f - width, -1.0f - width, -1.0f - width, 1.0f}),
+            .color = Math::Vector3f({0.0f, 0.0f, 0.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {-1.0f + width, 1.0f - width, -1.0f + width, 1.0f}),
+            .color = Math::Vector3f({1.0f, 1.0f, 1.0f}),
+        },
+        GizmoVertex{
+            .position = Math::Vector4f(
+                {-1.0f + width, -1.0f + width, -1.0f + width, 1.0f}),
+            .color = Math::Vector3f({0.0f, 0.0f, 0.0f}),
+        },
     };
 
     const wgpu::BufferDescriptor gizmo_vertex_buffer_desc{
@@ -591,7 +663,16 @@ void ReflectionRenderer::initialize() {
 
     // gizmo index buffer
     std::vector<uint32_t> gizmo_index{
-        0, 1, 2, 3, 4, 5,
+        0, 1,  2,  2,  1,  3,  4,  5,  6,  6,  5,  7,
+        8, 9,  10, 10, 9,  11, 12, 13, 14, 14, 13, 15,
+
+        0, 2,  4,  4,  2,  6,  1,  5,  3,  3,  5,  7,
+
+        8, 10, 12, 12, 10, 14, 9,  11, 13, 13, 11, 15,
+
+        4, 6,  12, 12, 6,  14, 5,  7,  13, 13, 7,  15,
+
+        0, 2,  8,  8,  2,  10, 1,  3,  9,  9,  3,  11,
     };
 
     const wgpu::BufferDescriptor gizmo_index_buffer_desc{
