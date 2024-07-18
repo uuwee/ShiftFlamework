@@ -52,8 +52,8 @@ class ReflectionRenderer {
     Math::Vector3f color;
   };
   struct AABB {
-    Math::Vector3f min;
-    Math::Vector3f max;
+    alignas(16) Math::Vector3f min;
+    alignas(16) Math::Vector3f max;
   };
   wgpu::BindGroupLayout gizmo_mesh_constant_bind_group_layout;
   wgpu::BindGroupLayout gizmo_camera_constant_bind_group_layout;

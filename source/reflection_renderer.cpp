@@ -297,12 +297,11 @@ void ReflectionRenderer::initialize() {
     wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
     wgsl_desc.code = R"(
     struct AABB{
-        min: vec3f,
-        max: vec3f,
+        @align(16) min: vec3f,
+        @align(16) max: vec3f,
     };
-    @group(0) @binding(0) var<uniform> aabb: AABB;
+    @group(0) @binding(0)  var<uniform> aabb: AABB;
     @group(1) @binding(0)  var<uniform> view_proj_mat: mat4x4f;
-
 
     struct VertexInput{
       @location(0) position: vec4f,
@@ -316,7 +315,11 @@ void ReflectionRenderer::initialize() {
 
     @vertex fn vertexMain(in: VertexInput) -> VertexOutput{
         var out: VertexOutput;
-        out.position = view_proj_mat * in.position;
+        var pos: vec3f = in.position.xyz;
+        let center = (aabb.max + aabb.min) / 2.0;
+        let scale = abs(aabb.max - aabb.min);
+        pos = (pos + center) * scale;
+        out.position = view_proj_mat * vec4f(pos, 1.0);
         out.color = in.color;
         return out;
     };
@@ -712,7 +715,8 @@ void ReflectionRenderer::initialize() {
     gizmo_constant_buffer = Engine::get_module<Graphics>()->create_buffer(
         gizmo_constant_buffer_desc);
     auto mat = std::vector<float>{
-        -1, -1, -1, 1, 1, 1,
+        // min.x, min.y, min.z, padding, max.x, max.y, max.z, padding
+        -1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
     };
     Engine::get_module<Graphics>()->update_buffer(gizmo_constant_buffer, mat);
 
