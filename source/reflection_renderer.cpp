@@ -703,47 +703,6 @@ void ReflectionRenderer::initialize() {
     Engine::get_module<Graphics>()->update_buffer(gizmo_index_buffer,
                                                   gizmo_index);
 
-    // gizmo constant buffer
-    auto gizmo_constant_buffer_desc = wgpu::BufferDescriptor{
-        .nextInChain = nullptr,
-        .label = "gizmo constant buffer",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
-        .size =
-            Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB)) *
-            aabb_count,
-        .mappedAtCreation = false,
-    };
-
-    gizmo_constant_buffer = Engine::get_module<Graphics>()->create_buffer(
-        gizmo_constant_buffer_desc);
-    auto stride =
-        Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB));
-    for (int i = 0; i < aabb_count; i++) {
-      auto mat = std::vector<float>{
-          -1.0f + i, -1.0f + i, -1.0f + i, 0.0f,
-          1.0f + i,  1.0f + i,  1.0f + i,  0.0f,
-      };
-      Engine::get_module<Graphics>()->update_buffer(gizmo_constant_buffer, mat,
-                                                    i * stride);
-    }
-
-    auto gizmo_constant_binding = wgpu::BindGroupEntry{
-        .binding = 0,
-        .buffer = gizmo_constant_buffer,
-        .offset = 0,
-        .size = sizeof(AABB),
-    };
-
-    wgpu::BindGroupDescriptor gizmo_bind_group_desc{
-        .layout = gizmo_mesh_constant_bind_group_layout,
-        .entryCount = 1,
-        .entries = &gizmo_constant_binding,
-    };
-
-    gizmo_constant_bind_group =
-        Engine::get_module<Graphics>()->get_device().CreateBindGroup(
-            &gizmo_bind_group_desc);
-
     // gizmo camera constant bind group
     auto gizmo_camera_constant_binding = wgpu::BindGroupEntry{
         .binding = 0,
@@ -763,6 +722,54 @@ void ReflectionRenderer::initialize() {
             &gizmo_camera_bind_group_desc);
   }
 }
+
+void ReflectionRenderer::init_aabb_data() {
+  if (aabb_initialized) {
+    return;
+  }
+  aabb_initialized = true;
+
+  aabb_count = gpu_resources.size();
+
+  // gizmo constant buffer
+  auto gizmo_constant_buffer_desc = wgpu::BufferDescriptor{
+      .nextInChain = nullptr,
+      .label = "gizmo constant buffer",
+      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+      .size = Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB)) *
+              aabb_count,
+      .mappedAtCreation = false,
+  };
+
+  gizmo_constant_buffer =
+      Engine::get_module<Graphics>()->create_buffer(gizmo_constant_buffer_desc);
+  auto stride = Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB));
+  for (int i = 0; i < aabb_count; i++) {
+    auto mat = std::vector<float>{
+        -1.0f + i, -1.0f + i, -1.0f + i, 0.0f,
+        1.0f + i,  1.0f + i,  1.0f + i,  0.0f,
+    };
+    Engine::get_module<Graphics>()->update_buffer(gizmo_constant_buffer, mat,
+                                                  i * stride);
+  }
+
+  auto gizmo_constant_binding = wgpu::BindGroupEntry{
+      .binding = 0,
+      .buffer = gizmo_constant_buffer,
+      .offset = 0,
+      .size = sizeof(AABB),
+  };
+
+  wgpu::BindGroupDescriptor gizmo_bind_group_desc{
+      .layout = gizmo_mesh_constant_bind_group_layout,
+      .entryCount = 1,
+      .entries = &gizmo_constant_binding,
+  };
+
+  gizmo_constant_bind_group =
+      Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+          &gizmo_bind_group_desc);
+};
 
 void ReflectionRenderer::render(wgpu::TextureView render_target) {
   if (!lock_command) {
@@ -788,6 +795,8 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         gpu_resources.insert_or_assign(entity_id, resource);
       }
     }
+
+    init_aabb_data();
   }
 
   // update constants
@@ -1041,7 +1050,8 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     pass.ExecuteBundles(1, &render_bundle);
     pass.End();
   }
-  {
+
+  if (draw_aabb) {
     wgpu::RenderPassColorAttachment attachment{
         .view = render_target,
         .loadOp = wgpu::LoadOp::Load,

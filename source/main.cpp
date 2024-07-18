@@ -139,6 +139,12 @@ void main_loop() {
         !Engine::get_module<ReflectionRenderer>()->lock_command;
   }
 
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::Z) ==
+      ButtonState::DOWN) {
+    Engine::get_module<ReflectionRenderer>()->draw_aabb =
+        !Engine::get_module<ReflectionRenderer>()->draw_aabb;
+  }
+
   Engine::get_module<Input>()->update();
   Engine::get_module<ReflectionRenderer>()->render(
       Engine::get_module<Window>()->get_swap_chain().GetCurrentTextureView());
@@ -159,7 +165,7 @@ void start() {
       Engine::get_module<Graphics>()->get_device());
   Engine::get_module<ReflectionRenderer>()->initialize();
 
-  // import();
+  import();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);

@@ -64,6 +64,7 @@ class ReflectionRenderer {
   wgpu::BindGroup gizmo_constant_bind_group;
   wgpu::BindGroup gizmo_camera_bind_group;
   int aabb_count = 10;
+  bool aabb_initialized = false;
 
   wgpu::TextureView depthTextureView;
   wgpu::RenderBundle render_bundle;
@@ -73,6 +74,7 @@ class ReflectionRenderer {
   void dispose_gpu_resource(EntityID id);
   GPUMeshBuffer create_mesh_buffer(EntityID id);
   GPUTransformBuffer create_constant_buffer(EntityID id);
+  void init_aabb_data();
 
  public:
   static std::string get_name() { return "ReflectionRenderer"; }
@@ -87,5 +89,6 @@ class ReflectionRenderer {
                 Math::Vector3f color);
 
   bool lock_command = false;
+  bool draw_aabb = false;
 };
 }  // namespace SF
