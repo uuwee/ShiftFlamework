@@ -367,7 +367,7 @@ void ReflectionRenderer::initialize() {
                 wgpu::BufferBindingLayout{
                     .type = wgpu::BufferBindingType::Uniform,
                     .hasDynamicOffset = false,
-                    .minBindingSize = sizeof(Math::Matrix4x4f),
+                    .minBindingSize = sizeof(AABB),
                 },
         };
 
@@ -384,13 +384,13 @@ void ReflectionRenderer::initialize() {
                 },
         };
 
-    wgpu::BindGroupLayoutDescriptor mesh_constant_layout_desc = {
+    wgpu::BindGroupLayoutDescriptor gizmo_mesh_constant_layout_desc = {
         .entryCount = 1,
         .entries = &gizmo_mesh_constant_bind_group_layout_entry,
     };
-    auto mesh_constant_bind_group_layout =
+    gizmo_mesh_constant_bind_group_layout =
         Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
-            &mesh_constant_layout_desc);
+            &gizmo_mesh_constant_layout_desc);
 
     wgpu::BindGroupLayoutDescriptor camera_constant_layout_desc = {
         .entryCount = 1,
@@ -401,7 +401,7 @@ void ReflectionRenderer::initialize() {
             &camera_constant_layout_desc);
 
     std::vector<wgpu::BindGroupLayout> layouts = {
-        mesh_constant_bind_group_layout,
+        gizmo_mesh_constant_bind_group_layout,
         gizmo_camera_constant_bind_group_layout,
     };
     wgpu::PipelineLayoutDescriptor layout_desc{
@@ -705,16 +705,14 @@ void ReflectionRenderer::initialize() {
         .nextInChain = nullptr,
         .label = "gizmo constant buffer",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
-        .size = Engine::get_module<Graphics>()->get_buffer_stride(
-            sizeof(Math::Matrix4x4f)),
+        .size = Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB)),
         .mappedAtCreation = false,
     };
 
     gizmo_constant_buffer = Engine::get_module<Graphics>()->create_buffer(
         gizmo_constant_buffer_desc);
     auto mat = std::vector<float>{
-        1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+        -1, -1, -1, 1, 1, 1,
     };
     Engine::get_module<Graphics>()->update_buffer(gizmo_constant_buffer, mat);
 
@@ -722,11 +720,11 @@ void ReflectionRenderer::initialize() {
         .binding = 0,
         .buffer = gizmo_constant_buffer,
         .offset = 0,
-        .size = sizeof(float) * 16,
+        .size = sizeof(AABB),
     };
 
     wgpu::BindGroupDescriptor gizmo_bind_group_desc{
-        .layout = mesh_constant_bind_group_layout,
+        .layout = gizmo_mesh_constant_bind_group_layout,
         .entryCount = 1,
         .entries = &gizmo_constant_binding,
     };
