@@ -456,7 +456,8 @@ void ReflectionRenderer::initialize() {
         .nextInChain = nullptr,
         .label = "camera buffer",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
-        .size = sizeof(Math::Matrix4x4f),
+        .size = Engine::get_module<Graphics>()->get_buffer_stride(
+            sizeof(Math::Matrix4x4f)),
         .mappedAtCreation = false};
 
     camera_buffer = Engine::get_module<Graphics>()->create_buffer(buffer_desc);
@@ -687,7 +688,8 @@ void ReflectionRenderer::initialize() {
         .nextInChain = nullptr,
         .label = "gizmo constant buffer",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
-        .size = sizeof(Math::Matrix4x4f),
+        .size = Engine::get_module<Graphics>()->get_buffer_stride(
+            sizeof(Math::Matrix4x4f)),
         .mappedAtCreation = false,
     };
 

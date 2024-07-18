@@ -52,6 +52,7 @@ class ReflectionRenderer {
     Math::Vector4f position;
     Math::Vector3f color;
   };
+
   wgpu::BindGroupLayout gizmo_mesh_constant_bind_group_layout;
   wgpu::RenderPipeline gizmo_render_pipeline;
   wgpu::Buffer gizmo_vertex_buffer;
