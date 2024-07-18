@@ -69,7 +69,7 @@ void import() {
         auto e = Engine::get_module<EntityStore>()->create();
 
         // transform
-        e->add_component<Transform>()->set_position(Math::Vector3f({0, 0, 10}));
+        e->add_component<Transform>()->set_position(Math::Vector3f({0, 0, 0}));
         e->get_component<Transform>()->set_scale(
             Math::Vector3f({0.01f, 0.01f, 0.01f}));
         e->get_component<Transform>()->set_euler_angle(
@@ -130,7 +130,7 @@ void main_loop() {
   auto duration =
       std::chrono::duration_cast<std::chrono::milliseconds>(now - last_time);
   last_time = now;
-  std::cout << "frame time: " << duration.count() << "ms" << std::endl;
+  // std::cout << "frame time: " << duration.count() << "ms" << std::endl;
 
   // user script
   if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::ESCAPE) ==

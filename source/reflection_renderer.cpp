@@ -317,8 +317,8 @@ void ReflectionRenderer::initialize() {
         var out: VertexOutput;
         var pos: vec3f = in.position.xyz;
         let center = (aabb.max + aabb.min) / 2.0;
-        let scale = abs(aabb.max - aabb.min);
-        pos = (pos + center) * scale;
+        let scale = (aabb.max - aabb.min) / 2.0;
+        pos = (pos * scale) + center;
         out.position = view_proj_mat * vec4f(pos, 1.0);
         out.color = in.color;
         return out;
@@ -582,7 +582,7 @@ void ReflectionRenderer::initialize() {
             &texture_bind_group_desc);
 
     // gizmo vertex buffer
-    float width = 0.02f;
+    float width = 0.005f;
     std::vector<GizmoVertex> gizmo_vertex{
         GizmoVertex{
             .position = Math::Vector4f(
@@ -724,13 +724,6 @@ void ReflectionRenderer::initialize() {
 }
 
 void ReflectionRenderer::init_aabb_data() {
-  if (aabb_initialized) {
-    return;
-  }
-  aabb_initialized = true;
-
-  aabb_count = gpu_resources.size();
-
   // gizmo constant buffer
   auto gizmo_constant_buffer_desc = wgpu::BufferDescriptor{
       .nextInChain = nullptr,
@@ -796,9 +789,48 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
       }
     }
 
-    init_aabb_data();
-  }
+    if (!aabb_initialized) {
+      aabb_initialized = true;
+      aabb_count = entity_list.size();
+      init_aabb_data();
 
+      auto stride =
+          Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB));
+      for (int i = 0; i < aabb_count; i++) {
+        const auto& mesh = entity_list.at(i)->get_component<Mesh>();
+        const auto& transform = entity_list.at(i)->get_component<Transform>();
+        AABB aabb{
+            .min = Math::Vector3f({std::numeric_limits<float>::max(),
+                                   std::numeric_limits<float>::max(),
+                                   std::numeric_limits<float>::max()}),
+            .max = Math::Vector3f({std::numeric_limits<float>::lowest(),
+                                   std::numeric_limits<float>::lowest(),
+                                   std::numeric_limits<float>::lowest()})};
+        for (const auto& vertex : mesh->get_vertices()) {
+          aabb.min.x = std::min(aabb.min.x, vertex.position.x);
+          aabb.min.y = std::min(aabb.min.y, vertex.position.y);
+          aabb.min.z = std::min(aabb.min.z, vertex.position.z);
+          aabb.max.x = std::max(aabb.max.x, vertex.position.x);
+          aabb.max.y = std::max(aabb.max.y, vertex.position.y);
+          aabb.max.z = std::max(aabb.max.z, vertex.position.z);
+        }
+        std::cout << "aabb: " << aabb.min.x << " " << aabb.min.y << " "
+                  << aabb.min.z << " " << aabb.max.x << " " << aabb.max.y << " "
+                  << aabb.max.z << std::endl;
+        std::vector<float> aabb_data{
+            aabb.min.x * transform->get_scale().x,
+            aabb.min.y * transform->get_scale().y,
+            aabb.min.z * transform->get_scale().z,
+            0.0f,
+            aabb.max.x * transform->get_scale().x,
+            aabb.max.y * transform->get_scale().y,
+            aabb.max.z * transform->get_scale().z,
+        };
+        Engine::get_module<Graphics>()->update_buffer(gizmo_constant_buffer,
+                                                      aabb_data, i * stride);
+      }
+    }
+  }
   // update constants
   if (!lock_command) {
     for (auto rendered : gpu_resources) {
@@ -1280,6 +1312,3 @@ std::pair<std::string, bool> ReflectionRenderer::load_texture(
 
   return {name, texture_data.alpha};
 }
-
-void draw_ray(wgpu::RenderPassEncoder pass, Math::Vector3f start,
-              Math::Vector3f end, Math::Vector3f color) {}
