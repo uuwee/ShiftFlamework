@@ -296,7 +296,11 @@ void ReflectionRenderer::initialize() {
 
     wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
     wgsl_desc.code = R"(
-    @group(0) @binding(0) var<uniform> world_mat: mat4x4f;
+    struct AABB{
+        min: vec3f,
+        max: vec3f,
+    };
+    @group(0) @binding(0) var<uniform> aabb: AABB;
     @group(1) @binding(0)  var<uniform> view_proj_mat: mat4x4f;
 
 
@@ -312,7 +316,7 @@ void ReflectionRenderer::initialize() {
 
     @vertex fn vertexMain(in: VertexInput) -> VertexOutput{
         var out: VertexOutput;
-        out.position = view_proj_mat * world_mat * in.position;
+        out.position = view_proj_mat * in.position;
         out.color = in.color;
         return out;
     };
@@ -392,13 +396,13 @@ void ReflectionRenderer::initialize() {
         .entryCount = 1,
         .entries = &gizmo_camera_constant_bind_group_layout_entry,
     };
-    camera_constant_bind_group_layout =
+    gizmo_camera_constant_bind_group_layout =
         Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
             &camera_constant_layout_desc);
 
     std::vector<wgpu::BindGroupLayout> layouts = {
         mesh_constant_bind_group_layout,
-        camera_constant_bind_group_layout,
+        gizmo_camera_constant_bind_group_layout,
     };
     wgpu::PipelineLayoutDescriptor layout_desc{
         .bindGroupLayoutCount = static_cast<uint32_t>(layouts.size()),
