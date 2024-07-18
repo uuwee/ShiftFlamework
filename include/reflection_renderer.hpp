@@ -63,6 +63,7 @@ class ReflectionRenderer {
   wgpu::Buffer gizmo_constant_buffer;
   wgpu::BindGroup gizmo_constant_bind_group;
   wgpu::BindGroup gizmo_camera_bind_group;
+  int aabb_count = 10;
 
   wgpu::TextureView depthTextureView;
   wgpu::RenderBundle render_bundle;

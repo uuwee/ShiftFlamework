@@ -55,7 +55,7 @@ void import() {
       //           << " #children=" << node->mNumChildren
       //           << " #meshes=" << node->mNumMeshes << std::endl;
       if (node->mNumChildren > 1) {
-        // in bistro scene, this is camera and directional light
+        // in bistro scene, this case is camera or directional light
         continue;
       }
 
@@ -159,7 +159,7 @@ void start() {
       Engine::get_module<Graphics>()->get_device());
   Engine::get_module<ReflectionRenderer>()->initialize();
 
-  import();
+  // import();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
