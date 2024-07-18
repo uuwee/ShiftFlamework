@@ -160,12 +160,6 @@ void start() {
   Engine::get_module<ReflectionRenderer>()->initialize();
 
   import();
-  // auto path = std::filesystem::directory_entry(
-  //                 "E:/resources/models/Bistro_v5_2/Bistro_v5_"
-  //                 "2/Textures/Foliage_Ivy_leaf_a_BaseColor.dds")
-  //                 .path();
-  // Engine::get_module<ReflectionRenderer>()->load_texture("test",
-  // path.string());
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
