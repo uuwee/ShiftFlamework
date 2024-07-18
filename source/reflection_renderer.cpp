@@ -160,7 +160,7 @@ void ReflectionRenderer::initialize() {
             wgpu::SamplerBindingLayout{.type =
                                            wgpu::SamplerBindingType::Filtering},
     };
-    camera_constant_bind_group_layout_entry = binding_layout_entries.at(1);
+    auto camera_constant_bind_group_layout_entry = binding_layout_entries.at(1);
 
     std::vector<wgpu::BindGroupLayoutEntry> mesh_constant_layout_entries(
         binding_layout_entries.begin(), binding_layout_entries.begin() + 1);
@@ -367,6 +367,19 @@ void ReflectionRenderer::initialize() {
                 },
         };
 
+    // camera
+    auto gizmo_camera_constant_bind_group_layout_entry =
+        wgpu::BindGroupLayoutEntry{
+            .binding = 0,
+            .visibility = wgpu::ShaderStage::Vertex,
+            .buffer =
+                wgpu::BufferBindingLayout{
+                    .type = wgpu::BufferBindingType::Uniform,
+                    .hasDynamicOffset = false,
+                    .minBindingSize = sizeof(Math::Matrix4x4f),
+                },
+        };
+
     wgpu::BindGroupLayoutDescriptor mesh_constant_layout_desc = {
         .entryCount = 1,
         .entries = &gizmo_mesh_constant_bind_group_layout_entry,
@@ -377,9 +390,9 @@ void ReflectionRenderer::initialize() {
 
     wgpu::BindGroupLayoutDescriptor camera_constant_layout_desc = {
         .entryCount = 1,
-        .entries = &camera_constant_bind_group_layout_entry,
+        .entries = &gizmo_camera_constant_bind_group_layout_entry,
     };
-    auto camera_constant_bind_group_layout =
+    camera_constant_bind_group_layout =
         Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
             &camera_constant_layout_desc);
 
@@ -717,6 +730,24 @@ void ReflectionRenderer::initialize() {
     gizmo_constant_bind_group =
         Engine::get_module<Graphics>()->get_device().CreateBindGroup(
             &gizmo_bind_group_desc);
+
+    // gizmo camera constant bind group
+    auto gizmo_camera_constant_binding = wgpu::BindGroupEntry{
+        .binding = 0,
+        .buffer = camera_buffer,
+        .offset = 0,
+        .size = sizeof(float) * 16,
+    };
+
+    wgpu::BindGroupDescriptor gizmo_camera_bind_group_desc{
+        .layout = camera_constant_bind_group_layout,
+        .entryCount = 1,
+        .entries = &gizmo_camera_constant_binding,
+    };
+
+    gizmo_camera_bind_group =
+        Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+            &gizmo_camera_bind_group_desc);
   }
 }
 
@@ -1029,7 +1060,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     gizmo_pass.SetIndexBuffer(gizmo_index_buffer, wgpu::IndexFormat::Uint32, 0,
                               gizmo_index_buffer.GetSize());
     gizmo_pass.SetBindGroup(0, gizmo_constant_bind_group, 0, nullptr);
-    gizmo_pass.SetBindGroup(1, camera_constant_bind_group, 0, nullptr);
+    gizmo_pass.SetBindGroup(1, gizmo_camera_bind_group, 0, nullptr);
     gizmo_pass.DrawIndexed(gizmo_index_buffer.GetSize() / sizeof(uint32_t), 1,
                            0, 0, 0);
     gizmo_pass.End();

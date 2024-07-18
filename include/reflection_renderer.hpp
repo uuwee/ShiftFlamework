@@ -29,7 +29,6 @@ class ReflectionRenderer {
   std::unordered_map<std::string, GPUTexture> textures{};
 
   wgpu::BindGroupLayout mesh_constant_bind_group_layout;
-  wgpu::BindGroupLayoutEntry camera_constant_bind_group_layout_entry;
   wgpu::BindGroupLayout camera_constant_bind_group_layout;
   wgpu::BindGroupLayout texture_bind_group_layout;
 
@@ -52,18 +51,18 @@ class ReflectionRenderer {
     Math::Vector4f position;
     Math::Vector3f color;
   };
-
+  struct AABB {
+    Math::Vector3f min;
+    Math::Vector3f max;
+  };
   wgpu::BindGroupLayout gizmo_mesh_constant_bind_group_layout;
+  wgpu::BindGroupLayout gizmo_camera_constant_bind_group_layout;
   wgpu::RenderPipeline gizmo_render_pipeline;
   wgpu::Buffer gizmo_vertex_buffer;
   wgpu::Buffer gizmo_index_buffer;
   wgpu::Buffer gizmo_constant_buffer;
   wgpu::BindGroup gizmo_constant_bind_group;
-
-  Math::Vector3f gizmo_color = Math::Vector3f({1, 0, 0});
-
-  // ray
-  wgpu::Buffer ray_vertex_buffer;
+  wgpu::BindGroup gizmo_camera_bind_group;
 
   wgpu::TextureView depthTextureView;
   wgpu::RenderBundle render_bundle;
