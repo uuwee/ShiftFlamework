@@ -770,6 +770,11 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     auto entity_list = Engine::get_module<EntityStore>()->get_all();
 
     // create gpu resources
+    instance_data = std::vector<InstanceData>(entity_list.size());
+    uint64_t vertex_count;
+    uint64_t vertex_offset;
+    uint64_t index_count;
+    uint64_t index_offset;
     for (const auto& entity : entity_list) {
       const auto& mesh = entity->get_component<Mesh>();
       const auto& transform = entity->get_component<Transform>();

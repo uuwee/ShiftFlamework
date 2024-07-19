@@ -33,13 +33,17 @@ class ReflectionRenderer {
   wgpu::BindGroupLayout texture_bind_group_layout;
 
   struct InstanceData {
-    alignas(16) uint32_t mesh_index;
-    alignas(16) uint32_t material_index;
-    alignas(16) uint32_t offset;
-    alignas(16) uint32_t size;
+    alignas(16) uint64_t mesh_index;
+    alignas(16) uint64_t material_index;
+    alignas(16) uint64_t vertex_offset;
+    alignas(16) uint64_t vertex_size;
+    alignas(16) uint64_t index_offset;
+    alignas(16) uint64_t index_size;
   };
-  wgpu::Buffer one_big_vertex_buffer;
-  wgpu::Buffer one_big_index_buffer;
+  wgpu::Buffer unified_vertex_buffer;
+  wgpu::Buffer unified_index_buffer;
+  wgpu::Buffer instance_data_buffer;
+  std::vector<InstanceData> instance_data;
 
   wgpu::RenderPipeline render_pipeline;
   wgpu::TextureView depthTextureView;
