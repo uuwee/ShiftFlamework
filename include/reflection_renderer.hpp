@@ -32,7 +32,18 @@ class ReflectionRenderer {
   wgpu::BindGroupLayout camera_constant_bind_group_layout;
   wgpu::BindGroupLayout texture_bind_group_layout;
 
+  struct InstanceData {
+    alignas(16) uint32_t mesh_index;
+    alignas(16) uint32_t material_index;
+    alignas(16) uint32_t offset;
+    alignas(16) uint32_t size;
+  };
+  wgpu::Buffer one_big_vertex_buffer;
+  wgpu::Buffer one_big_index_buffer;
+
   wgpu::RenderPipeline render_pipeline;
+  wgpu::TextureView depthTextureView;
+  wgpu::RenderBundle render_bundle;
 
   Math::Vector3f camera_position = Math::Vector3f({0, 3, 0});
   Math::Vector3f camera_angle = Math::Vector3f({0, 0, 0});
@@ -40,7 +51,7 @@ class ReflectionRenderer {
 
   wgpu::BindGroup camera_constant_bind_group;
 
-  // dummpy texture
+  // dummy texture
   wgpu::Texture texture;
   wgpu::Sampler sampler;
   wgpu::TextureView texture_view;
@@ -65,9 +76,6 @@ class ReflectionRenderer {
   wgpu::BindGroup gizmo_camera_bind_group;
   int aabb_count = 10;
   bool aabb_initialized = false;
-
-  wgpu::TextureView depthTextureView;
-  wgpu::RenderBundle render_bundle;
 
   int count = 0;
 
