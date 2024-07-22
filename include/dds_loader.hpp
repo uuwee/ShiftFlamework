@@ -7,6 +7,30 @@
 #include <iostream>
 #include <vector>
 namespace SF::DDSLoader {
+struct RawDDSHeader{
+  unsigned long magic;
+  unsigned long size;
+  unsigned long flags;
+  unsigned long height;
+  unsigned long width;
+  unsigned long pitchOrLinearSize;
+  unsigned long depth;
+  unsigned long mipMapCount;
+  unsigned long reserved1[11];
+  unsigned long pfSize;
+  unsigned long pfFlags;
+  unsigned long fourCC;
+  unsigned long rgbBitCount;
+  unsigned long rBitMask;
+  unsigned long gBitMask;
+  unsigned long bBitMask;
+  unsigned long aBitMask;
+  unsigned long caps;
+  unsigned long caps2;
+  unsigned long reservedCaps[2];
+  unsigned long reserved2;
+};
+
 struct RGBA8888 {
   uint8_t r, g, b, a;
 };

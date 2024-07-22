@@ -55,7 +55,7 @@ void import() {
       //           << " #children=" << node->mNumChildren
       //           << " #meshes=" << node->mNumMeshes << std::endl;
       if (node->mNumChildren > 1) {
-        // in bistro scene, this is camera and directional light
+        // in bistro scene, this case is camera or directional light
         continue;
       }
 
@@ -69,7 +69,7 @@ void import() {
         auto e = Engine::get_module<EntityStore>()->create();
 
         // transform
-        e->add_component<Transform>()->set_position(Math::Vector3f({0, 0, 10}));
+        e->add_component<Transform>()->set_position(Math::Vector3f({0, 0, 0}));
         e->get_component<Transform>()->set_scale(
             Math::Vector3f({0.01f, 0.01f, 0.01f}));
         e->get_component<Transform>()->set_euler_angle(
@@ -130,13 +130,19 @@ void main_loop() {
   auto duration =
       std::chrono::duration_cast<std::chrono::milliseconds>(now - last_time);
   last_time = now;
-  std::cout << "frame time: " << duration.count() << "ms" << std::endl;
+  // std::cout << "frame time: " << duration.count() << "ms" << std::endl;
 
   // user script
   if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::ESCAPE) ==
       ButtonState::DOWN) {
     Engine::get_module<ReflectionRenderer>()->lock_command =
         !Engine::get_module<ReflectionRenderer>()->lock_command;
+  }
+
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::Z) ==
+      ButtonState::DOWN) {
+    Engine::get_module<ReflectionRenderer>()->draw_aabb =
+        !Engine::get_module<ReflectionRenderer>()->draw_aabb;
   }
 
   Engine::get_module<Input>()->update();
@@ -160,12 +166,6 @@ void start() {
   Engine::get_module<ReflectionRenderer>()->initialize();
 
   import();
-  // auto path = std::filesystem::directory_entry(
-  //                 "E:/resources/models/Bistro_v5_2/Bistro_v5_"
-  //                 "2/Textures/Foliage_Ivy_leaf_a_BaseColor.dds")
-  //                 .path();
-  // Engine::get_module<ReflectionRenderer>()->load_texture("test",
-  // path.string());
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
