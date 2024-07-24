@@ -145,6 +145,54 @@ void main_loop() {
         !Engine::get_module<ReflectionRenderer>()->draw_aabb;
   }
 
+  auto renderer = Engine::get_module<ReflectionRenderer>();
+  const auto right = Math::Vector3f({std::cos(-renderer->camera_angle.y), 0.0f,
+                                     std::sin(-renderer->camera_angle.y)});
+  const auto forward =
+      -Math::Vector3f({std::sin(-renderer->camera_angle.y), 0.0f,
+                       -std::cos(-renderer->camera_angle.y)});
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::A) ==
+      ButtonState::HOLD) {
+    renderer->camera_position -= 0.1f * right;
+  }
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::D) ==
+      ButtonState::HOLD) {
+    renderer->camera_position += 0.1f * right;
+  }
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::W) ==
+      ButtonState::HOLD) {
+    renderer->camera_position += 0.1f * forward;
+  }
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::S) ==
+      ButtonState::HOLD) {
+    renderer->camera_position -= 0.1f * forward;
+  }
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::Q) ==
+      ButtonState::HOLD) {
+    renderer->camera_position.y -= 0.1f;
+  }
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::E) ==
+      ButtonState::HOLD) {
+    renderer->camera_position.y += 0.1f;
+  }
+
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::H) ==
+      ButtonState::HOLD) {
+    renderer->camera_angle.y -= 0.1f;
+  }
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::L) ==
+      ButtonState::HOLD) {
+    renderer->camera_angle.y += 0.1f;
+  }
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::J) ==
+      ButtonState::HOLD) {
+    renderer->camera_angle.x += 0.1f;
+  }
+  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::K) ==
+      ButtonState::HOLD) {
+    renderer->camera_angle.x -= 0.1f;
+  }
+
   Engine::get_module<Input>()->update();
   Engine::get_module<ReflectionRenderer>()->render(
       Engine::get_module<Window>()->get_swap_chain().GetCurrentTextureView());
