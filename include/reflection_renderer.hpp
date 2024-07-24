@@ -93,8 +93,6 @@ class ReflectionRenderer {
   int aabb_count = 10;
   bool aabb_initialized = false;
 
-  int count = 0;
-
   void dispose_gpu_resource(EntityID id);
   GPUMeshBuffer create_mesh_buffer(EntityID id);
   GPUTransformBuffer create_constant_buffer(EntityID id);
