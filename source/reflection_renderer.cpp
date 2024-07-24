@@ -900,52 +900,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
 
   // update camera
   {
-    const auto right = Math::Vector3f(
-        {std::cos(-camera_angle.y), 0.0f, std::sin(-camera_angle.y)});
-    const auto forward = -Math::Vector3f(
-        {std::sin(-camera_angle.y), 0.0f, -std::cos(-camera_angle.y)});
-    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::A) ==
-        ButtonState::HOLD) {
-      camera_position -= 0.1f * right;
-    }
-    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::D) ==
-        ButtonState::HOLD) {
-      camera_position += 0.1f * right;
-    }
-    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::W) ==
-        ButtonState::HOLD) {
-      camera_position += 0.1f * forward;
-    }
-    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::S) ==
-        ButtonState::HOLD) {
-      camera_position -= 0.1f * forward;
-    }
-    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::Q) ==
-        ButtonState::HOLD) {
-      camera_position.y -= 0.1f;
-    }
-    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::E) ==
-        ButtonState::HOLD) {
-      camera_position.y += 0.1f;
-    }
-
-    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::H) ==
-        ButtonState::HOLD) {
-      camera_angle.y -= 0.1f;
-    }
-    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::L) ==
-        ButtonState::HOLD) {
-      camera_angle.y += 0.1f;
-    }
-    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::J) ==
-        ButtonState::HOLD) {
-      camera_angle.x += 0.1f;
-    }
-    if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::K) ==
-        ButtonState::HOLD) {
-      camera_angle.x -= 0.1f;
-    }
-
     auto view_mat = Math::Matrix4x4f({{
         {1.0f, 0.0f, 0.0f, -camera_position.x},
         {0.0f, 1.0f, 0.0f, -camera_position.y},

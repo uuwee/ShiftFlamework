@@ -63,8 +63,6 @@ class ReflectionRenderer {
   std::vector<InstanceData> instance_data;
 
   // camera parameter
-  Math::Vector3f camera_position = Math::Vector3f({0, 3, 0});
-  Math::Vector3f camera_angle = Math::Vector3f({0, 0, 0});
   wgpu::Buffer camera_buffer;
 
   // dummy texture
@@ -109,6 +107,10 @@ class ReflectionRenderer {
 
   void draw_ray(Math::Vector3f origin, Math::Vector3f direction, float length,
                 Math::Vector3f color);
+
+  // camera parameter
+  Math::Vector3f camera_position = Math::Vector3f({0, 3, 0});
+  Math::Vector3f camera_angle = Math::Vector3f({0, 0, 0});
 
   bool lock_command = false;
   bool draw_aabb = false;
