@@ -169,7 +169,7 @@ void ReflectionRenderer::initialize() {
             static_cast<uint32_t>(mesh_constant_layout_entries.size()),
         .entries = mesh_constant_layout_entries.data(),
     };
-    mesh_constant_bind_group_layout =
+    diffuse_pass.mesh_constant_bind_group_layout =
         Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
             &mesh_constant_layout_desc);
 
@@ -179,7 +179,7 @@ void ReflectionRenderer::initialize() {
         .entryCount = static_cast<uint32_t>(camera_layout_entries.size()),
         .entries = camera_layout_entries.data(),
     };
-    camera_constant_bind_group_layout =
+    diffuse_pass.camera_constant_bind_group_layout =
         Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
             &camera_layout_desc);
 
@@ -189,13 +189,14 @@ void ReflectionRenderer::initialize() {
         .entryCount = static_cast<uint32_t>(texture_layout_entries.size()),
         .entries = texture_layout_entries.data(),
     };
-    texture_bind_group_layout =
+    diffuse_pass.texture_bind_group_layout =
         Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
             &texture_layout_desc);
 
     std::vector<wgpu::BindGroupLayout> layouts = {
-        mesh_constant_bind_group_layout, camera_constant_bind_group_layout,
-        texture_bind_group_layout};
+        diffuse_pass.mesh_constant_bind_group_layout,
+        diffuse_pass.camera_constant_bind_group_layout,
+        diffuse_pass.texture_bind_group_layout};
     wgpu::PipelineLayoutDescriptor layout_desc{
         .bindGroupLayoutCount = static_cast<uint32_t>(layouts.size()),
         .bindGroupLayouts = layouts.data(),
@@ -254,7 +255,7 @@ void ReflectionRenderer::initialize() {
         .aspect = wgpu::TextureAspect::DepthOnly,
     };
 
-    depthTextureView = depthTexture.CreateView(&depthTextureViewDesc);
+    depth_texture_view = depthTexture.CreateView(&depthTextureViewDesc);
 
     wgpu::RenderPipelineDescriptor render_pipeline_desc{
         .layout = pipeline_layout,
@@ -266,7 +267,7 @@ void ReflectionRenderer::initialize() {
         .fragment = &fragment_state,
     };
 
-    render_pipeline =
+    diffuse_pass.render_pipeline =
         Engine::get_module<Graphics>()->get_device().CreateRenderPipeline(
             &render_pipeline_desc);
   }
@@ -391,7 +392,7 @@ void ReflectionRenderer::initialize() {
         .entryCount = 1,
         .entries = &gizmo_mesh_constant_bind_group_layout_entry,
     };
-    gizmo_mesh_constant_bind_group_layout =
+    aabb_pass.aabb_bind_group_layout =
         Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
             &gizmo_mesh_constant_layout_desc);
 
@@ -399,13 +400,13 @@ void ReflectionRenderer::initialize() {
         .entryCount = 1,
         .entries = &gizmo_camera_constant_bind_group_layout_entry,
     };
-    gizmo_camera_constant_bind_group_layout =
+    aabb_pass.camera_constant_bind_group_layout =
         Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
             &camera_constant_layout_desc);
 
     std::vector<wgpu::BindGroupLayout> layouts = {
-        gizmo_mesh_constant_bind_group_layout,
-        gizmo_camera_constant_bind_group_layout,
+        aabb_pass.aabb_bind_group_layout,
+        aabb_pass.camera_constant_bind_group_layout,
     };
     wgpu::PipelineLayoutDescriptor layout_desc{
         .bindGroupLayoutCount = static_cast<uint32_t>(layouts.size()),
@@ -447,7 +448,7 @@ void ReflectionRenderer::initialize() {
         .fragment = &fragment_state,
     };
 
-    gizmo_render_pipeline =
+    aabb_pass.render_pipeline =
         Engine::get_module<Graphics>()->get_device().CreateRenderPipeline(
             &render_pipeline_desc);
   }
@@ -491,7 +492,7 @@ void ReflectionRenderer::initialize() {
                                                  .size = sizeof(float) * 16};
 
     wgpu::BindGroupDescriptor bind_group_desc{
-        .layout = camera_constant_bind_group_layout,
+        .layout = diffuse_pass.camera_constant_bind_group_layout,
         .entryCount = 1,
         .entries = &constant_binding};
 
@@ -572,7 +573,7 @@ void ReflectionRenderer::initialize() {
     };
 
     wgpu::BindGroupDescriptor texture_bind_group_desc{
-        .layout = texture_bind_group_layout,
+        .layout = diffuse_pass.texture_bind_group_layout,
         .entryCount = static_cast<uint32_t>(texture_bindings.size()),
         .entries = texture_bindings.data(),
     };
@@ -712,7 +713,7 @@ void ReflectionRenderer::initialize() {
     };
 
     wgpu::BindGroupDescriptor gizmo_camera_bind_group_desc{
-        .layout = camera_constant_bind_group_layout,
+        .layout = diffuse_pass.camera_constant_bind_group_layout,
         .entryCount = 1,
         .entries = &gizmo_camera_constant_binding,
     };
@@ -754,7 +755,7 @@ void ReflectionRenderer::init_aabb_data() {
   };
 
   wgpu::BindGroupDescriptor gizmo_bind_group_desc{
-      .layout = gizmo_mesh_constant_bind_group_layout,
+      .layout = aabb_pass.aabb_bind_group_layout,
       .entryCount = 1,
       .entries = &gizmo_constant_binding,
   };
@@ -1026,7 +1027,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
 
     // render
     {
-      render_bundle_encoder.SetPipeline(render_pipeline);
+      render_bundle_encoder.SetPipeline(diffuse_pass.render_pipeline);
 
       for (const auto& rendered : gpu_resources) {
         auto id = rendered.first;
@@ -1068,7 +1069,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     };
 
     wgpu::RenderPassDepthStencilAttachment depth_stencil_attachment{
-        .view = depthTextureView,
+        .view = depth_texture_view,
         .depthLoadOp = wgpu::LoadOp::Clear,
         .depthStoreOp = wgpu::StoreOp::Store,
         .depthClearValue = 1.0f,
@@ -1097,7 +1098,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     };
 
     wgpu::RenderPassDepthStencilAttachment depth_stencil_attachment{
-        .view = depthTextureView,
+        .view = depth_texture_view,
         .depthLoadOp = wgpu::LoadOp::Load,
         .depthStoreOp = wgpu::StoreOp::Store,
         .depthClearValue = 1.0f,
@@ -1114,12 +1115,12 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         .depthStencilAttachment = &depth_stencil_attachment,
     };
     auto gizmo_pass = commandEncoder.BeginRenderPass(&gizmo_pass_desc);
-    gizmo_pass.SetPipeline(gizmo_render_pipeline);
-      gizmo_pass.SetVertexBuffer(0, gizmo_vertex_buffer, 0,
-                                 gizmo_vertex_buffer.GetSize());
-      gizmo_pass.SetIndexBuffer(gizmo_index_buffer, wgpu::IndexFormat::Uint32,
-                                0, gizmo_index_buffer.GetSize());
-      gizmo_pass.SetBindGroup(1, gizmo_camera_bind_group, 0, nullptr);
+    gizmo_pass.SetPipeline(aabb_pass.render_pipeline);
+    gizmo_pass.SetVertexBuffer(0, gizmo_vertex_buffer, 0,
+                               gizmo_vertex_buffer.GetSize());
+    gizmo_pass.SetIndexBuffer(gizmo_index_buffer, wgpu::IndexFormat::Uint32, 0,
+                              gizmo_index_buffer.GetSize());
+    gizmo_pass.SetBindGroup(1, gizmo_camera_bind_group, 0, nullptr);
 
     auto stride =
         Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB));
@@ -1197,7 +1198,7 @@ GPUTransformBuffer ReflectionRenderer::create_constant_buffer(
                                       .offset = 0,
                                       .size = sizeof(Math::Matrix4x4f)};
   wgpu::BindGroupDescriptor bind_group_desc{
-      .layout = mesh_constant_bind_group_layout,
+      .layout = diffuse_pass.mesh_constant_bind_group_layout,
       .entryCount = 1,
       .entries = &binding};
 
@@ -1296,7 +1297,7 @@ std::pair<std::string, bool> ReflectionRenderer::load_texture(
   };
 
   wgpu::BindGroupDescriptor texture_bind_group_desc{
-      .layout = texture_bind_group_layout,
+      .layout = diffuse_pass.texture_bind_group_layout,
       .entryCount = static_cast<uint32_t>(texture_bindings.size()),
       .entries = texture_bindings.data(),
   };

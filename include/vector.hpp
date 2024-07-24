@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 #include <iostream>
 #include <ostream>
 
@@ -90,6 +91,7 @@ inline void Vector<T, 2>::set_vector(int i, T n) {
 
 template <typename T>
 inline void Vector<T, 3>::set_vector(int i, T n) {
+  assert(0 <= i && i < 3);
   if (i == 0) {
     x = n;
   } else if (i == 1) {
@@ -101,6 +103,7 @@ inline void Vector<T, 3>::set_vector(int i, T n) {
 
 template <typename T>
 inline void Vector<T, 4>::set_vector(int i, T n) {
+  assert(0 <= i && i < 4);
   if (i == 0) {
     x = n;
   } else if (i == 1) {
@@ -119,6 +122,7 @@ inline T Vector<T, dimension>::get_vector(int i) const {
 
 template <typename T>
 inline T Vector<T, 2>::get_vector(int i) const {
+  assert(0 <= i && i < 2);
   if (i == 0) {
     return x;
   } else if (i == 1) {
@@ -128,6 +132,7 @@ inline T Vector<T, 2>::get_vector(int i) const {
 
 template <typename T>
 inline T Vector<T, 3>::get_vector(int i) const {
+  assert(0 <= i && i < 3);
   if (i == 0) {
     return x;
   } else if (i == 1) {
@@ -139,6 +144,7 @@ inline T Vector<T, 3>::get_vector(int i) const {
 
 template <typename T>
 inline T Vector<T, 4>::get_vector(int i) const {
+  assert(0 <= i && i < 4);
   if (i == 0) {
     return x;
   } else if (i == 1) {
