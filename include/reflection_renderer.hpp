@@ -25,12 +25,18 @@ class ReflectionRenderer {
     GPUTransformBuffer transform_buffer;
   };
 
-  std::unordered_map<EntityID, GPUResource> gpu_resources{};
-  std::unordered_map<std::string, GPUTexture> textures{};
+  struct DiffusePass {
+    wgpu::RenderPipeline render_pipeline;
+    wgpu::BindGroupLayout mesh_constant_bind_group_layout;
+    wgpu::BindGroupLayout camera_constant_bind_group_layout;
+    wgpu::BindGroupLayout texture_bind_group_layout;
+  };
 
-  wgpu::BindGroupLayout mesh_constant_bind_group_layout;
-  wgpu::BindGroupLayout camera_constant_bind_group_layout;
-  wgpu::BindGroupLayout texture_bind_group_layout;
+  struct AABBPass {
+    wgpu::RenderPipeline render_pipeline;
+    wgpu::BindGroupLayout aabb_bind_group_layout;
+    wgpu::BindGroupLayout camera_constant_bind_group_layout;
+  };
 
   struct InstanceData {
     alignas(16) uint64_t mesh_index;
@@ -40,20 +46,26 @@ class ReflectionRenderer {
     alignas(16) uint64_t index_offset;
     alignas(16) uint64_t index_size;
   };
+
+  // diffuse pass
+  DiffusePass diffuse_pass;
+  wgpu::TextureView depth_texture_view;
+  wgpu::RenderBundle render_bundle;
+  wgpu::BindGroup camera_constant_bind_group;
+
+  std::unordered_map<EntityID, GPUResource> gpu_resources{};
+  std::unordered_map<std::string, GPUTexture> textures{};
+
+  // unified buffer
   wgpu::Buffer unified_vertex_buffer;
   wgpu::Buffer unified_index_buffer;
   wgpu::Buffer instance_data_buffer;
   std::vector<InstanceData> instance_data;
 
-  wgpu::RenderPipeline render_pipeline;
-  wgpu::TextureView depthTextureView;
-  wgpu::RenderBundle render_bundle;
-
+  // camera parameter
   Math::Vector3f camera_position = Math::Vector3f({0, 3, 0});
   Math::Vector3f camera_angle = Math::Vector3f({0, 0, 0});
   wgpu::Buffer camera_buffer;
-
-  wgpu::BindGroup camera_constant_bind_group;
 
   // dummy texture
   wgpu::Texture texture;
@@ -61,7 +73,7 @@ class ReflectionRenderer {
   wgpu::TextureView texture_view;
   wgpu::BindGroup texture_bind_group;
 
-  // gizmo
+  // aabb
   struct GizmoVertex {
     Math::Vector4f position;
     Math::Vector3f color;
@@ -70,9 +82,9 @@ class ReflectionRenderer {
     alignas(16) Math::Vector3f min;
     alignas(16) Math::Vector3f max;
   };
-  wgpu::BindGroupLayout gizmo_mesh_constant_bind_group_layout;
-  wgpu::BindGroupLayout gizmo_camera_constant_bind_group_layout;
-  wgpu::RenderPipeline gizmo_render_pipeline;
+
+  // aabb pass
+  AABBPass aabb_pass{};
   wgpu::Buffer gizmo_vertex_buffer;
   wgpu::Buffer gizmo_index_buffer;
   wgpu::Buffer gizmo_constant_buffer;
