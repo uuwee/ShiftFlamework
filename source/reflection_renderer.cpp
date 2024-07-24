@@ -263,6 +263,8 @@ RenderShader define_diffuse_pass() {
   };
 }
 
+
+
 void ReflectionRenderer::initialize() {}
 
 void ReflectionRenderer::render(wgpu::TextureView renderTarget) {}

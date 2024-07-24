@@ -11,6 +11,34 @@
 #include "vector.hpp"
 
 namespace SF {
+
+template <typename H, typename T>
+struct TypeList {
+  H head;
+  T tail;
+};
+
+struct EmptyTypeList {};
+
+template <typename List, int T>
+struct TypeListAt
+{
+  using type = typename TypeListAt<typename List::tail, T - 1>::type;
+};
+
+template <typename List>
+struct TypeListAt<List, 0>
+{
+  using type = typename List::head;
+};
+
+template <typename List>
+struct TypeListSize
+{
+  static const int value = 1 + TypeListSize<typename List::tail>::value;
+};
+
+template <typename VertexType, typename IndexType, typename UniformTypeList, typename OutputTypeList>
 struct RenderShader {
   const wgpu::RenderPipeline render_pipeline;
   const wgpu::PipelineLayout pipeline_layout;
@@ -18,7 +46,7 @@ struct RenderShader {
 };
 
 template <typename T>
-struct Buffer {
+struct BufferPtr {
   wgpu::Buffer buffer;
 };
 
