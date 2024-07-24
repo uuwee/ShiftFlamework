@@ -12,6 +12,7 @@
 #include "input.hpp"
 #include "material.hpp"
 #include "matrix.hpp"
+#include "matrix_utility.hpp"
 #include "mesh.hpp"
 #include "transform.hpp"
 #include "vector.hpp"
@@ -952,50 +953,16 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         {0.0f, 0.0f, 0.0f, 1.0f},
     }});
 
-    const auto ax = -camera_angle.x;
-    const auto ay = -camera_angle.y;
-    const auto az = -camera_angle.z;
-    const auto rotate_x = Math::Matrix4x4f({{
-        {1.0f, 0.0f, 0.0f, 0.0f},
-        {0.0f, cos(ax), -sin(ax), 0.0f},
-        {0.0f, sin(ax), cos(ax), 0.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f},
-    }});
-
-    const auto rotate_y = Math::Matrix4x4f({{
-        {cos(ay), 0.0f, sin(ay), 0.0f},
-        {0.0f, 1.0f, 0.0f, 0.0f},
-        {-sin(ay), 0.0f, cos(ay), 0.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f},
-    }});
-
-    const auto rotate_z = Math::Matrix4x4f({{
-        {cos(az), -sin(az), 0.0f, 0.0f},
-        {sin(az), cos(az), 0.0f, 0.0f},
-        {0.0f, 0.0f, 1.0f, 0.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f},
-    }});
-
-    view_mat = rotate_z * rotate_y * rotate_x * view_mat;
+    view_mat = Math::euler_angle_to_matrix4x4f(-camera_angle) * view_mat;
 
     auto ratio = 1080.0f / 1080.0f;
     auto focal_length = 2.0f;
     auto near = 0.01f;
     auto far = 100.0f;
-    auto divides = 1.0f / (focal_length * (far - near));
-    auto proj_mat = Math::Matrix4x4f({{
-        {1.0f, 0.0f, 0.0f, 0.0f},
-        {0.0f, ratio, 0.0f, 0.0f},
-        {0.0f, 0.0f, far * divides, -far * near * divides},
-        {0.0f, 0.0f, 1.0f / focal_length, 1.0f},
-    }});
+    auto proj_mat = Math::perspective_projection(1.0f, ratio, near, far);
     auto scale = 10.0f;
-    auto ortho_proj_mat = Math::Matrix4x4f({{
-        {1.0f / scale, 0.0f, 0.0f, 0.0f},
-        {0.0f, 1.0f / scale, 0.0f, 0.0f},
-        {0.0f, 0.0f, 1.0f / (far - near), -near / (far - near)},
-        {0.0f, 0.0f, 0.0f, 1.0f},
-    }});
+    auto ortho_proj_mat =
+        Math::orthographics_projection(scale, 1.0f, near, far);
 
     // auto view_proj_mat = ortho_proj_mat * view_mat;
     auto view_proj_mat = proj_mat * view_mat;
