@@ -900,7 +900,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     }
   }
 
-  if (!lock_command) {
+  if (!lock_command ) {
     auto entity_list = Engine::get_module<EntityStore>()->get_all();
     auto rendered_entity_list = std::vector<EntityID>();
     for (const auto& entity : entity_list) {
@@ -968,7 +968,8 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
   auto commandEncoder =
       Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
 
-  {
+  // execute diffuse pass
+  if (render_bundle != nullptr) {
     wgpu::RenderPassColorAttachment attachment{
         .view = render_target,
         .loadOp = wgpu::LoadOp::Clear,
