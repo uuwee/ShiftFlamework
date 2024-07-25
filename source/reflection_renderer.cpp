@@ -788,8 +788,10 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
       }
 
       if (!gpu_resources.contains(entity_id)) {
-        GPUResource resource{};
-        resource.mesh_buffer = create_mesh_buffer(entity_id);
+        MeshBuffer resource{};
+        auto mesh_buffer = create_mesh_buffer(entity_id);
+        resource.vertex_buffer = std::get<0>(mesh_buffer);
+        resource.index_buffer = std::get<1>(mesh_buffer);
         resource.transform_buffer = create_constant_buffer(entity_id);
 
         gpu_resources.insert_or_assign(entity_id, resource);
@@ -893,9 +895,41 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         }
       }
 
-      Engine::get_module<Graphics>()->update_buffer(gpu_transform_buffer.buffer,
+      Engine::get_module<Graphics>()->update_buffer(gpu_transform_buffer,
                                                     world_mat_vec);
     }
+  }
+
+  if (!lock_command) {
+    auto entity_list = Engine::get_module<EntityStore>()->get_all();
+    auto rendered_entity_list = std::vector<EntityID>();
+    for (const auto& entity : entity_list) {
+      const auto& mesh = entity->get_component<Mesh>();
+      const auto& transform = entity->get_component<Transform>();
+      const auto& material = entity->get_component<Material>();
+
+      auto entity_id = entity->get_id();
+      if (mesh == nullptr || transform == nullptr) {
+        dispose_gpu_resource(entity_id);
+        continue;
+      }
+
+      if (!gpu_resources.contains(entity_id)) {
+        MeshBuffer resource{};
+        auto mesh_buffer = create_mesh_buffer(entity_id);
+        resource.vertex_buffer = std::get<0>(mesh_buffer);
+        resource.index_buffer = std::get<1>(mesh_buffer);
+        resource.transform_buffer = create_constant_buffer(entity_id);
+
+        gpu_resources.insert_or_assign(entity_id, resource);
+
+      }
+
+      if (!material->is_transparent) {
+        rendered_entity_list.push_back(entity_id);
+      }
+    }
+    render_bundle = create_diffuse_pass_render_bundle(rendered_entity_list);
   }
 
   // update camera
@@ -929,53 +963,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     }
     Engine::get_module<Graphics>()->update_buffer(camera_buffer,
                                                   view_proj_mat_vec);
-  }
-
-  if (!lock_command) {
-    auto color_format = wgpu::TextureFormat::BGRA8Unorm;
-    wgpu::RenderBundleEncoderDescriptor render_bundle_encoder_desc{
-        .label = "render bundle encoder",
-        .colorFormatCount = 1,
-        .colorFormats = &color_format,
-        .depthStencilFormat = wgpu::TextureFormat::Depth24Plus,
-        .sampleCount = 1,
-        .depthReadOnly = false,
-        .stencilReadOnly = true,
-    };
-    auto render_bundle_encoder =
-        Engine::get_module<Graphics>()->get_device().CreateRenderBundleEncoder(
-            &render_bundle_encoder_desc);
-
-    // render
-    {
-      render_bundle_encoder.SetPipeline(diffuse_pass.render_pipeline);
-
-      for (const auto& rendered : gpu_resources) {
-        auto id = rendered.first;
-        auto mat = Engine::get_module<MaterialStore>()->get(id);
-        auto mat_id = mat->id;
-        if (!textures.contains(mat_id) || mat->is_transparent) {
-          continue;
-        }
-        render_bundle_encoder.SetVertexBuffer(
-            0, rendered.second.mesh_buffer.vertex_buffer, 0,
-            rendered.second.mesh_buffer.vertex_buffer.GetSize());
-        render_bundle_encoder.SetIndexBuffer(
-            rendered.second.mesh_buffer.index_buffer, wgpu::IndexFormat::Uint32,
-            0, rendered.second.mesh_buffer.index_buffer.GetSize());
-        render_bundle_encoder.SetBindGroup(
-            0, rendered.second.transform_buffer.bindgroup, 0, nullptr);
-        render_bundle_encoder.SetBindGroup(1, camera_constant_bind_group, 0,
-                                           nullptr);
-        render_bundle_encoder.SetBindGroup(2, textures[mat_id].bind_group, 0,
-                                           nullptr);
-        render_bundle_encoder.DrawIndexed(
-            rendered.second.mesh_buffer.index_buffer.GetSize() /
-                sizeof(uint32_t),
-            1, 0, 0, 0);
-      }
-      render_bundle = render_bundle_encoder.Finish();
-    }
   }
 
   auto commandEncoder =
@@ -1059,12 +1046,13 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
       1, &command_buffer);
 }
 
-GPUMeshBuffer ReflectionRenderer::create_mesh_buffer(EntityID id) {
+std::tuple<wgpu::Buffer, wgpu::Buffer> ReflectionRenderer::create_mesh_buffer(
+    EntityID id) {
   auto mesh = Engine::get_module<MeshStore>()->get(id);
   auto vertices = mesh->get_vertices();
   auto indices = mesh->get_indices();
 
-  GPUMeshBuffer gpu_mesh_buffer{};
+  wgpu::Buffer vertex_buffer;
   {
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
@@ -1073,12 +1061,11 @@ GPUMeshBuffer ReflectionRenderer::create_mesh_buffer(EntityID id) {
         .size = vertices.size() * sizeof(Vertex),
         .mappedAtCreation = false};
 
-    gpu_mesh_buffer.vertex_buffer =
-        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
-    Engine::get_module<Graphics>()->update_buffer(gpu_mesh_buffer.vertex_buffer,
-                                                  vertices);
+    vertex_buffer = Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+    Engine::get_module<Graphics>()->update_buffer(vertex_buffer, vertices);
   }
 
+  wgpu::Buffer index_buffer;
   {
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
@@ -1087,22 +1074,19 @@ GPUMeshBuffer ReflectionRenderer::create_mesh_buffer(EntityID id) {
         .size = indices.size() * sizeof(uint32_t),
         .mappedAtCreation = false};
 
-    gpu_mesh_buffer.index_buffer =
-        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
-    Engine::get_module<Graphics>()->update_buffer(gpu_mesh_buffer.index_buffer,
-                                                  indices);
+    index_buffer = Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+    Engine::get_module<Graphics>()->update_buffer(index_buffer, indices);
   }
-  return gpu_mesh_buffer;
+  return std::make_tuple(vertex_buffer, index_buffer);
 }
 
-GPUTransformBuffer ReflectionRenderer::create_constant_buffer(
-    EntityID entity_id) {
+wgpu::Buffer ReflectionRenderer::create_constant_buffer(EntityID entity_id) {
   auto transform = Engine::get_module<TransformStore>()->get(entity_id);
   auto position = transform->get_position();
   auto angle = transform->get_euler_angle();
   auto scale = transform->get_scale();
 
-  GPUTransformBuffer gpu_transform_buffer{};
+  wgpu::Buffer gpu_transform_buffer{};
   wgpu::BufferDescriptor buffer_desc{
       .nextInChain = nullptr,
       .label = "constant",
@@ -1123,10 +1107,7 @@ GPUTransformBuffer ReflectionRenderer::create_constant_buffer(
       .entryCount = 1,
       .entries = &binding};
 
-  gpu_transform_buffer.buffer = buffer;
-  gpu_transform_buffer.bindgroup =
-      Engine::get_module<Graphics>()->get_device().CreateBindGroup(
-          &bind_group_desc);
+  gpu_transform_buffer = buffer;
 
   return gpu_transform_buffer;
 }
@@ -1134,9 +1115,9 @@ GPUTransformBuffer ReflectionRenderer::create_constant_buffer(
 void ReflectionRenderer::dispose_gpu_resource(EntityID id) {
   if (gpu_resources.contains(id)) {
     auto& gpu_resource = gpu_resources.at(id);
-    gpu_resource.mesh_buffer.vertex_buffer.Destroy();
-    gpu_resource.mesh_buffer.index_buffer.Destroy();
-    gpu_resource.transform_buffer.buffer.Destroy();
+    gpu_resource.vertex_buffer.Destroy();
+    gpu_resource.index_buffer.Destroy();
+    gpu_resource.transform_buffer.Destroy();
     gpu_resources.erase(id);
   }
 }
@@ -1207,35 +1188,92 @@ std::pair<std::string, bool> ReflectionRenderer::load_texture(
   sampler =
       Engine::get_module<Graphics>()->get_device().CreateSampler(&sampler_desc);
 
-  auto texture_bindings = std::vector<wgpu::BindGroupEntry>(2);
-  texture_bindings.at(0) = wgpu::BindGroupEntry{
-      .binding = 0,
-      .textureView = texture_view,
-  };
-  texture_bindings.at(1) = wgpu::BindGroupEntry{
-      .binding = 1,
-      .sampler = sampler,
-  };
-
-  wgpu::BindGroupDescriptor texture_bind_group_desc{
-      .layout = diffuse_pass.texture_bind_group_layout,
-      .entryCount = static_cast<uint32_t>(texture_bindings.size()),
-      .entries = texture_bindings.data(),
-  };
-
-  auto texture_bind_group =
-      Engine::get_module<Graphics>()->get_device().CreateBindGroup(
-          &texture_bind_group_desc);
-
   GPUTexture gpu_texture{
       .texture = texture,
       .sampler = sampler,
       .texture_view = texture_view,
-      .bind_group = texture_bind_group,
       .is_transparent = texture_data.alpha,
   };
 
   textures.insert_or_assign(name, gpu_texture);
 
   return {name, texture_data.alpha};
+}
+
+wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
+    std::vector<EntityID> render_list) {
+  // render bandle encoder
+  auto color_format = wgpu::TextureFormat::BGRA8Unorm;
+  wgpu::RenderBundleEncoderDescriptor render_bundle_encoder_desc{
+      .label = "render bundle encoder",
+      .colorFormatCount = 1,
+      .colorFormats = &color_format,
+      .depthStencilFormat = wgpu::TextureFormat::Depth24Plus,
+      .sampleCount = 1,
+      .depthReadOnly = false,
+      .stencilReadOnly = true,
+  };
+  auto render_bundle_encoder =
+      Engine::get_module<Graphics>()->get_device().CreateRenderBundleEncoder(
+          &render_bundle_encoder_desc);
+
+  // render
+  {
+    render_bundle_encoder.SetPipeline(diffuse_pass.render_pipeline);
+
+    for (const auto& id : render_list) {
+      auto mesh_buffer = gpu_resources.at(id);
+      auto mat = textures.at(Engine::get_module<MaterialStore>()->get(id)->id);
+
+      // transform buffer
+      auto binding = wgpu::BindGroupEntry{
+          .binding = 0,
+          .buffer = mesh_buffer.transform_buffer,
+          .offset = 0,
+          .size = sizeof(Math::Matrix4x4f),
+      };
+      auto transform_buffer_bind_group_desc = wgpu::BindGroupDescriptor{
+          .layout = diffuse_pass.mesh_constant_bind_group_layout,
+          .entryCount = 1,
+          .entries = &binding,
+      };
+      auto transform_buffer_bind_group =
+          Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+              &transform_buffer_bind_group_desc);
+
+      // material buffer
+      auto texture_bindings = std::vector<wgpu::BindGroupEntry>(2);
+      texture_bindings.at(0) = wgpu::BindGroupEntry{
+          .binding = 0,
+          .textureView = mat.texture_view,
+      };
+      texture_bindings.at(1) = wgpu::BindGroupEntry{
+          .binding = 1,
+          .sampler = mat.sampler,
+      };
+      wgpu::BindGroupDescriptor texture_bind_group_desc{
+          .layout = diffuse_pass.texture_bind_group_layout,
+          .entryCount = static_cast<uint32_t>(texture_bindings.size()),
+          .entries = texture_bindings.data(),
+      };
+      auto texture_bind_group =
+          Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+              &texture_bind_group_desc);
+
+      render_bundle_encoder.SetVertexBuffer(
+          0, mesh_buffer.vertex_buffer, 0, mesh_buffer.vertex_buffer.GetSize());
+      render_bundle_encoder.SetIndexBuffer(mesh_buffer.index_buffer,
+                                           wgpu::IndexFormat::Uint32, 0,
+                                           mesh_buffer.index_buffer.GetSize());
+      render_bundle_encoder.SetBindGroup(0, transform_buffer_bind_group, 0,
+                                         nullptr);
+      render_bundle_encoder.SetBindGroup(1, camera_constant_bind_group, 0,
+                                         nullptr);
+      render_bundle_encoder.SetBindGroup(2, texture_bind_group, 0, nullptr);
+      render_bundle_encoder.DrawIndexed(
+          mesh_buffer.index_buffer.GetSize() / sizeof(uint32_t), 1, 0, 0, 0);
+    }
+  }
+
+  return render_bundle_encoder.Finish();
 }
