@@ -882,45 +882,13 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
       // update constant buffer
       auto& gpu_transform_buffer = rendered.second.transform_buffer;
       auto transform = entity->get_component<Transform>();
-      const auto translate = Math::Matrix4x4f({{
-          {1.0f, 0.0f, 0.0f, transform->get_position().x},
-          {0.0f, 1.0f, 0.0f, transform->get_position().y},
-          {0.0f, 0.0f, 1.0f, transform->get_position().z},
-          {0.0f, 0.0f, 0.0f, 1.0f},
-      }});
+      const auto translate = Math::translation_matrix4x4f(transform->get_position());
 
-      const auto scale = Math::Matrix4x4f({{
-          {transform->get_scale().x, 0.0f, 0.0f, 0.0f},
-          {0.0f, transform->get_scale().y, 0.0f, 0.0f},
-          {0.0f, 0.0f, transform->get_scale().z, 0.0f},
-          {0.0f, 0.0f, 0.0f, 1.0f},
-      }});
+      const auto scale = Math::scale_matrix4x4f(transform->get_scale());
 
-      const auto ax = transform->get_euler_angle().x;
-      const auto ay = transform->get_euler_angle().y;
-      const auto az = transform->get_euler_angle().z;
-      const auto rotate_x = Math::Matrix4x4f({{
-          {1.0f, 0.0f, 0.0f, 0.0f},
-          {0.0f, cos(ax), -sin(ax), 0.0f},
-          {0.0f, sin(ax), cos(ax), 0.0f},
-          {0.0f, 0.0f, 0.0f, 1.0f},
-      }});
+      auto rotate = Math::euler_angle_to_matrix4x4f(transform->get_euler_angle());
 
-      const auto rotate_y = Math::Matrix4x4f({{
-          {cos(ay), 0.0f, sin(ay), 0.0f},
-          {0.0f, 1.0f, 0.0f, 0.0f},
-          {-sin(ay), 0.0f, cos(ay), 0.0f},
-          {0.0f, 0.0f, 0.0f, 1.0f},
-      }});
-
-      const auto rotate_z = Math::Matrix4x4f({{
-          {cos(az), -sin(az), 0.0f, 0.0f},
-          {sin(az), cos(az), 0.0f, 0.0f},
-          {0.0f, 0.0f, 1.0f, 0.0f},
-          {0.0f, 0.0f, 0.0f, 1.0f},
-      }});
-
-      const auto world_mat = translate * rotate_z * rotate_y * rotate_x * scale;
+      const auto world_mat = translate * rotate * scale;
       auto world_mat_vec = std::vector<float>();
       for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
