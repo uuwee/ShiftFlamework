@@ -6,7 +6,6 @@
 
 #include "entity.hpp"
 #include "gpu_mesh_buffer.hpp"
-#include "gpu_transform_buffer.hpp"
 #include "graphics.hpp"
 #include "vector.hpp"
 
@@ -17,12 +16,12 @@ class ReflectionRenderer {
     wgpu::Texture texture;
     wgpu::Sampler sampler;
     wgpu::TextureView texture_view;
-    wgpu::BindGroup bind_group;
     bool is_transparent;
   };
-  struct GPUResource {
-    GPUMeshBuffer mesh_buffer;
-    GPUTransformBuffer transform_buffer;
+  struct MeshBuffer {
+    wgpu::Buffer vertex_buffer;
+    wgpu::Buffer index_buffer;
+    wgpu::Buffer transform_buffer;
   };
 
   struct DiffusePass {
@@ -53,8 +52,11 @@ class ReflectionRenderer {
   wgpu::RenderBundle render_bundle;
   wgpu::BindGroup camera_constant_bind_group;
 
-  std::unordered_map<EntityID, GPUResource> gpu_resources{};
+  std::unordered_map<EntityID, MeshBuffer> gpu_resources{};
   std::unordered_map<std::string, GPUTexture> textures{};
+
+  wgpu::RenderBundle create_diffuse_pass_render_bundle(
+      std::vector<EntityID> render_list);
 
   // unified buffer
   wgpu::Buffer unified_vertex_buffer;
@@ -92,8 +94,8 @@ class ReflectionRenderer {
   bool aabb_initialized = false;
 
   void dispose_gpu_resource(EntityID id);
-  GPUMeshBuffer create_mesh_buffer(EntityID id);
-  GPUTransformBuffer create_constant_buffer(EntityID id);
+  std::tuple<wgpu::Buffer, wgpu::Buffer> create_mesh_buffer(EntityID id);
+  wgpu::Buffer create_constant_buffer(EntityID id);
   void init_aabb_data();
 
  public:
