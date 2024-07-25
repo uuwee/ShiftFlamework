@@ -854,22 +854,22 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
             Engine::get_module<Graphics>()->get_device().CreateRenderBundleEncoder(
                 &render_bundle_encoder_desc);
 
-    render_bundle_encoder.SetPipeline(diffuse_pass.render_pipeline);
-      for (int i = 0; i < aabb_count; i++){
+    render_bundle_encoder.SetPipeline(aabb_pass.render_pipeline);
+    render_bundle_encoder.SetVertexBuffer(0, gizmo_vertex_buffer, 0,
+                               gizmo_vertex_buffer.GetSize());
+    render_bundle_encoder.SetIndexBuffer(gizmo_index_buffer, wgpu::IndexFormat::Uint32, 0,
+                              gizmo_index_buffer.GetSize());
+    render_bundle_encoder.SetBindGroup(1, gizmo_camera_bind_group, 0, nullptr);
 
-        render_bundle_encoder.SetVertexBuffer(
-            0, gizmo_vertex_buffer, 0, gizmo_vertex_buffer.GetSize());
-        render_bundle_encoder.SetIndexBuffer(gizmo_index_buffer,
-                                            wgpu::IndexFormat::Uint32, 0,
-                                            gizmo_index_buffer.GetSize());
-        render_bundle_encoder.SetBindGroup(0, gizmo_constant_bind_group, 0,
-                                            nullptr);
-        render_bundle_encoder.SetBindGroup(1, gizmo_camera_bind_group, 0,
-                                            nullptr);
-        render_bundle_encoder.DrawIndexed(
-            mesh_buffer.index_buffer.GetSize() / sizeof(uint32_t), 1, 0, 0, 0);
-        
-      }
+    auto aabb_buffer_stride =
+        Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB));
+    uint32_t offset = 0;
+    for (int i = 0; i < aabb_count; i++) {
+      offset = i * aabb_buffer_stride;
+      render_bundle_encoder.SetBindGroup(0, gizmo_constant_bind_group, 1, &offset);
+      render_bundle_encoder.DrawIndexed(gizmo_index_buffer.GetSize() / sizeof(uint32_t), 1,
+                             0, 0, 0);
+    }
     aabb_render_bundle = render_bundle_encoder.Finish();
     }
   }
@@ -1057,22 +1057,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         .depthStencilAttachment = &depth_stencil_attachment,
     };
     auto gizmo_pass = commandEncoder.BeginRenderPass(&gizmo_pass_desc);
-    gizmo_pass.SetPipeline(aabb_pass.render_pipeline);
-    gizmo_pass.SetVertexBuffer(0, gizmo_vertex_buffer, 0,
-                               gizmo_vertex_buffer.GetSize());
-    gizmo_pass.SetIndexBuffer(gizmo_index_buffer, wgpu::IndexFormat::Uint32, 0,
-                              gizmo_index_buffer.GetSize());
-    gizmo_pass.SetBindGroup(1, gizmo_camera_bind_group, 0, nullptr);
-
-    auto stride =
-        Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB));
-    uint32_t offset = 0;
-    for (int i = 0; i < aabb_count; i++) {
-      offset = i * stride;
-      gizmo_pass.SetBindGroup(0, gizmo_constant_bind_group, 1, &offset);
-      gizmo_pass.DrawIndexed(gizmo_index_buffer.GetSize() / sizeof(uint32_t), 1,
-                             0, 0, 0);
-    }
+    gizmo_pass.ExecuteBundles(1, &aabb_render_bundle);
     gizmo_pass.End();
   }
   auto command_buffer = commandEncoder.Finish();
