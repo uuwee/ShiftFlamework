@@ -838,6 +838,39 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         Engine::get_module<Graphics>()->update_buffer(gizmo_constant_buffer,
                                                       aabb_data, i * stride);
       }
+
+        // create render bundle
+        auto color_format = wgpu::TextureFormat::BGRA8Unorm;
+        wgpu::RenderBundleEncoderDescriptor render_bundle_encoder_desc{
+            .label = "render bundle encoder",
+            .colorFormatCount = 1,
+            .colorFormats = &color_format,
+            .depthStencilFormat = wgpu::TextureFormat::Depth24Plus,
+            .sampleCount = 1,
+            .depthReadOnly = false,
+            .stencilReadOnly = true,
+        };
+        auto render_bundle_encoder =
+            Engine::get_module<Graphics>()->get_device().CreateRenderBundleEncoder(
+                &render_bundle_encoder_desc);
+
+    render_bundle_encoder.SetPipeline(diffuse_pass.render_pipeline);
+      for (int i = 0; i < aabb_count; i++){
+
+        render_bundle_encoder.SetVertexBuffer(
+            0, gizmo_vertex_buffer, 0, gizmo_vertex_buffer.GetSize());
+        render_bundle_encoder.SetIndexBuffer(gizmo_index_buffer,
+                                            wgpu::IndexFormat::Uint32, 0,
+                                            gizmo_index_buffer.GetSize());
+        render_bundle_encoder.SetBindGroup(0, gizmo_constant_bind_group, 0,
+                                            nullptr);
+        render_bundle_encoder.SetBindGroup(1, gizmo_camera_bind_group, 0,
+                                            nullptr);
+        render_bundle_encoder.DrawIndexed(
+            mesh_buffer.index_buffer.GetSize() / sizeof(uint32_t), 1, 0, 0, 0);
+        
+      }
+    aabb_render_bundle = render_bundle_encoder.Finish();
     }
   }
   // update constants

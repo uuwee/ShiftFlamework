@@ -90,6 +90,7 @@ class ReflectionRenderer {
   wgpu::Buffer gizmo_constant_buffer;
   wgpu::BindGroup gizmo_constant_bind_group;
   wgpu::BindGroup gizmo_camera_bind_group;
+  wgpu::RenderBundle aabb_render_bundle;
   int aabb_count = 10;
   bool aabb_initialized = false;
 
