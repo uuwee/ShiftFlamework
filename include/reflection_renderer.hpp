@@ -37,6 +37,16 @@ class ReflectionRenderer {
     wgpu::BindGroupLayout camera_constant_bind_group_layout;
   };
 
+  struct MeshData {
+    alignas(16) uint64_t vertex_offset;
+  };
+
+  struct UnifiedPrimaryRayPass{
+    wgpu::RenderPipeline render_pipeline;
+    wgpu::BindGroupLayout camera_constant_bind_group_layout;
+    wgpu::BindGroupLayout material_bind_group_layout;
+  };
+
   struct InstanceData {
     alignas(16) uint64_t mesh_index;
     alignas(16) uint64_t material_index;
@@ -57,6 +67,7 @@ class ReflectionRenderer {
 
   wgpu::RenderBundle create_diffuse_pass_render_bundle(
       std::vector<EntityID> render_list);
+
 
   // unified buffer
   wgpu::Buffer unified_vertex_buffer;

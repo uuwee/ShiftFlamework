@@ -454,6 +454,59 @@ void ReflectionRenderer::initialize() {
             &render_pipeline_desc);
   }
 
+  // create v buffer rendering pass
+  {
+    std::vector<wgpu::VertexAttribute> vertex_attributes{
+        wgpu::VertexAttribute{
+            // position
+            .format = wgpu::VertexFormat::Float32x4,
+            .offset = 0,
+            .shaderLocation = 0,
+        },
+        wgpu::VertexAttribute{
+            // uv
+            .format = wgpu::VertexFormat::Float32x2,
+            .offset = 4 * 4,  // 4 * sizeof(Float32)
+            .shaderLocation = 1,
+        },
+    };
+
+    wgpu::VertexBufferLayout vertex_buffer_layout{
+        .arrayStride = 11 * 4,  // (4 + 2 + 1) * sizeof(Float32)
+        .stepMode = wgpu::VertexStepMode::Vertex,
+        .attributeCount = static_cast<uint32_t>(vertex_attributes.size()),
+        .attributes = vertex_attributes.data()
+        };
+
+    wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
+    wgsl_desc.code = R"(
+    @group(0) @binding(0) var<uniform> view_proj_mat: mat4x4f;
+    @group(1) @binding(0) var<uniform> material: u32;
+
+    struct VertexInput{
+      @location(0) position: vec4f,
+      @location(1) texcoord0: vec2f,
+    };
+    
+    struct VertexOutput{
+        @builtin(position) position: vec4f,
+        @location(0) texcoord0: vec2f,
+    };
+
+    @vertex fn vertexMain(in: VertexInput) -> VertexOutput{
+        var out: VertexOutput;
+        out.position = view_proj_mat * in.position;
+        out.texcoord0 = in.texcoord0;
+        return out;
+    };
+
+    struct Visible{
+        @location(0) instance_index: u16;
+        @location(1) uv: vec2f;
+    };
+    )";
+  }
+
   // set up sample data
   {
     auto ratio = 1080.0f / 1080.0f;
