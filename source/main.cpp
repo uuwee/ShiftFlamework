@@ -215,44 +215,7 @@ void start() {
       Engine::get_module<Graphics>()->get_device());
   Engine::get_module<ReflectionRenderer>()->initialize();
 
-  // import();
-  // DDSLoader::load("D:/resources/models/Bistro_v5_2/Bistro_v5_2/Textures/Cloth_BaseColor.dds");
-  auto path = std::filesystem::directory_entry(
-                  "E:/resources/models/Bistro_v5_2/Bistro_v5_2/Textures/"
-                  "Banner_Metal_Normal.dds")
-                  .path();
-  // auto path = std::filesystem::directory_entry(
-  //                 "E:/resources/models/Bistro_v5_2/Bistro_v5_2/Textures/"
-  //                 "Cloth_BaseColor.dds")
-  //                 .path();
-  std::array<uint8_t, 128> header;
-  std::ifstream file(path, std::ios::binary);
-  file.read(reinterpret_cast<char*>(&header), header.size());
-  file.close();
-
-  auto parsed = DDSLoader::parse_dds_header(header);
-  std::cout << "width=" << parsed.width << std::endl;
-  std::cout << "height=" << parsed.height << std::endl;
-  std::cout << "flags=";
-  for (auto flag : DDSLoader::dump_flags(parsed.flags)) {
-    std::cout << flag << " ";
-  }
-  std::cout << std::endl;
-  std::cout << "mip_map_count=" << parsed.mip_map_count << std::endl;
-  std::cout << "pixel_format.size=" << parsed.pixel_format.size << std::endl;
-  std::cout << "pixel_format.flags=" << parsed.pixel_format.flags << std::endl;
-  std::cout << "pixel_format.fourCC=" << to_string(parsed.pixel_format.fourCC)
-            << std::endl;
-  std::cout << "pixel_format.rgb_bit_count="
-            << parsed.pixel_format.rgb_bit_count << std::endl;
-  std::cout << "pixel_format.r_bit_mask=" << parsed.pixel_format.r_bit_mask
-            << std::endl;
-  std::cout << "pixel_format.g_bit_mask=" << parsed.pixel_format.g_bit_mask
-            << std::endl;
-  std::cout << "pixel_format.b_bit_mask=" << parsed.pixel_format.b_bit_mask
-            << std::endl;
-  std::cout << "pixel_format.a_bit_mask=" << parsed.pixel_format.a_bit_mask
-            << std::endl;
+  import();
 
   // start main loop
   Engine::get_module<Window>()->start_main_loop(main_loop);
