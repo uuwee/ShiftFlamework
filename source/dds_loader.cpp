@@ -3,90 +3,131 @@
 #include <bit>
 #include <fstream>
 #include <iostream>
-#include <vector>
 #include <string>
+#include <vector>
 
-namespace SF::DDSLoader{
+namespace SF::DDSLoader {
+
+std::vector<std::string> dump_flags(uint32_t flags) {
+  std::vector<std::string> result;
+  if (flags & static_cast<uint32_t>(DDSFlags::caps)) {
+    result.push_back("DDS_CAPS");
+  }
+  if (flags & static_cast<uint32_t>(DDSFlags::height)) {
+    result.push_back("DDS_HEIGHT");
+  }
+  if (flags & static_cast<uint32_t>(DDSFlags::width)) {
+    result.push_back("DDS_WIDTH");
+  }
+  if (flags & static_cast<uint32_t>(DDSFlags::pitch)) {
+    result.push_back("DDS_PITCH");
+  }
+  if (flags & static_cast<uint32_t>(DDSFlags::pixel_format)) {
+    result.push_back("DDS_PIXELFORMAT");
+  }
+  if (flags & static_cast<uint32_t>(DDSFlags::mip_map_count)) {
+    result.push_back("DDS_MIPMAPCOUNT");
+  }
+  if (flags & static_cast<uint32_t>(DDSFlags::linear_size)) {
+    result.push_back("DDS_LINEARSIZE");
+  }
+  if (flags & static_cast<uint32_t>(DDSFlags::depth)) {
+    result.push_back("DDS_DEPTH");
+  }
+  return result;
+}
+
+std::string to_string(FourCC fourCC) {
+  return std::string(reinterpret_cast<const char*>(&fourCC), 4);
+}
 
 uint32_t readUInt32LE(const uint8_t* data) {
-    return data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);
+  return data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);
 }
 
-DDSHeader parse_dds_header(const std::array<uint8_t, 128>& data) {
-    DDSHeader header;
-    std::memset(&header, 0, sizeof(header));
+DDSHeader parse_dds_header(const std::array<uint8_t, sizeof(DDSHeader)>& data) {
+  DDSHeader header;
+  std::memset(&header, 0, sizeof(header));
 
-    auto magic = std::string(data.begin(), data.begin() + 4);
-    if (magic != "DDS ") {
-        std::cerr << "Not a DDS file" << std::endl;
-        return header;
-    }
-
-    const uint8_t* ptr = data.data() + 4;
-
-    header.size = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.flags = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.height = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.width = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.pitch_or_linear_size = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.depth = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.mip_map_count = readUInt32LE(ptr);
-    ptr += 4;
-
-    for (int i = 0; i < 11; ++i) {
-        header.reserved[i] = readUInt32LE(ptr);
-        ptr += 4;
-    }
-
-    header.pixel_format.size = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.pixel_format.flags = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.pixel_format.fourCC = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.pixel_format.rgb_bit_count = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.pixel_format.r_bit_mask = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.pixel_format.g_bit_mask = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.pixel_format.b_bit_mask = readUInt32LE(ptr);
-    ptr += 4;
-
-    header.pixel_format.a_bit_mask = readUInt32LE(ptr);
-    ptr += 4;
-
-    for (int i = 0; i < 4; ++i) {
-        header.caps[i] = readUInt32LE(ptr);
-        ptr += 4;
-    }
-
-    header.reserved2 = readUInt32LE(ptr);
-
+  auto magic = std::string(data.begin(), data.begin() + 4);
+  if (magic != "DDS ") {
+    std::cerr << "Not a DDS file" << std::endl;
     return header;
+  }
+
+  const uint8_t* ptr = data.data();
+
+  header.magic[0] = *ptr++;
+  header.magic[1] = *ptr++;
+  header.magic[2] = *ptr++;
+  header.magic[3] = *ptr++;
+
+  header.size = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.flags = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.height = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.width = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.pitch_or_linear_size = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.depth = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.mip_map_count = readUInt32LE(ptr);
+  ptr += 4;
+
+  for (int i = 0; i < 11; ++i) {
+    header.reserved[i] = readUInt32LE(ptr);
+    ptr += 4;
+  }
+
+  header.pixel_format.size = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.pixel_format.flags = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.pixel_format.fourCC = static_cast<FourCC>(readUInt32LE(ptr));
+  ptr += 4;
+
+  header.pixel_format.rgb_bit_count = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.pixel_format.r_bit_mask = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.pixel_format.g_bit_mask = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.pixel_format.b_bit_mask = readUInt32LE(ptr);
+  ptr += 4;
+
+  header.pixel_format.a_bit_mask = readUInt32LE(ptr);
+  ptr += 4;
+
+  for (int i = 0; i < 4; ++i) {
+    header.caps[i] = readUInt32LE(ptr);
+    ptr += 4;
+  }
+
+  header.reserved2 = readUInt32LE(ptr);
+
+  return header;
 }
 
-std::string dump_raw_dds_header(DDSHeader header){
-  return "";
+DDSHeaderDXT10 parse_dds_header_dx10(
+    const std::array<uint8_t, sizeof(DDSHeaderDXT10)>& data) {
+  return DDSHeaderDXT10();
 }
+
+std::string dump_raw_dds_header(DDSHeader header) { return ""; }
 
 RGBA8888 fromRGB565(unsigned short rgb565) {
   RGBA8888 color;
@@ -122,12 +163,12 @@ DDSData load(const std::filesystem::path& path) {
   }
   DDSData dds_data{};
 
-  DDSHeader raw_header;  
+  DDSHeader raw_header;
 
   const int header_size = 128;
   std::vector<uint8_t> header(header_size);
   file.read(reinterpret_cast<char*>(header.data()), header_size);
-  
+
   memcpy(&raw_header, header.data(), sizeof(DDSHeader));
   std::cout << dump_raw_dds_header(raw_header) << std::endl;
 
@@ -169,10 +210,10 @@ DDSData load(const std::filesystem::path& path) {
         std::vector<uint8_t> block(8);
         file.read(reinterpret_cast<char*>(block.data()), 8);
 
-        RGBA8888 color0 =
-            SF::DDSLoader::fromRGB565(*reinterpret_cast<unsigned short*>(&block[0]));
-        RGBA8888 color1 =
-            SF::DDSLoader::fromRGB565(*reinterpret_cast<unsigned short*>(&block[2]));
+        RGBA8888 color0 = SF::DDSLoader::fromRGB565(
+            *reinterpret_cast<unsigned short*>(&block[0]));
+        RGBA8888 color1 = SF::DDSLoader::fromRGB565(
+            *reinterpret_cast<unsigned short*>(&block[2]));
 
         auto c0 = *reinterpret_cast<uint16_t*>(&block[0]);
         auto c1 = *reinterpret_cast<uint16_t*>(&block[2]);
@@ -251,10 +292,10 @@ DDSData load(const std::filesystem::path& path) {
           std::vector<uint8_t> col_block(8);
           file.read(reinterpret_cast<char*>(col_block.data()), 8);
 
-          RGBA8888 color0 =
-              SF::DDSLoader::fromRGB565(*reinterpret_cast<unsigned short*>(&col_block[0]));
-          RGBA8888 color1 =
-              SF::DDSLoader::fromRGB565(*reinterpret_cast<unsigned short*>(&col_block[2]));
+          RGBA8888 color0 = SF::DDSLoader::fromRGB565(
+              *reinterpret_cast<unsigned short*>(&col_block[0]));
+          RGBA8888 color1 = SF::DDSLoader::fromRGB565(
+              *reinterpret_cast<unsigned short*>(&col_block[2]));
 
           auto c0 = *reinterpret_cast<uint16_t*>(&col_block[0]);
           auto c1 = *reinterpret_cast<uint16_t*>(&col_block[2]);
@@ -320,4 +361,4 @@ DDSData load(const std::filesystem::path& path) {
   // output_file.close();
   return dds_data;
 }
-}
+}  // namespace SF::DDSLoader
