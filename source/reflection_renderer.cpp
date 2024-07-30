@@ -475,8 +475,7 @@ void ReflectionRenderer::initialize() {
         .arrayStride = 11 * 4,  // (4 + 2 + 1) * sizeof(Float32)
         .stepMode = wgpu::VertexStepMode::Vertex,
         .attributeCount = static_cast<uint32_t>(vertex_attributes.size()),
-        .attributes = vertex_attributes.data()
-        };
+        .attributes = vertex_attributes.data()};
 
     wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
     wgsl_desc.code = R"(
@@ -493,7 +492,7 @@ void ReflectionRenderer::initialize() {
         @location(0) texcoord0: vec2f,
     };
 
-    @vertex fn vertexMain(in: VertexInput) -> VertexOutput{
+    @vertex fn vertex_main(in: VertexInput) -> VertexOutput{
         var out: VertexOutput;
         out.position = view_proj_mat * in.position;
         out.texcoord0 = in.texcoord0;
@@ -501,10 +500,181 @@ void ReflectionRenderer::initialize() {
     };
 
     struct Visible{
-        @location(0) instance_index: u16;
+        @location(0) instance_index: u32;
         @location(1) uv: vec2f;
     };
+
+    @fragment fn fragment_main(in: VertexOutput) -> Visible{
+        var v: Visible;
+        v.instance_index = material;
+        v.uv = in.texcoord0;
+        return v;
+    };
     )";
+
+    wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
+    wgpu::ShaderModule shader_module =
+        Engine::get_module<Graphics>()->get_device().CreateShaderModule(
+            &shader_module_desc);
+
+    std::vector<wgpu::BlendState> blend_states(1);
+    blend_states.at(0) =
+        wgpu::BlendState{.color = wgpu::BlendComponent{
+                             .operation = wgpu::BlendOperation::Add,
+                             .srcFactor = wgpu::BlendFactor::SrcAlpha,
+                             .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
+                         }};
+
+    auto color_target_states = std::vector<wgpu::ColorTargetState>{
+        // instance index
+        wgpu::ColorTargetState{
+            .format = wgpu::TextureFormat::R32Uint,
+            .blend = blend_states.data(),
+        },
+        // uv
+        wgpu::ColorTargetState{
+            .format = wgpu::TextureFormat::RG32Float,
+            .blend = blend_states.data(),
+        },
+    };
+
+    wgpu::FragmentState fragment_state{
+        .module = shader_module,
+        .entryPoint = "fragment_main",
+        .targetCount = 2,
+        .targets = color_target_states.data(),
+    };
+
+    auto binding_layout_entries = std::vector<wgpu::BindGroupLayoutEntry>{
+        // view_proj_mat
+        wgpu::BindGroupLayoutEntry{
+            .binding = 0,
+            .visibility = wgpu::ShaderStage::Vertex,
+            .buffer =
+                wgpu::BufferBindingLayout{
+                    .type = wgpu::BufferBindingType::Uniform,
+                    .hasDynamicOffset = false,
+                    .minBindingSize = sizeof(Math::Matrix4x4f),
+                }},
+        // material
+        wgpu::BindGroupLayoutEntry{
+            .binding = 0,
+            .visibility = wgpu::ShaderStage::Fragment,
+            .buffer =
+                wgpu::BufferBindingLayout{
+                    .type = wgpu::BufferBindingType::Uniform,
+                    .hasDynamicOffset = false,
+                    .minBindingSize = sizeof(uint32_t),
+                },
+        }};
+
+    auto view_proj_mat_bind_group_layout_entry = binding_layout_entries.at(0);
+    std::vector<wgpu::BindGroupLayoutEntry> view_proj_mat_layout_entries(
+        binding_layout_entries.begin(), binding_layout_entries.begin() + 1);
+    wgpu::BindGroupLayoutDescriptor view_proj_layout_desc = {
+        .entryCount =
+            static_cast<uint32_t>(view_proj_mat_layout_entries.size()),
+        .entries = view_proj_mat_layout_entries.data(),
+    };
+    auto view_proj_mat_bind_group_layout =
+        Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
+            &view_proj_layout_desc);
+
+    auto material_bind_group_layout_entry = binding_layout_entries.at(1);
+    std::vector<wgpu::BindGroupLayoutEntry> material_layout_entries(
+        binding_layout_entries.begin() + 1, binding_layout_entries.begin() + 2);
+    wgpu::BindGroupLayoutDescriptor material_layout_desc = {
+        .entryCount = static_cast<uint32_t>(material_layout_entries.size()),
+        .entries = material_layout_entries.data(),
+    };
+    auto material_bind_group_layout =
+        Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
+            &material_layout_desc);
+
+    std::vector<wgpu::BindGroupLayout> layouts = {
+        view_proj_mat_bind_group_layout, material_bind_group_layout};
+    wgpu::PipelineLayoutDescriptor layout_desc{
+        .bindGroupLayoutCount = static_cast<uint32_t>(layouts.size()),
+        .bindGroupLayouts = layouts.data(),
+    };
+
+    wgpu::PipelineLayout pipeline_layout =
+        Engine::get_module<Graphics>()->get_device().CreatePipelineLayout(
+            &layout_desc);
+
+    wgpu::DepthStencilState depth_stencil_state{
+        .nextInChain = nullptr,
+        .format = wgpu::TextureFormat::Depth24Plus,
+        .depthWriteEnabled = true,
+        .depthCompare = wgpu::CompareFunction::Less,
+        .stencilFront =
+            wgpu::StencilFaceState{
+                .compare = wgpu::CompareFunction::Always,
+                .failOp = wgpu::StencilOperation::Keep,
+                .depthFailOp = wgpu::StencilOperation::Keep,
+                .passOp = wgpu::StencilOperation::Keep,
+            },
+        .stencilBack =
+            wgpu::StencilFaceState{
+                .compare = wgpu::CompareFunction::Always,
+                .failOp = wgpu::StencilOperation::Keep,
+                .depthFailOp = wgpu::StencilOperation::Keep,
+                .passOp = wgpu::StencilOperation::Keep,
+            },
+        .stencilReadMask = 0,
+        .stencilWriteMask = 0,
+        .depthBias = 0,
+        .depthBiasSlopeScale = 0,
+        .depthBiasClamp = 0.0f,
+    };
+
+    auto depth_texture_desc = wgpu::TextureDescriptor{
+        .nextInChain = nullptr,
+        .usage = wgpu::TextureUsage::RenderAttachment,
+        .dimension = wgpu::TextureDimension::e2D,
+        .size = {1080, 1080, 1},
+        .format = wgpu::TextureFormat::Depth24Plus,
+        .mipLevelCount = 1,
+        .sampleCount = 1,
+        .viewFormatCount = 1,
+        .viewFormats = &depth_stencil_state.format,
+    };
+
+    auto depth_texture =
+        Engine::get_module<Graphics>()->get_device().CreateTexture(
+            &depth_texture_desc);
+
+    wgpu::TextureViewDescriptor depth_texture_view_desc{
+        .nextInChain = nullptr,
+        .format = wgpu::TextureFormat::Depth24Plus,
+        .dimension = wgpu::TextureViewDimension::e2D,
+        .baseMipLevel = 0,
+        .mipLevelCount = 1,
+        .baseArrayLayer = 0,
+        .arrayLayerCount = 1,
+        .aspect = wgpu::TextureAspect::DepthOnly,
+    };
+
+    auto depth_texture_view =
+        depth_texture.CreateView(&depth_texture_view_desc);
+
+    wgpu::RenderPipelineDescriptor render_pipeline_desc{
+        .layout = pipeline_layout,
+        .vertex = {.module = shader_module,
+                   .entryPoint = "vertex_main",
+                   .bufferCount = 1,
+                   .buffers = &vertex_buffer_layout},
+        .depthStencil = &depth_stencil_state,
+        .fragment = &fragment_state,
+    };
+
+    unified_primary_ray_pass = UnifiedPrimaryRayPass{
+        .render_pipeline =
+            Engine::get_module<Graphics>()->get_device().CreateRenderPipeline(
+                &render_pipeline_desc),
+        .view_proj_mat_bind_group_layout = view_proj_mat_bind_group_layout,
+        .material_bind_group_layout = material_bind_group_layout,
+    };
   }
 
   // set up sample data
@@ -892,38 +1062,42 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
                                                       aabb_data, i * stride);
       }
 
-        // create render bundle
-        auto color_format = wgpu::TextureFormat::BGRA8Unorm;
-        wgpu::RenderBundleEncoderDescriptor render_bundle_encoder_desc{
-            .label = "render bundle encoder",
-            .colorFormatCount = 1,
-            .colorFormats = &color_format,
-            .depthStencilFormat = wgpu::TextureFormat::Depth24Plus,
-            .sampleCount = 1,
-            .depthReadOnly = false,
-            .stencilReadOnly = true,
-        };
-        auto render_bundle_encoder =
-            Engine::get_module<Graphics>()->get_device().CreateRenderBundleEncoder(
-                &render_bundle_encoder_desc);
+      // create render bundle
+      auto color_format = wgpu::TextureFormat::BGRA8Unorm;
+      wgpu::RenderBundleEncoderDescriptor render_bundle_encoder_desc{
+          .label = "render bundle encoder",
+          .colorFormatCount = 1,
+          .colorFormats = &color_format,
+          .depthStencilFormat = wgpu::TextureFormat::Depth24Plus,
+          .sampleCount = 1,
+          .depthReadOnly = false,
+          .stencilReadOnly = true,
+      };
+      auto render_bundle_encoder =
+          Engine::get_module<Graphics>()
+              ->get_device()
+              .CreateRenderBundleEncoder(&render_bundle_encoder_desc);
 
-    render_bundle_encoder.SetPipeline(aabb_pass.render_pipeline);
-    render_bundle_encoder.SetVertexBuffer(0, gizmo_vertex_buffer, 0,
-                               gizmo_vertex_buffer.GetSize());
-    render_bundle_encoder.SetIndexBuffer(gizmo_index_buffer, wgpu::IndexFormat::Uint32, 0,
-                              gizmo_index_buffer.GetSize());
-    render_bundle_encoder.SetBindGroup(1, gizmo_camera_bind_group, 0, nullptr);
+      render_bundle_encoder.SetPipeline(aabb_pass.render_pipeline);
+      render_bundle_encoder.SetVertexBuffer(0, gizmo_vertex_buffer, 0,
+                                            gizmo_vertex_buffer.GetSize());
+      render_bundle_encoder.SetIndexBuffer(gizmo_index_buffer,
+                                           wgpu::IndexFormat::Uint32, 0,
+                                           gizmo_index_buffer.GetSize());
+      render_bundle_encoder.SetBindGroup(1, gizmo_camera_bind_group, 0,
+                                         nullptr);
 
-    auto aabb_buffer_stride =
-        Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB));
-    uint32_t offset = 0;
-    for (int i = 0; i < aabb_count; i++) {
-      offset = i * aabb_buffer_stride;
-      render_bundle_encoder.SetBindGroup(0, gizmo_constant_bind_group, 1, &offset);
-      render_bundle_encoder.DrawIndexed(gizmo_index_buffer.GetSize() / sizeof(uint32_t), 1,
-                             0, 0, 0);
-    }
-    aabb_render_bundle = render_bundle_encoder.Finish();
+      auto aabb_buffer_stride =
+          Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB));
+      uint32_t offset = 0;
+      for (int i = 0; i < aabb_count; i++) {
+        offset = i * aabb_buffer_stride;
+        render_bundle_encoder.SetBindGroup(0, gizmo_constant_bind_group, 1,
+                                           &offset);
+        render_bundle_encoder.DrawIndexed(
+            gizmo_index_buffer.GetSize() / sizeof(uint32_t), 1, 0, 0, 0);
+      }
+      aabb_render_bundle = render_bundle_encoder.Finish();
     }
   }
   // update constants
@@ -935,11 +1109,13 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
       // update constant buffer
       auto& gpu_transform_buffer = rendered.second.transform_buffer;
       auto transform = entity->get_component<Transform>();
-      const auto translate = Math::translation_matrix4x4f(transform->get_position());
+      const auto translate =
+          Math::translation_matrix4x4f(transform->get_position());
 
       const auto scale = Math::scale_matrix4x4f(transform->get_scale());
 
-      auto rotate = Math::euler_angle_to_matrix4x4f(transform->get_euler_angle());
+      auto rotate =
+          Math::euler_angle_to_matrix4x4f(transform->get_euler_angle());
 
       const auto world_mat = translate * rotate * scale;
       auto world_mat_vec = std::vector<float>();
@@ -954,7 +1130,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     }
   }
 
-  if (!lock_command ) {
+  if (!lock_command) {
     auto entity_list = Engine::get_module<EntityStore>()->get_all();
     auto rendered_entity_list = std::vector<EntityID>();
     for (const auto& entity : entity_list) {
@@ -976,7 +1152,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         resource.transform_buffer = create_constant_buffer(entity_id);
 
         gpu_resources.insert_or_assign(entity_id, resource);
-
       }
 
       if (!material->is_transparent) {
@@ -1019,7 +1194,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
                                                   view_proj_mat_vec);
   }
 
-  auto commandEncoder =
+  auto command_encoder =
       Engine::get_module<Graphics>()->get_device().CreateCommandEncoder();
 
   // execute diffuse pass
@@ -1047,7 +1222,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         .colorAttachmentCount = 1,
         .colorAttachments = &attachment,
         .depthStencilAttachment = &depth_stencil_attachment};
-    auto pass = commandEncoder.BeginRenderPass(&renderpass_desc);
+    auto pass = command_encoder.BeginRenderPass(&renderpass_desc);
     pass.ExecuteBundles(1, &render_bundle);
     pass.End();
   }
@@ -1077,11 +1252,11 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         .colorAttachments = &attachment,
         .depthStencilAttachment = &depth_stencil_attachment,
     };
-    auto gizmo_pass = commandEncoder.BeginRenderPass(&gizmo_pass_desc);
+    auto gizmo_pass = command_encoder.BeginRenderPass(&gizmo_pass_desc);
     gizmo_pass.ExecuteBundles(1, &aabb_render_bundle);
     gizmo_pass.End();
   }
-  auto command_buffer = commandEncoder.Finish();
+  auto command_buffer = command_encoder.Finish();
   Engine::get_module<Graphics>()->get_device().GetQueue().Submit(
       1, &command_buffer);
 }
