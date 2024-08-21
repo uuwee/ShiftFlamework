@@ -454,229 +454,6 @@ void ReflectionRenderer::initialize() {
             &render_pipeline_desc);
   }
 
-  // create v buffer rendering pass
-  {
-    std::vector<wgpu::VertexAttribute> vertex_attributes{
-        wgpu::VertexAttribute{
-            // position
-            .format = wgpu::VertexFormat::Float32x4,
-            .offset = 0,
-            .shaderLocation = 0,
-        },
-        wgpu::VertexAttribute{
-            // uv
-            .format = wgpu::VertexFormat::Float32x2,
-            .offset = 4 * 4,  // 4 * sizeof(Float32)
-            .shaderLocation = 1,
-        },
-    };
-
-    wgpu::VertexBufferLayout vertex_buffer_layout{
-        .arrayStride = 11 * 4,  // (4 + 2 + 1) * sizeof(Float32)
-        .stepMode = wgpu::VertexStepMode::Vertex,
-        .attributeCount = static_cast<uint32_t>(vertex_attributes.size()),
-        .attributes = vertex_attributes.data()};
-
-    wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
-    wgsl_desc.code = R"(
-    @group(0) @binding(0) var<uniform> view_proj_mat: mat4x4f;
-    @group(1) @binding(0) var<uniform> material: u32;
-
-    struct VertexInput{
-      @location(0) position: vec4f,
-      @location(1) texcoord0: vec2f,
-    };
-    
-    struct VertexOutput{
-        @builtin(position) position: vec4f,
-        @location(0) texcoord0: vec2f,
-    };
-
-    @vertex fn vertex_main(in: VertexInput) -> VertexOutput{
-        var out: VertexOutput;
-        out.position = view_proj_mat * in.position;
-        out.texcoord0 = in.texcoord0;
-        return out;
-    };
-
-    struct Visible{
-        @location(0) instance_index: u32;
-        @location(1) uv: vec2f;
-    };
-
-    @fragment fn fragment_main(in: VertexOutput) -> Visible{
-        var v: Visible;
-        v.instance_index = material;
-        v.uv = in.texcoord0;
-        return v;
-    };
-    )";
-
-    wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
-    wgpu::ShaderModule shader_module =
-        Engine::get_module<Graphics>()->get_device().CreateShaderModule(
-            &shader_module_desc);
-
-    std::vector<wgpu::BlendState> blend_states(1);
-    blend_states.at(0) =
-        wgpu::BlendState{.color = wgpu::BlendComponent{
-                             .operation = wgpu::BlendOperation::Add,
-                             .srcFactor = wgpu::BlendFactor::SrcAlpha,
-                             .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
-                         }};
-
-    auto color_target_states = std::vector<wgpu::ColorTargetState>{
-        // instance index
-        wgpu::ColorTargetState{
-            .format = wgpu::TextureFormat::R32Uint,
-            .blend = blend_states.data(),
-        },
-        // uv
-        wgpu::ColorTargetState{
-            .format = wgpu::TextureFormat::RG32Float,
-            .blend = blend_states.data(),
-        },
-    };
-
-    wgpu::FragmentState fragment_state{
-        .module = shader_module,
-        .entryPoint = "fragment_main",
-        .targetCount = 2,
-        .targets = color_target_states.data(),
-    };
-
-    auto binding_layout_entries = std::vector<wgpu::BindGroupLayoutEntry>{
-        // view_proj_mat
-        wgpu::BindGroupLayoutEntry{
-            .binding = 0,
-            .visibility = wgpu::ShaderStage::Vertex,
-            .buffer =
-                wgpu::BufferBindingLayout{
-                    .type = wgpu::BufferBindingType::Uniform,
-                    .hasDynamicOffset = false,
-                    .minBindingSize = sizeof(Math::Matrix4x4f),
-                }},
-        // material
-        wgpu::BindGroupLayoutEntry{
-            .binding = 0,
-            .visibility = wgpu::ShaderStage::Fragment,
-            .buffer =
-                wgpu::BufferBindingLayout{
-                    .type = wgpu::BufferBindingType::Uniform,
-                    .hasDynamicOffset = false,
-                    .minBindingSize = sizeof(uint32_t),
-                },
-        }};
-
-    auto view_proj_mat_bind_group_layout_entry = binding_layout_entries.at(0);
-    std::vector<wgpu::BindGroupLayoutEntry> view_proj_mat_layout_entries(
-        binding_layout_entries.begin(), binding_layout_entries.begin() + 1);
-    wgpu::BindGroupLayoutDescriptor view_proj_layout_desc = {
-        .entryCount =
-            static_cast<uint32_t>(view_proj_mat_layout_entries.size()),
-        .entries = view_proj_mat_layout_entries.data(),
-    };
-    auto view_proj_mat_bind_group_layout =
-        Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
-            &view_proj_layout_desc);
-
-    auto material_bind_group_layout_entry = binding_layout_entries.at(1);
-    std::vector<wgpu::BindGroupLayoutEntry> material_layout_entries(
-        binding_layout_entries.begin() + 1, binding_layout_entries.begin() + 2);
-    wgpu::BindGroupLayoutDescriptor material_layout_desc = {
-        .entryCount = static_cast<uint32_t>(material_layout_entries.size()),
-        .entries = material_layout_entries.data(),
-    };
-    auto material_bind_group_layout =
-        Engine::get_module<Graphics>()->get_device().CreateBindGroupLayout(
-            &material_layout_desc);
-
-    std::vector<wgpu::BindGroupLayout> layouts = {
-        view_proj_mat_bind_group_layout, material_bind_group_layout};
-    wgpu::PipelineLayoutDescriptor layout_desc{
-        .bindGroupLayoutCount = static_cast<uint32_t>(layouts.size()),
-        .bindGroupLayouts = layouts.data(),
-    };
-
-    wgpu::PipelineLayout pipeline_layout =
-        Engine::get_module<Graphics>()->get_device().CreatePipelineLayout(
-            &layout_desc);
-
-    wgpu::DepthStencilState depth_stencil_state{
-        .nextInChain = nullptr,
-        .format = wgpu::TextureFormat::Depth24Plus,
-        .depthWriteEnabled = true,
-        .depthCompare = wgpu::CompareFunction::Less,
-        .stencilFront =
-            wgpu::StencilFaceState{
-                .compare = wgpu::CompareFunction::Always,
-                .failOp = wgpu::StencilOperation::Keep,
-                .depthFailOp = wgpu::StencilOperation::Keep,
-                .passOp = wgpu::StencilOperation::Keep,
-            },
-        .stencilBack =
-            wgpu::StencilFaceState{
-                .compare = wgpu::CompareFunction::Always,
-                .failOp = wgpu::StencilOperation::Keep,
-                .depthFailOp = wgpu::StencilOperation::Keep,
-                .passOp = wgpu::StencilOperation::Keep,
-            },
-        .stencilReadMask = 0,
-        .stencilWriteMask = 0,
-        .depthBias = 0,
-        .depthBiasSlopeScale = 0,
-        .depthBiasClamp = 0.0f,
-    };
-
-    auto depth_texture_desc = wgpu::TextureDescriptor{
-        .nextInChain = nullptr,
-        .usage = wgpu::TextureUsage::RenderAttachment,
-        .dimension = wgpu::TextureDimension::e2D,
-        .size = {1080, 1080, 1},
-        .format = wgpu::TextureFormat::Depth24Plus,
-        .mipLevelCount = 1,
-        .sampleCount = 1,
-        .viewFormatCount = 1,
-        .viewFormats = &depth_stencil_state.format,
-    };
-
-    auto depth_texture =
-        Engine::get_module<Graphics>()->get_device().CreateTexture(
-            &depth_texture_desc);
-
-    wgpu::TextureViewDescriptor depth_texture_view_desc{
-        .nextInChain = nullptr,
-        .format = wgpu::TextureFormat::Depth24Plus,
-        .dimension = wgpu::TextureViewDimension::e2D,
-        .baseMipLevel = 0,
-        .mipLevelCount = 1,
-        .baseArrayLayer = 0,
-        .arrayLayerCount = 1,
-        .aspect = wgpu::TextureAspect::DepthOnly,
-    };
-
-    auto depth_texture_view =
-        depth_texture.CreateView(&depth_texture_view_desc);
-
-    wgpu::RenderPipelineDescriptor render_pipeline_desc{
-        .layout = pipeline_layout,
-        .vertex = {.module = shader_module,
-                   .entryPoint = "vertex_main",
-                   .bufferCount = 1,
-                   .buffers = &vertex_buffer_layout},
-        .depthStencil = &depth_stencil_state,
-        .fragment = &fragment_state,
-    };
-
-    unified_primary_ray_pass = UnifiedPrimaryRayPass{
-        .render_pipeline =
-            Engine::get_module<Graphics>()->get_device().CreateRenderPipeline(
-                &render_pipeline_desc),
-        .view_proj_mat_bind_group_layout = view_proj_mat_bind_group_layout,
-        .material_bind_group_layout = material_bind_group_layout,
-    };
-  }
-
   // set up sample data
   {
     auto ratio = 1080.0f / 1080.0f;
@@ -995,29 +772,45 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     auto entity_list = Engine::get_module<EntityStore>()->get_all();
 
     // create gpu resources
-    instance_data = std::vector<InstanceData>(entity_list.size());
     uint64_t vertex_count;
     uint64_t vertex_offset;
     uint64_t index_count;
     uint64_t index_offset;
     for (const auto& entity : entity_list) {
-      const auto& mesh = entity->get_component<Mesh>();
-      const auto& transform = entity->get_component<Transform>();
+      {
+        // mesh buffer
+        const auto& mesh = entity->get_component<Mesh>();
+        const auto& transform = entity->get_component<Transform>();
 
-      auto entity_id = entity->get_id();
-      if (mesh == nullptr || transform == nullptr) {
-        dispose_gpu_resource(entity_id);
-        continue;
+        auto entity_id = entity->get_id();
+        if (mesh == nullptr || transform == nullptr) {
+            dispose_gpu_resource(entity_id);
+            continue;
+        }
+
+        if (!gpu_resources.contains(entity_id)) {
+            MeshBuffer resource{};
+            auto mesh_buffer = create_mesh_buffer(entity_id);
+            resource.vertex_buffer = std::get<0>(mesh_buffer);
+            resource.index_buffer = std::get<1>(mesh_buffer);
+            resource.transform_buffer = create_constant_buffer(entity_id);
+
+            gpu_resources.insert_or_assign(entity_id, resource);
+        }
       }
 
-      if (!gpu_resources.contains(entity_id)) {
-        MeshBuffer resource{};
-        auto mesh_buffer = create_mesh_buffer(entity_id);
-        resource.vertex_buffer = std::get<0>(mesh_buffer);
-        resource.index_buffer = std::get<1>(mesh_buffer);
-        resource.transform_buffer = create_constant_buffer(entity_id);
+      {
+        //texture buffer
+        const auto& material = entity->get_component<Material>();
+        const auto& texture_path = material->texture_path;
 
-        gpu_resources.insert_or_assign(entity_id, resource);
+        if(!textures.contains(texture_path)){
+            material->is_transparent = load_texture(texture_path);
+            std::cout << "load texture: " << texture_path << ", " << material->is_transparent << std::endl;
+        }
+        else{
+            material->is_transparent = textures.at(texture_path).is_transparent;
+        }
       }
     }
 
@@ -1028,6 +821,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
 
       auto stride =
           Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB));
+          std::cout << "create aabb" << std::endl;
       for (int i = 0; i < aabb_count; i++) {
         const auto& mesh = entity_list.at(i)->get_component<Mesh>();
         const auto& transform = entity_list.at(i)->get_component<Transform>();
@@ -1046,9 +840,9 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
           aabb.max.y = std::max(aabb.max.y, vertex.position.y);
           aabb.max.z = std::max(aabb.max.z, vertex.position.z);
         }
-        std::cout << "aabb: " << aabb.min.x << " " << aabb.min.y << " "
-                  << aabb.min.z << " " << aabb.max.x << " " << aabb.max.y << " "
-                  << aabb.max.z << std::endl;
+        std::cout << "progress: " << i << "/" << aabb_count << "%\r";
+        std::cout.flush();
+        
         std::vector<float> aabb_data{
             aabb.min.x * transform->get_scale().x,
             aabb.min.y * transform->get_scale().y,
@@ -1058,6 +852,8 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
             aabb.max.y * transform->get_scale().y,
             aabb.max.z * transform->get_scale().z,
         };
+        std::cout << "done" << std::endl;
+        std::cout.flush();
         Engine::get_module<Graphics>()->update_buffer(gizmo_constant_buffer,
                                                       aabb_data, i * stride);
       }
@@ -1337,11 +1133,12 @@ void ReflectionRenderer::dispose_gpu_resource(EntityID id) {
   }
 }
 
-std::pair<std::string, bool> ReflectionRenderer::load_texture(
-    std::string name, std::string path) {
-  if (textures.contains(name)) {
-    return {name, textures[name].is_transparent};
-  }
+bool ReflectionRenderer::load_texture(
+    std::filesystem::path path) {
+    if (textures.contains(path)) {
+        return textures.at(path).is_transparent;
+    }
+
   auto texture_data = DDSLoader::load(path);
 
   const wgpu::TextureDescriptor texture_desc{
@@ -1410,9 +1207,9 @@ std::pair<std::string, bool> ReflectionRenderer::load_texture(
       .is_transparent = texture_data.alpha,
   };
 
-  textures.insert_or_assign(name, gpu_texture);
+  textures.insert_or_assign(path, gpu_texture);
 
-  return {name, texture_data.alpha};
+  return texture_data.alpha;
 }
 
 wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
@@ -1438,7 +1235,7 @@ wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
 
     for (const auto& id : render_list) {
       auto mesh_buffer = gpu_resources.at(id);
-      auto mat = textures.at(Engine::get_module<MaterialStore>()->get(id)->id);
+      auto mat = textures.at(Engine::get_module<MaterialStore>()->get(id)->texture_path);
 
       // transform buffer
       auto binding = wgpu::BindGroupEntry{

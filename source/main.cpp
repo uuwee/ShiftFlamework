@@ -33,7 +33,7 @@ using namespace SF;
 
 void import() {
   const auto filePath =
-      "E:/resources/models/Bistro_v5_2/Bistro_v5_2/BistroExterior.fbx";
+      "D:/resources/models/Bistro_v5_2/Bistro_v5_2/BistroExterior.fbx";
   Assimp::Importer importer;
   const aiScene* scene = importer.ReadFile(
       filePath, aiProcess_Triangulate | aiProcess_CalcTangentSpace |
@@ -111,15 +111,16 @@ void import() {
         auto pos = std::string(name.C_Str()).find_last_of("\\");
         auto len = 1;
         auto path = std::filesystem::directory_entry(
-                        "E:/resources/models/Bistro_v5_2/Bistro_v5_2/" +
+                        "D:/resources/models/Bistro_v5_2/Bistro_v5_2/" +
                         std::string(name.C_Str()).replace(pos, len, "/"))
                         .path();
+        
+        // auto r = Engine::get_module<ReflectionRenderer>()->load_texture(
+        //     name.C_Str(), path.string());
 
-        auto r = Engine::get_module<ReflectionRenderer>()->load_texture(
-            name.C_Str(), path.string());
-
-        e->add_component<Material>()->id = std::get<0>(r);
-        e->get_component<Material>()->is_transparent = std::get<1>(r);
+        // e->add_component<Material>()->id = std::get<0>(r);
+        // e->get_component<Material>()->is_transparent = std::get<1>(r);
+        e->add_component<Material>()->texture_path = path;
       }
     }
   }
