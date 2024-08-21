@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <filesystem>
-
+#include <mutex>
 #include "entity.hpp"
 #include "gpu_mesh_buffer.hpp"
 #include "graphics.hpp"
@@ -88,6 +88,8 @@ class ReflectionRenderer {
   std::tuple<wgpu::Buffer, wgpu::Buffer> create_mesh_buffer(EntityID id);
   wgpu::Buffer create_constant_buffer(EntityID id);
   void init_aabb_data();
+
+  std::mutex texture_load_mutex;
 
  public:
   static std::string get_name() { return "ReflectionRenderer"; }
