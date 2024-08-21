@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <filesystem>
 
 #include "entity.hpp"
 #include "gpu_mesh_buffer.hpp"
@@ -41,31 +42,6 @@ class ReflectionRenderer {
     alignas(16) uint64_t vertex_offset;
   };
 
-  struct UnifiedPrimaryRayPass {
-    wgpu::RenderPipeline render_pipeline;
-    wgpu::BindGroupLayout view_proj_mat_bind_group_layout;
-    wgpu::BindGroupLayout material_bind_group_layout;
-  };
-
-  struct DrawInstanceData {
-    wgpu::RenderPipeline render_pipeline;
-    wgpu::BindGroupLayout instance_data_tex_bind_group_layout;
-  };
-
-  struct DrawUV {
-    wgpu::RenderPipeline render_pipeline;
-    wgpu::BindGroupLayout uv_bind_group_layout;
-  };
-
-  struct InstanceData {
-    alignas(16) uint64_t mesh_index;
-    alignas(16) uint64_t material_index;
-    alignas(16) uint64_t vertex_offset;
-    alignas(16) uint64_t vertex_size;
-    alignas(16) uint64_t index_offset;
-    alignas(16) uint64_t index_size;
-  };
-
   // diffuse pass
   DiffusePass diffuse_pass;
   wgpu::TextureView depth_texture_view;
@@ -73,17 +49,10 @@ class ReflectionRenderer {
   wgpu::BindGroup camera_constant_bind_group;
 
   std::unordered_map<EntityID, MeshBuffer> gpu_resources{};
-  std::unordered_map<std::string, GPUTexture> textures{};
+  std::unordered_map<std::filesystem::path, GPUTexture> textures{};
 
   wgpu::RenderBundle create_diffuse_pass_render_bundle(
       std::vector<EntityID> render_list);
-
-  // unified buffer
-  std::vector<InstanceData> instance_data;
-  UnifiedPrimaryRayPass unified_primary_ray_pass;
-
-  // draw instance data
-  DrawInstanceData draw_instance_data;
 
   // camera parameter
   wgpu::Buffer camera_buffer;
@@ -124,7 +93,7 @@ class ReflectionRenderer {
   static std::string get_name() { return "ReflectionRenderer"; }
   void initialize();
   void render(wgpu::TextureView render_target);
-  std::pair<std::string, bool> load_texture(std::string name, std::string path);
+  bool load_texture( std::filesystem::path path);
 
   void remove_mesh(EntityID id);
   void remove_constant(EntityID id);

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-
+#include <filesystem>
 #include <string>
 
 #include "entity.hpp"
@@ -14,6 +14,7 @@ class Material : public Component {
  private:
  public:
   static std::shared_ptr<MaterialStore> get_store();
+  std::filesystem::path texture_path = ""; // TODO: this should be asset unique identifier or something
   std::string id = "";
   bool is_transparent = false;
   Material(){};
