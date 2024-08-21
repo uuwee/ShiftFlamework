@@ -1,7 +1,8 @@
 #include "reflection_renderer.hpp"
 
 #include <stdint.h>
-
+#include <thread>
+#include <unordered_set>
 #include <initializer_list>
 
 #include "dds_loader.hpp"
@@ -776,6 +777,8 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     uint64_t vertex_offset;
     uint64_t index_count;
     uint64_t index_offset;
+
+    std::unordered_set<std::filesystem::path> added_textures;
     for (const auto& entity : entity_list) {
       {
         // mesh buffer
@@ -804,14 +807,32 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         const auto& material = entity->get_component<Material>();
         const auto& texture_path = material->texture_path;
 
-        if(!textures.contains(texture_path)){
-            material->is_transparent = load_texture(texture_path);
-            std::cout << "load texture: " << texture_path << ", " << material->is_transparent << std::endl;
-        }
-        else{
-            material->is_transparent = textures.at(texture_path).is_transparent;
-        }
+        added_textures.insert(texture_path);
       }
+    }
+
+    // load
+    {
+        std::vector<std::thread> load_threads;
+
+        for(auto& texture_path : added_textures){
+            load_threads.emplace_back([this, texture_path](){
+                load_texture(texture_path);
+            });
+        }
+
+        // std::cout << "wait loading textures" << std::endl;
+        for(auto& thread : load_threads){
+            thread.join();
+        }
+        // std::cout << "finish loading textures" << std::endl;
+    }
+
+    // set is_transparent
+    for (const auto& entity : entity_list) {
+        const auto& material = entity->get_component<Material>();
+        const auto& texture_path = material->texture_path;
+        material->is_transparent = textures.at(texture_path).is_transparent;
     }
 
     if (!aabb_initialized) {
@@ -840,8 +861,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
           aabb.max.y = std::max(aabb.max.y, vertex.position.y);
           aabb.max.z = std::max(aabb.max.z, vertex.position.z);
         }
-        std::cout << "progress: " << i << "/" << aabb_count << "%\r";
-        std::cout.flush();
         
         std::vector<float> aabb_data{
             aabb.min.x * transform->get_scale().x,
@@ -852,7 +871,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
             aabb.max.y * transform->get_scale().y,
             aabb.max.z * transform->get_scale().z,
         };
-        std::cout << "done" << std::endl;
         std::cout.flush();
         Engine::get_module<Graphics>()->update_buffer(gizmo_constant_buffer,
                                                       aabb_data, i * stride);
@@ -1133,13 +1151,15 @@ void ReflectionRenderer::dispose_gpu_resource(EntityID id) {
   }
 }
 
-bool ReflectionRenderer::load_texture(
+bool ReflectionRenderer::load_texture( 
     std::filesystem::path path) {
     if (textures.contains(path)) {
         return textures.at(path).is_transparent;
     }
 
   auto texture_data = DDSLoader::load(path);
+
+    std::lock_guard<std::mutex> lock(texture_load_mutex);
 
   const wgpu::TextureDescriptor texture_desc{
       .nextInChain = nullptr,
@@ -1208,7 +1228,7 @@ bool ReflectionRenderer::load_texture(
   };
 
   textures.insert_or_assign(path, gpu_texture);
-
+  std::cout << "load texture: " << path << std::endl;
   return texture_data.alpha;
 }
 

@@ -192,7 +192,6 @@ DDSData load(const std::filesystem::path& path) {
       type[0] == 0x44 && type[1] == 0x58 && type[2] == 0x54 && type[3] == 0x35;
 
   auto block_count = ((dds_data.width + 3) / 4) * ((dds_data.height + 3) / 4);
-  std::cout << "Block count: " << block_count << std::endl;
 
   if ((!is_dxt1) && (!is_dxt5)) {
     std::cout << "Not a DXT1 nor DXT5 file" << std::endl;
