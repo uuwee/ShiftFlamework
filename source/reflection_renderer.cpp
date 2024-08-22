@@ -1,8 +1,10 @@
 #include "reflection_renderer.hpp"
 
 #include <stdint.h>
-
+#include <thread>
+#include <unordered_set>
 #include <initializer_list>
+#include <queue>
 
 #include "dds_loader.hpp"
 #include "engine.hpp"
@@ -776,6 +778,8 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     uint64_t vertex_offset;
     uint64_t index_count;
     uint64_t index_offset;
+
+    std::unordered_set<std::filesystem::path> added_textures;
     for (const auto& entity : entity_list) {
       {
         // mesh buffer
@@ -804,14 +808,49 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         const auto& material = entity->get_component<Material>();
         const auto& texture_path = material->texture_path;
 
-        if (!textures.contains(texture_path)) {
-          material->is_transparent = load_texture(texture_path);
-          std::cout << "load texture: " << texture_path << ", "
-                    << material->is_transparent << std::endl;
-        } else {
-          material->is_transparent = textures.at(texture_path).is_transparent;
-        }
+        added_textures.insert(texture_path);
       }
+    }
+
+    // load
+    {
+        std::queue<std::function<void()>> load_tasks;
+        std::mutex task_mutex;
+
+        for(auto& texture_path : added_textures){
+            load_tasks.push([this, texture_path](){
+                load_texture(texture_path);
+            });
+        }
+
+        std::vector<std::thread> load_threads;
+        // std::cout << "wait loading textures" << std::endl;
+        for (int i = 0; i < std::thread::hardware_concurrency(); i++) {
+            load_threads.push_back(std::thread([&load_tasks, &task_mutex]() {
+                while (true) {
+                    task_mutex.lock();
+                    if(load_tasks.empty()){
+                        task_mutex.unlock();
+                        break;
+                    }
+                    auto task = load_tasks.front();
+                    load_tasks.pop();
+                    task_mutex.unlock();
+                    task();
+                }
+            }));
+        }
+        for(auto& thread : load_threads){
+            thread.join();
+        }
+        // std::cout << "finish loading textures" << std::endl;
+    }
+
+    // set is_transparent
+    for (const auto& entity : entity_list) {
+        const auto& material = entity->get_component<Material>();
+        const auto& texture_path = material->texture_path;
+        material->is_transparent = textures.at(texture_path).is_transparent;
     }
 
     if (!aabb_initialized) {
@@ -842,7 +881,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         }
         std::cout << "progress: " << i << "/" << aabb_count << "%\r";
         std::cout.flush();
-
         std::vector<float> aabb_data{
             aabb.min.x * transform->get_scale().x,
             aabb.min.y * transform->get_scale().y,
@@ -1131,12 +1169,16 @@ void ReflectionRenderer::dispose_gpu_resource(EntityID id) {
   }
 }
 
-bool ReflectionRenderer::load_texture(std::filesystem::path path) {
-  if (textures.contains(path)) {
-    return textures.at(path).is_transparent;
-  }
+
+bool ReflectionRenderer::load_texture( 
+    std::filesystem::path path) {
+    if (textures.contains(path)) {
+        return textures.at(path).is_transparent;
+    }
 
   auto texture_data = DDSLoader::load(path);
+
+    std::lock_guard<std::mutex> lock(texture_load_mutex);
 
   const wgpu::TextureDescriptor texture_desc{
       .nextInChain = nullptr,
@@ -1205,7 +1247,7 @@ bool ReflectionRenderer::load_texture(std::filesystem::path path) {
   };
 
   textures.insert_or_assign(path, gpu_texture);
-
+  std::cout << "load texture: " << path << std::endl;
   return texture_data.alpha;
 }
 
