@@ -199,8 +199,8 @@ DDSData load(const std::filesystem::path& path) {
     return dds_data;
   }
 
-  std::vector<std::vector<RGBA8888>> bitmap(
-      dds_data.height, std::vector<RGBA8888>(dds_data.width));
+  dds_data.data = std::vector<RGBA8888>(
+      dds_data.height * dds_data.width);
 
   uint32_t row = (dds_data.width + 3) / 4;
   uint32_t col = (dds_data.height + 3) / 4;
@@ -239,7 +239,7 @@ DDSData load(const std::filesystem::path& path) {
               continue;
             }
 
-            bitmap[yy][xx] = color_table[idx];
+            dds_data.data[yy * dds_data.width + xx] = color_table[idx];
             index_bits >>= 2;  // see next lower 2 bits
           }
         }
@@ -283,7 +283,7 @@ DDSData load(const std::filesystem::path& path) {
                 continue;
               }
 
-              bitmap[yy][xx].w = alpha_table[idx];
+              dds_data.data[yy * dds_data.width + xx].w = alpha_table[idx];
               *index_bits.data() >>= 3;
             }
           }
@@ -321,9 +321,9 @@ DDSData load(const std::filesystem::path& path) {
                 continue;
               }
 
-              bitmap[yy][xx].x = color_table[idx].x;
-              bitmap[yy][xx].y = color_table[idx].y;
-              bitmap[yy][xx].z = color_table[idx].z;
+              dds_data.data[yy * dds_data.width + xx].x = color_table[idx].x;
+              dds_data.data[yy * dds_data.width + xx].y = color_table[idx].y;
+              dds_data.data[yy * dds_data.width + xx].z = color_table[idx].z;
 
               index_bits >>= 2;
             }
@@ -335,13 +335,13 @@ DDSData load(const std::filesystem::path& path) {
 
   file.close();
 
-  dds_data.data = std::vector<RGBA8888>(dds_data.width * dds_data.height);
-  for (int i = 0; i < dds_data.height; i++) {
-    for (int j = 0; j < dds_data.width; j++) {
-      dds_data.data[i * dds_data.width + j] = bitmap[i][j];
-    }
-  }
-
+  // dds_data.data = std::vector<RGBA8888>(dds_data.width * dds_data.height);
+  // for (int i = 0; i < dds_data.height; i++) {
+  //   for (int j = 0; j < dds_data.width; j++) {
+  //     dds_data.data[i * dds_data.width + j] = bitmap[i][j];
+  //   }
+  // }
+  // dds_data.data = (std::vector<RGBA8888>::data)(bitmap.data());
   dds_data.alpha = is_dxt5;
 
   // auto output_file = std::ofstream("output.ppm");
