@@ -130,20 +130,20 @@ DDSHeaderDXT10 parse_dds_header_dx10(
 std::string dump_raw_dds_header(DDSHeader header) { return ""; }
 
 RGBA8888 fromRGB565(unsigned short rgb565) {
-  RGBA8888 color;
-  color.r = ((rgb565 >> 11) & 0x1F) * 1.0f / 31.0f * 255.0f;
-  color.g = ((rgb565 >> 5) & 0x3F) * 1.0f / 63.0f * 255.0f;
-  color.b = (rgb565 & 0x1F) * 1.0f / 31.0f * 255.0f;
-  color.a = 255;
+  RGBA8888 color{{
+    (uint8_t)(((rgb565 >> 11) & 0x1F) * 1.0f / 31.0f * 255.0f), 
+    (uint8_t)(((rgb565 >> 5) & 0x3F) * 1.0f / 63.0f * 255.0f), 
+    (uint8_t)((rgb565 & 0x1F) * 1.0f / 31.0f * 255.0f), 
+    255}};
   return color;
 }
 
 RGBA8888 Lerp(RGBA8888 x, RGBA8888 y, float s) {
-  RGBA8888 result;
-  result.r = x.r + s * (y.r - x.r);
-  result.g = x.g + s * (y.g - x.g);
-  result.b = x.b + s * (y.b - x.b);
-  result.a = x.a + s * (y.a - x.a);
+  RGBA8888 result{{0, 0, 0, 0}};
+  result.x = x.x + s * (y.x - x.x);
+  result.y = x.y + s * (y.y - x.y);
+  result.z = x.z + s * (y.z - x.z);
+  result.w = x.w + s * (y.w - x.w);
   return result;
 }
 
@@ -198,8 +198,8 @@ DDSData load(const std::filesystem::path& path) {
     return dds_data;
   }
 
-  std::vector<std::vector<RGBA8888>> bitmap(
-      dds_data.height, std::vector<RGBA8888>(dds_data.width));
+  dds_data.data = std::vector<RGBA8888>(
+      dds_data.height * dds_data.width);
 
   uint32_t row = (dds_data.width + 3) / 4;
   uint32_t col = (dds_data.height + 3) / 4;
@@ -238,7 +238,7 @@ DDSData load(const std::filesystem::path& path) {
               continue;
             }
 
-            bitmap[yy][xx] = color_table[idx];
+            dds_data.data[yy * dds_data.width + xx] = color_table[idx];
             index_bits >>= 2;  // see next lower 2 bits
           }
         }
@@ -282,7 +282,7 @@ DDSData load(const std::filesystem::path& path) {
                 continue;
               }
 
-              bitmap[yy][xx].a = alpha_table[idx];
+              dds_data.data[yy * dds_data.width + xx].w = alpha_table[idx];
               *index_bits.data() >>= 3;
             }
           }
@@ -320,9 +320,9 @@ DDSData load(const std::filesystem::path& path) {
                 continue;
               }
 
-              bitmap[yy][xx].r = color_table[idx].r;
-              bitmap[yy][xx].g = color_table[idx].g;
-              bitmap[yy][xx].b = color_table[idx].b;
+              dds_data.data[yy * dds_data.width + xx].x = color_table[idx].x;
+              dds_data.data[yy * dds_data.width + xx].y = color_table[idx].y;
+              dds_data.data[yy * dds_data.width + xx].z = color_table[idx].z;
 
               index_bits >>= 2;
             }
@@ -334,13 +334,13 @@ DDSData load(const std::filesystem::path& path) {
 
   file.close();
 
-  dds_data.data = std::vector<RGBA8888>(dds_data.width * dds_data.height);
-  for (int i = 0; i < dds_data.height; i++) {
-    for (int j = 0; j < dds_data.width; j++) {
-      dds_data.data[i * dds_data.width + j] = bitmap[i][j];
-    }
-  }
-
+  // dds_data.data = std::vector<RGBA8888>(dds_data.width * dds_data.height);
+  // for (int i = 0; i < dds_data.height; i++) {
+  //   for (int j = 0; j < dds_data.width; j++) {
+  //     dds_data.data[i * dds_data.width + j] = bitmap[i][j];
+  //   }
+  // }
+  // dds_data.data = (std::vector<RGBA8888>::data)(bitmap.data());
   dds_data.alpha = is_dxt5;
 
   // auto output_file = std::ofstream("output.ppm");
