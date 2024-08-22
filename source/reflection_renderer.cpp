@@ -784,32 +784,32 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
 
         auto entity_id = entity->get_id();
         if (mesh == nullptr || transform == nullptr) {
-            dispose_gpu_resource(entity_id);
-            continue;
+          dispose_gpu_resource(entity_id);
+          continue;
         }
 
         if (!gpu_resources.contains(entity_id)) {
-            MeshBuffer resource{};
-            auto mesh_buffer = create_mesh_buffer(entity_id);
-            resource.vertex_buffer = std::get<0>(mesh_buffer);
-            resource.index_buffer = std::get<1>(mesh_buffer);
-            resource.transform_buffer = create_constant_buffer(entity_id);
+          MeshBuffer resource{};
+          auto mesh_buffer = create_mesh_buffer(entity_id);
+          resource.vertex_buffer = std::get<0>(mesh_buffer);
+          resource.index_buffer = std::get<1>(mesh_buffer);
+          resource.transform_buffer = create_constant_buffer(entity_id);
 
-            gpu_resources.insert_or_assign(entity_id, resource);
+          gpu_resources.insert_or_assign(entity_id, resource);
         }
       }
 
       {
-        //texture buffer
+        // texture buffer
         const auto& material = entity->get_component<Material>();
         const auto& texture_path = material->texture_path;
 
-        if(!textures.contains(texture_path)){
-            material->is_transparent = load_texture(texture_path);
-            std::cout << "load texture: " << texture_path << ", " << material->is_transparent << std::endl;
-        }
-        else{
-            material->is_transparent = textures.at(texture_path).is_transparent;
+        if (!textures.contains(texture_path)) {
+          material->is_transparent = load_texture(texture_path);
+          std::cout << "load texture: " << texture_path << ", "
+                    << material->is_transparent << std::endl;
+        } else {
+          material->is_transparent = textures.at(texture_path).is_transparent;
         }
       }
     }
@@ -821,7 +821,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
 
       auto stride =
           Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB));
-          std::cout << "create aabb" << std::endl;
+      std::cout << "create aabb" << std::endl;
       for (int i = 0; i < aabb_count; i++) {
         const auto& mesh = entity_list.at(i)->get_component<Mesh>();
         const auto& transform = entity_list.at(i)->get_component<Transform>();
@@ -842,7 +842,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         }
         std::cout << "progress: " << i << "/" << aabb_count << "%\r";
         std::cout.flush();
-        
+
         std::vector<float> aabb_data{
             aabb.min.x * transform->get_scale().x,
             aabb.min.y * transform->get_scale().y,
@@ -852,8 +852,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
             aabb.max.y * transform->get_scale().y,
             aabb.max.z * transform->get_scale().z,
         };
-        std::cout << "done" << std::endl;
-        std::cout.flush();
         Engine::get_module<Graphics>()->update_buffer(gizmo_constant_buffer,
                                                       aabb_data, i * stride);
       }
@@ -1133,11 +1131,10 @@ void ReflectionRenderer::dispose_gpu_resource(EntityID id) {
   }
 }
 
-bool ReflectionRenderer::load_texture(
-    std::filesystem::path path) {
-    if (textures.contains(path)) {
-        return textures.at(path).is_transparent;
-    }
+bool ReflectionRenderer::load_texture(std::filesystem::path path) {
+  if (textures.contains(path)) {
+    return textures.at(path).is_transparent;
+  }
 
   auto texture_data = DDSLoader::load(path);
 
@@ -1235,7 +1232,8 @@ wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
 
     for (const auto& id : render_list) {
       auto mesh_buffer = gpu_resources.at(id);
-      auto mat = textures.at(Engine::get_module<MaterialStore>()->get(id)->texture_path);
+      auto mat = textures.at(
+          Engine::get_module<MaterialStore>()->get(id)->texture_path);
 
       // transform buffer
       auto binding = wgpu::BindGroupEntry{
@@ -1287,5 +1285,6 @@ wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
     }
   }
 
+  lock_command = true;
   return render_bundle_encoder.Finish();
 }
