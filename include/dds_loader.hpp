@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <vector>
 
+#include "vector.hpp"
+
 namespace SF::DDSLoader {
 
 enum class DDSFlags : uint32_t {
@@ -123,9 +125,7 @@ DDSHeaderDXT10 parse_dds_header_dx10(
 
 std::string dump_raw_dds_header(DDSHeader header);
 
-struct RGBA8888 {
-  uint8_t r, g, b, a;
-};
+using RGBA8888 = Math::Vector<std::uint8_t, 4>;
 struct DDSData {
   uint32_t width, height;
   std::vector<RGBA8888> data;

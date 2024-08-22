@@ -43,6 +43,8 @@ class Vector<T, 3> {
     z = init_value.at(2);
   }
 
+  Vector() : x(0), y(0), z(0) {}
+
   void set_vector(int i, T n);
   T get_vector(int i) const;
   T x;
@@ -59,6 +61,8 @@ class Vector<T, 4> {
     z = init_value.at(2);
     w = init_value.at(3);
   }
+
+  Vector() : x(0), y(0), z(0), w(0) {}
 
   void set_vector(int i, T n);
   T get_vector(int i) const;
