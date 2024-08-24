@@ -22,7 +22,7 @@
 using namespace SF;
 
 void ReflectionRenderer::initialize() {
-  // create first pass pipeline
+  // create diffuse pass pipeline
   {
     std::vector<wgpu::VertexAttribute> vertex_attributes{
         wgpu::VertexAttribute{
