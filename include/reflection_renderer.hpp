@@ -27,12 +27,6 @@ class ReflectionRenderer {
     wgpu::Buffer transform_buffer;
   };
 
-  struct AABBPass {
-    wgpu::RenderPipeline render_pipeline;
-    wgpu::BindGroupLayout aabb_bind_group_layout;
-    wgpu::BindGroupLayout camera_constant_bind_group_layout;
-  };
-
   struct MeshData {
     alignas(16) uint64_t vertex_offset;
   };
@@ -62,10 +56,6 @@ class ReflectionRenderer {
   struct GizmoVertex {
     Math::Vector4f position;
     Math::Vector3f color;
-  };
-  struct AABB {
-    alignas(16) Math::Vector3f min;
-    alignas(16) Math::Vector3f max;
   };
 
   // aabb pass
