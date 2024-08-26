@@ -1,13 +1,15 @@
 #pragma once
 
+#include <filesystem>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <filesystem>
-#include <mutex>
+
 #include "entity.hpp"
 #include "gpu_mesh_buffer.hpp"
 #include "graphics.hpp"
+#include "reflection_renderer_pass.hpp"
 #include "vector.hpp"
 
 namespace SF {
@@ -25,13 +27,6 @@ class ReflectionRenderer {
     wgpu::Buffer transform_buffer;
   };
 
-  struct DiffusePass {
-    wgpu::RenderPipeline render_pipeline;
-    wgpu::BindGroupLayout mesh_constant_bind_group_layout;
-    wgpu::BindGroupLayout camera_constant_bind_group_layout;
-    wgpu::BindGroupLayout texture_bind_group_layout;
-  };
-
   struct AABBPass {
     wgpu::RenderPipeline render_pipeline;
     wgpu::BindGroupLayout aabb_bind_group_layout;
@@ -43,8 +38,8 @@ class ReflectionRenderer {
   };
 
   // diffuse pass
+  wgpu::Texture depth_texture;
   DiffusePass diffuse_pass;
-  wgpu::TextureView depth_texture_view;
   wgpu::RenderBundle render_bundle;
   wgpu::BindGroup camera_constant_bind_group;
 
@@ -95,7 +90,7 @@ class ReflectionRenderer {
   static std::string get_name() { return "ReflectionRenderer"; }
   void initialize();
   void render(wgpu::TextureView render_target);
-  bool load_texture( std::filesystem::path path);
+  bool load_texture(std::filesystem::path path);
 
   void remove_mesh(EntityID id);
   void remove_constant(EntityID id);
