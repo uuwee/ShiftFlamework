@@ -15,8 +15,8 @@ DiffusePass create_diffuse_pass(Graphics& graphics,
                                 wgpu::Texture depth_texture);
 
 struct AABB {
-    alignas(16) Math::Vector3f min;
-    alignas(16) Math::Vector3f max;
+  alignas(16) Math::Vector3f min;
+  alignas(16) Math::Vector3f max;
 };
 
 struct AABBPass {

@@ -244,29 +244,29 @@ DiffusePass create_diffuse_pass(Graphics& graphics,
 }
 
 AABBPass create_aabb_pass(Graphics& graphics) {
-    std::vector<wgpu::VertexAttribute> vertex_attributes{
-        wgpu::VertexAttribute{
-            // position
-            .format = wgpu::VertexFormat::Float32x4,
-            .offset = 0,
-            .shaderLocation = 0,
-        },
-        wgpu::VertexAttribute{
-            // color
-            .format = wgpu::VertexFormat::Float32x3,
-            .offset = 4 * 4,  // 4 * sizeof(Float32)
-            .shaderLocation = 1,
-        },
-    };
+  std::vector<wgpu::VertexAttribute> vertex_attributes{
+      wgpu::VertexAttribute{
+          // position
+          .format = wgpu::VertexFormat::Float32x4,
+          .offset = 0,
+          .shaderLocation = 0,
+      },
+      wgpu::VertexAttribute{
+          // color
+          .format = wgpu::VertexFormat::Float32x3,
+          .offset = 4 * 4,  // 4 * sizeof(Float32)
+          .shaderLocation = 1,
+      },
+  };
 
-    wgpu::VertexBufferLayout vertex_buffer_layout{
-        .arrayStride = 7 * 4,  // (4 + 3) * sizeof(Float32)
-        .stepMode = wgpu::VertexStepMode::Vertex,
-        .attributeCount = static_cast<uint32_t>(vertex_attributes.size()),
-        .attributes = vertex_attributes.data()};
+  wgpu::VertexBufferLayout vertex_buffer_layout{
+      .arrayStride = 7 * 4,  // (4 + 3) * sizeof(Float32)
+      .stepMode = wgpu::VertexStepMode::Vertex,
+      .attributeCount = static_cast<uint32_t>(vertex_attributes.size()),
+      .attributes = vertex_attributes.data()};
 
-    wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
-    wgsl_desc.code = R"(
+  wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
+  wgsl_desc.code = R"(
     struct AABB{
         @align(16) min: vec3f,
         @align(16) max: vec3f,
@@ -300,132 +300,126 @@ AABBPass create_aabb_pass(Graphics& graphics) {
     };
     )";
 
-    wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
-    wgpu::ShaderModule shader_module =
-        graphics.get_device().CreateShaderModule(
-            &shader_module_desc);
+  wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
+  wgpu::ShaderModule shader_module =
+      graphics.get_device().CreateShaderModule(&shader_module_desc);
 
-    std::vector<wgpu::BlendState> blend_states{wgpu::BlendState{
-        .color =
-            wgpu::BlendComponent{
-                .operation = wgpu::BlendOperation::Add,
-                .srcFactor = wgpu::BlendFactor::SrcAlpha,
-                .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
-            },
-        .alpha =
-            wgpu::BlendComponent{
-                .operation = wgpu::BlendOperation::Add,
-                .srcFactor = wgpu::BlendFactor::SrcAlpha,
-                .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
-            },
-    }};
+  std::vector<wgpu::BlendState> blend_states{wgpu::BlendState{
+      .color =
+          wgpu::BlendComponent{
+              .operation = wgpu::BlendOperation::Add,
+              .srcFactor = wgpu::BlendFactor::SrcAlpha,
+              .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
+          },
+      .alpha =
+          wgpu::BlendComponent{
+              .operation = wgpu::BlendOperation::Add,
+              .srcFactor = wgpu::BlendFactor::SrcAlpha,
+              .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
+          },
+  }};
 
-    wgpu::ColorTargetState color_target_state{
-        .format = wgpu::TextureFormat::BGRA8Unorm,
-        .blend = blend_states.data(),
-    };
+  wgpu::ColorTargetState color_target_state{
+      .format = wgpu::TextureFormat::BGRA8Unorm,
+      .blend = blend_states.data(),
+  };
 
-    wgpu::FragmentState fragment_state{
-        .module = shader_module,
-        .entryPoint = "fragmentMain",
-        .targetCount = 1,
-        .targets = &color_target_state,
-    };
+  wgpu::FragmentState fragment_state{
+      .module = shader_module,
+      .entryPoint = "fragmentMain",
+      .targetCount = 1,
+      .targets = &color_target_state,
+  };
 
-    // mesh constant
-    auto gizmo_mesh_constant_bind_group_layout_entry =
-        wgpu::BindGroupLayoutEntry{
-            .binding = 0,
-            .visibility = wgpu::ShaderStage::Vertex,
-            .buffer =
-                wgpu::BufferBindingLayout{
-                    .type = wgpu::BufferBindingType::Uniform,
-                    .hasDynamicOffset = true,
-                    .minBindingSize = sizeof(AABB),
-                },
-        };
+  // mesh constant
+  auto gizmo_mesh_constant_bind_group_layout_entry = wgpu::BindGroupLayoutEntry{
+      .binding = 0,
+      .visibility = wgpu::ShaderStage::Vertex,
+      .buffer =
+          wgpu::BufferBindingLayout{
+              .type = wgpu::BufferBindingType::Uniform,
+              .hasDynamicOffset = true,
+              .minBindingSize = sizeof(AABB),
+          },
+  };
 
-    // camera
-    auto gizmo_camera_constant_bind_group_layout_entry =
-        wgpu::BindGroupLayoutEntry{
-            .binding = 0,
-            .visibility = wgpu::ShaderStage::Vertex,
-            .buffer =
-                wgpu::BufferBindingLayout{
-                    .type = wgpu::BufferBindingType::Uniform,
-                    .hasDynamicOffset = false,
-                    .minBindingSize = sizeof(Math::Matrix4x4f),
-                },
-        };
+  // camera
+  auto gizmo_camera_constant_bind_group_layout_entry =
+      wgpu::BindGroupLayoutEntry{
+          .binding = 0,
+          .visibility = wgpu::ShaderStage::Vertex,
+          .buffer =
+              wgpu::BufferBindingLayout{
+                  .type = wgpu::BufferBindingType::Uniform,
+                  .hasDynamicOffset = false,
+                  .minBindingSize = sizeof(Math::Matrix4x4f),
+              },
+      };
 
-    wgpu::BindGroupLayoutDescriptor gizmo_mesh_constant_layout_desc = {
-        .entryCount = 1,
-        .entries = &gizmo_mesh_constant_bind_group_layout_entry,
-    };
-    auto aabb_bind_group_layout =
-        graphics.get_device().CreateBindGroupLayout(
-            &gizmo_mesh_constant_layout_desc);
+  wgpu::BindGroupLayoutDescriptor gizmo_mesh_constant_layout_desc = {
+      .entryCount = 1,
+      .entries = &gizmo_mesh_constant_bind_group_layout_entry,
+  };
+  auto aabb_bind_group_layout = graphics.get_device().CreateBindGroupLayout(
+      &gizmo_mesh_constant_layout_desc);
 
-    wgpu::BindGroupLayoutDescriptor camera_constant_layout_desc = {
-        .entryCount = 1,
-        .entries = &gizmo_camera_constant_bind_group_layout_entry,
-    };
-    auto camera_constant_bind_group_layout =
-        graphics.get_device().CreateBindGroupLayout(
-            &camera_constant_layout_desc);
+  wgpu::BindGroupLayoutDescriptor camera_constant_layout_desc = {
+      .entryCount = 1,
+      .entries = &gizmo_camera_constant_bind_group_layout_entry,
+  };
+  auto camera_constant_bind_group_layout =
+      graphics.get_device().CreateBindGroupLayout(&camera_constant_layout_desc);
 
-    std::vector<wgpu::BindGroupLayout> layouts = {
-        aabb_bind_group_layout,
-        camera_constant_bind_group_layout,
-    };
-    wgpu::PipelineLayoutDescriptor layout_desc{
-        .bindGroupLayoutCount = static_cast<uint32_t>(layouts.size()),
-        .bindGroupLayouts = layouts.data(),
-    };
-    wgpu::PipelineLayout pipeline_layout =
-        graphics.get_device().CreatePipelineLayout(
-            &layout_desc);
+  std::vector<wgpu::BindGroupLayout> layouts = {
+      aabb_bind_group_layout,
+      camera_constant_bind_group_layout,
+  };
+  wgpu::PipelineLayoutDescriptor layout_desc{
+      .bindGroupLayoutCount = static_cast<uint32_t>(layouts.size()),
+      .bindGroupLayouts = layouts.data(),
+  };
+  wgpu::PipelineLayout pipeline_layout =
+      graphics.get_device().CreatePipelineLayout(&layout_desc);
 
-    wgpu::DepthStencilState depth_stencil_state{
-        .nextInChain = nullptr,
-        .format = wgpu::TextureFormat::Depth24Plus,
-        .depthWriteEnabled = true,
-        .depthCompare = wgpu::CompareFunction::Less,
-        .stencilFront =
-            wgpu::StencilFaceState{.compare = wgpu::CompareFunction::Always,
-                                   .failOp = wgpu::StencilOperation::Keep,
-                                   .depthFailOp = wgpu::StencilOperation::Keep,
-                                   .passOp = wgpu::StencilOperation::Keep},
-        .stencilBack =
-            wgpu::StencilFaceState{.compare = wgpu::CompareFunction::Always,
-                                   .failOp = wgpu::StencilOperation::Keep,
-                                   .depthFailOp = wgpu::StencilOperation::Keep,
-                                   .passOp = wgpu::StencilOperation::Keep},
-        .stencilReadMask = 0,
-        .stencilWriteMask = 0,
-        .depthBias = 0,
-        .depthBiasSlopeScale = 0.0f,
-        .depthBiasClamp = 0.0f,
-    };
+  wgpu::DepthStencilState depth_stencil_state{
+      .nextInChain = nullptr,
+      .format = wgpu::TextureFormat::Depth24Plus,
+      .depthWriteEnabled = true,
+      .depthCompare = wgpu::CompareFunction::Less,
+      .stencilFront =
+          wgpu::StencilFaceState{.compare = wgpu::CompareFunction::Always,
+                                 .failOp = wgpu::StencilOperation::Keep,
+                                 .depthFailOp = wgpu::StencilOperation::Keep,
+                                 .passOp = wgpu::StencilOperation::Keep},
+      .stencilBack =
+          wgpu::StencilFaceState{.compare = wgpu::CompareFunction::Always,
+                                 .failOp = wgpu::StencilOperation::Keep,
+                                 .depthFailOp = wgpu::StencilOperation::Keep,
+                                 .passOp = wgpu::StencilOperation::Keep},
+      .stencilReadMask = 0,
+      .stencilWriteMask = 0,
+      .depthBias = 0,
+      .depthBiasSlopeScale = 0.0f,
+      .depthBiasClamp = 0.0f,
+  };
 
-    wgpu::RenderPipelineDescriptor render_pipeline_desc{
-        .layout = pipeline_layout,
-        .vertex = {.module = shader_module,
-                   .entryPoint = "vertexMain",
-                   .bufferCount = 1,
-                   .buffers = &vertex_buffer_layout},
-        .depthStencil = &depth_stencil_state,
-        .fragment = &fragment_state,
-    };
+  wgpu::RenderPipelineDescriptor render_pipeline_desc{
+      .layout = pipeline_layout,
+      .vertex = {.module = shader_module,
+                 .entryPoint = "vertexMain",
+                 .bufferCount = 1,
+                 .buffers = &vertex_buffer_layout},
+      .depthStencil = &depth_stencil_state,
+      .fragment = &fragment_state,
+  };
 
-    auto render_pipeline =
-        graphics.get_device().CreateRenderPipeline(
-            &render_pipeline_desc);
+  auto render_pipeline =
+      graphics.get_device().CreateRenderPipeline(&render_pipeline_desc);
 
-    return AABBPass{
-        .render_pipeline = render_pipeline,
-        .aabb_data_bind_group_layout = aabb_bind_group_layout,
-        .camera_constant_bind_group_layout = camera_constant_bind_group_layout,
-    };
+  return AABBPass{
+      .render_pipeline = render_pipeline,
+      .aabb_data_bind_group_layout = aabb_bind_group_layout,
+      .camera_constant_bind_group_layout = camera_constant_bind_group_layout,
+  };
 }
 }  // namespace SF

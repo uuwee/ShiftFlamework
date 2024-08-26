@@ -27,10 +27,6 @@ class ReflectionRenderer {
     wgpu::Buffer transform_buffer;
   };
 
-  struct MeshData {
-    alignas(16) uint64_t vertex_offset;
-  };
-
   // diffuse pass
   wgpu::Texture depth_texture;
   DiffusePass diffuse_pass;
