@@ -838,6 +838,8 @@ bool ReflectionRenderer::load_texture(std::filesystem::path path) {
 
 wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
     std::vector<EntityID> render_list) {
+  update_unified_mesh_buffer();
+
   // render bandle encoder
   auto color_format = wgpu::TextureFormat::BGRA8Unorm;
   wgpu::RenderBundleEncoderDescriptor render_bundle_encoder_desc{
@@ -857,6 +859,7 @@ wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
   {
     render_bundle_encoder.SetPipeline(diffuse_pass.render_pipeline);
 
+    uint32_t instance_idx = 0;
     for (const auto& id : render_list) {
       auto mesh_buffer = gpu_resources.at(id);
       auto mat = textures.at(
@@ -897,11 +900,15 @@ wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
           Engine::get_module<Graphics>()->get_device().CreateBindGroup(
               &texture_bind_group_desc);
 
-      render_bundle_encoder.SetVertexBuffer(
-          0, mesh_buffer.vertex_buffer, 0, mesh_buffer.vertex_buffer.GetSize());
-      render_bundle_encoder.SetIndexBuffer(mesh_buffer.index_buffer,
-                                           wgpu::IndexFormat::Uint32, 0,
-                                           mesh_buffer.index_buffer.GetSize());
+      const auto& instance_data = instance_data_list.at(instance_idx++);
+
+        render_bundle_encoder.SetVertexBuffer(
+            0, mesh_buffer.vertex_buffer, 0,
+            mesh_buffer.vertex_buffer.GetSize());
+        render_bundle_encoder.SetIndexBuffer(mesh_buffer.index_buffer,
+                                             wgpu::IndexFormat::Uint32, 0,
+                                             mesh_buffer.index_buffer.GetSize());
+    
       render_bundle_encoder.SetBindGroup(0, transform_buffer_bind_group, 0,
                                          nullptr);
       render_bundle_encoder.SetBindGroup(1, camera_constant_bind_group, 0,
@@ -947,18 +954,35 @@ void ReflectionRenderer::update_unified_mesh_buffer() {
 
     vertex_offset += vertex_buffer_size;
     index_offset += index_buffer_size;
+
+    std::cout << "offset: " << vertex_offset << ", " << index_offset
+              << std::endl;
   }
 
   // allocate buffer
-  const wgpu::BufferDescriptor buffer_desc{
-      .nextInChain = nullptr,
-      .label = "unified vertex buffer",
-      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
-      .size = vertex_offset,
-      .mappedAtCreation = false};
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+        .nextInChain = nullptr,
+        .label = "unified vertex buffer",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
+        .size = vertex_offset,
+        .mappedAtCreation = false};
 
-  unified_vertex_buffer =
-      Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+    unified_vertex_buffer =
+        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+  }
+
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+        .nextInChain = nullptr,
+        .label = "unified index buffer",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Index,
+        .size = index_offset,
+        .mappedAtCreation = false};
+
+    unified_index_buffer =
+        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+  }
 
   // update buffer
   for (const auto& gpu_resource : gpu_resources) {
