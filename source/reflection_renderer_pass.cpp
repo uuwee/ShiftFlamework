@@ -430,7 +430,7 @@ TexturePass create_texture_pass(Graphics& graphics) {
     @group(0) @binding(1) var tex_sampler: sampler;
 
     struct VertexInput{
-      @builtin(vertex_index) index: u32;
+      @builtin(vertex_index) index: u32,
     };
 
     struct VertexOutput{
@@ -440,13 +440,23 @@ TexturePass create_texture_pass(Graphics& graphics) {
 
     @vertex fn vertexMain(in: VertexInput) -> VertexOutput{
         var out: VertexOutput;
-        out.position = vec4<f32>((in.index << 1) & 2, (in.index & 2) * 2 - 1, 0.0, 1.0);
-        out.texcoord0 = vec2<f32>((in.index << 1) & 2, (in.index & 2) * 2 - 1);
+        var idx2pos: array<vec2f, 6> = array<vec2f, 6>(
+            vec2<f32>(-1.0, -1.0),
+            vec2<f32>(1.0, -1.0),
+            vec2<f32>(-1.0, 1.0),
+            vec2<f32>(1.0, -1.0),
+            vec2<f32>(-1.0, 1.0),
+            vec2<f32>(1.0, 1.0)
+        );
+        out.position = vec4f(idx2pos[in.index] / 2.0, 0.0, 1.0);
+        // out.texcoord0 = (idx2pos[in.index] + vec2<f32>(1.0, 1.0)) / 2.0;
+        out.texcoord0 = idx2pos[in.index] / 2.0 + vec2<f32>(0.5, 0.5);
+        return out;
     };
 
     @fragment fn fragmentMain(in: VertexOutput) -> @location(0) vec4f{
-        // return textureSample(tex, tex_sampler, in.texcoord0);
-        return vec4<f32>(in.texcoord0 , 0.0, 1.0);
+        return textureSample(tex, tex_sampler, in.texcoord0);
+        // return vec4<f32>(in.texcoord0.x, 0.0, in.texcoord0.y, 1.0);
     };
   )";
 

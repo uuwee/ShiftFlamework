@@ -46,8 +46,9 @@ void ReflectionRenderer::initialize() {
   diffuse_pass =
       create_diffuse_pass(*Engine::get_module<Graphics>(), depth_texture);
 
-  // create aabb pass pipeline
   aabb_pass = create_aabb_pass(*Engine::get_module<Graphics>());
+
+  texture_pass = create_texture_pass(*Engine::get_module<Graphics>());
 
   // set up sample data
   {
@@ -314,6 +315,50 @@ void ReflectionRenderer::initialize() {
     gizmo_camera_bind_group =
         Engine::get_module<Graphics>()->get_device().CreateBindGroup(
             &gizmo_camera_bind_group_desc);
+  }
+
+  {
+    // create texture pass index buffer
+    std::vector<uint32_t> texture_pass_index{
+        0, 1, 2, 2, 1, 3,
+    };
+
+    const wgpu::BufferDescriptor texture_pass_index_buffer_desc{
+        .nextInChain = nullptr,
+        .label = "texture pass index buffer",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Index,
+        .size = sizeof(uint32_t) * texture_pass_index.size(),
+        .mappedAtCreation = false,
+    };
+
+    texture_pass_index_buffer = Engine::get_module<Graphics>()->create_buffer(
+        texture_pass_index_buffer_desc);
+
+    Engine::get_module<Graphics>()->update_buffer(texture_pass_index_buffer,
+                                                  texture_pass_index);
+
+    // create texture pass test bind group
+    std::vector<wgpu::BindGroupEntry> texture_bindings{
+        wgpu::BindGroupEntry{
+            .binding = 0,
+            .textureView = texture_view,
+        },
+        wgpu::BindGroupEntry{
+            .binding = 1,
+            .sampler = sampler,
+        },
+    };
+    
+
+    wgpu::BindGroupDescriptor texture_pass_test_bind_group_desc{
+        .layout = texture_pass.texture_bind_group_layout,
+        .entryCount = 2,
+        .entries = texture_bindings.data(),
+    };
+
+    texture_pass_test_bind_group =
+        Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+            &texture_pass_test_bind_group_desc);
   }
 }
 
@@ -671,7 +716,27 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     gizmo_pass.End();
   }
 
-  {}
+  // execute texture pass
+  {
+     wgpu::RenderPassColorAttachment attachment{
+         .view = render_target,
+         .loadOp = wgpu::LoadOp::Load,
+         .storeOp = wgpu::StoreOp::Store,
+         .clearValue = {1.0f, 0.0f, 1.0f, 0.0f},
+     };
+
+     wgpu::RenderPassDescriptor texture_pass_desc{
+         .colorAttachmentCount = 1,
+         .colorAttachments = &attachment,
+     };
+     auto pass = command_encoder.BeginRenderPass(&texture_pass_desc);
+     pass.SetPipeline(texture_pass.render_pipeline);
+     pass.SetIndexBuffer(texture_pass_index_buffer, wgpu::IndexFormat::Uint32, 0,
+                         texture_pass_index_buffer.GetSize());
+     pass.SetBindGroup(0, texture_pass_test_bind_group, 0, nullptr);
+     pass.Draw(6, 1, 0, 0);
+     pass.End();
+  }
 
   auto command_buffer = command_encoder.Finish();
   Engine::get_module<Graphics>()->get_device().GetQueue().Submit(
