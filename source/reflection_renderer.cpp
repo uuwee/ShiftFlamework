@@ -7,6 +7,7 @@
 #include <thread>
 #include <unordered_set>
 
+#include "camera.hpp"
 #include "dds_loader.hpp"
 #include "engine.hpp"
 #include "entity.hpp"
@@ -58,18 +59,14 @@ void ReflectionRenderer::initialize() {
     auto near = 0.01f;
     auto far = 100.0f;
     auto divides = 1.0f / (focal_length * (far - near));
-    auto view_proj_mat = Math::Matrix4x4f({{
-        {1.0f, 0.0f, 0.0f, 0.0f},
-        {0.0f, ratio, 0.0f, 0.0f},
-        {0.0f, 0.0f, far * divides, -far * near * divides},
-        {0.0f, 0.0f, 1.0f / focal_length, 1.0f},
-    }});
+    auto view_proj_mat = create_projection_matrix(ratio, focal_length, near, far);
     auto view_proj_mat_vec = std::vector<float>();
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
         view_proj_mat_vec.push_back(view_proj_mat.internal_data.at(j).at(i));
       }
     }
+    
     // camera buffer
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
