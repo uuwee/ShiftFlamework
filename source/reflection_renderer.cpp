@@ -7,7 +7,6 @@
 #include <thread>
 #include <unordered_set>
 
-#include "camera.hpp"
 #include "dds_loader.hpp"
 #include "engine.hpp"
 #include "entity.hpp"
@@ -48,9 +47,7 @@ void ReflectionRenderer::initialize() {
       create_diffuse_pass(*Engine::get_module<Graphics>(), depth_texture);
 
   // create aabb pass pipeline
-  {
-    aabb_pass = create_aabb_pass(*Engine::get_module<Graphics>());
-  }
+  aabb_pass = create_aabb_pass(*Engine::get_module<Graphics>());
 
   // set up sample data
   {
@@ -59,7 +56,8 @@ void ReflectionRenderer::initialize() {
     auto near = 0.01f;
     auto far = 100.0f;
     auto divides = 1.0f / (focal_length * (far - near));
-    auto view_proj_mat = create_projection_matrix(ratio, focal_length, near, far);
+    auto view_proj_mat =
+        Math::perspective_projection(ratio, focal_length, near, far);
     auto view_proj_mat_vec = std::vector<float>();
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
