@@ -1019,8 +1019,8 @@ void ReflectionRenderer::update_unified_mesh_buffer() {
     vertex_offset += vertex_buffer_size;
     index_offset += index_buffer_size;
 
-    std::cout << "offset: " << vertex_offset << ", " << index_offset
-              << std::endl;
+    // std::cout << "offset: " << vertex_offset << ", " << index_offset
+    //           << std::endl;
   }
 
   // allocate buffer
