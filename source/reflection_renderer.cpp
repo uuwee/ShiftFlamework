@@ -348,7 +348,6 @@ void ReflectionRenderer::initialize() {
             .sampler = sampler,
         },
     };
-    
 
     wgpu::BindGroupDescriptor texture_pass_test_bind_group_desc{
         .layout = texture_pass.texture_bind_group_layout,
@@ -360,6 +359,9 @@ void ReflectionRenderer::initialize() {
         Engine::get_module<Graphics>()->get_device().CreateBindGroup(
             &texture_pass_test_bind_group_desc);
   }
+
+  // compute shader test
+  {}
 }
 
 void ReflectionRenderer::init_aabb_data() {
@@ -718,24 +720,24 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
 
   // execute texture pass
   {
-     wgpu::RenderPassColorAttachment attachment{
-         .view = render_target,
-         .loadOp = wgpu::LoadOp::Load,
-         .storeOp = wgpu::StoreOp::Store,
-         .clearValue = {1.0f, 0.0f, 1.0f, 0.0f},
-     };
+    wgpu::RenderPassColorAttachment attachment{
+        .view = render_target,
+        .loadOp = wgpu::LoadOp::Load,
+        .storeOp = wgpu::StoreOp::Store,
+        .clearValue = {1.0f, 0.0f, 1.0f, 0.0f},
+    };
 
-     wgpu::RenderPassDescriptor texture_pass_desc{
-         .colorAttachmentCount = 1,
-         .colorAttachments = &attachment,
-     };
-     auto pass = command_encoder.BeginRenderPass(&texture_pass_desc);
-     pass.SetPipeline(texture_pass.render_pipeline);
-     pass.SetIndexBuffer(texture_pass_index_buffer, wgpu::IndexFormat::Uint32, 0,
-                         texture_pass_index_buffer.GetSize());
-     pass.SetBindGroup(0, texture_pass_test_bind_group, 0, nullptr);
-     pass.Draw(6, 1, 0, 0);
-     pass.End();
+    wgpu::RenderPassDescriptor texture_pass_desc{
+        .colorAttachmentCount = 1,
+        .colorAttachments = &attachment,
+    };
+    auto pass = command_encoder.BeginRenderPass(&texture_pass_desc);
+    pass.SetPipeline(texture_pass.render_pipeline);
+    pass.SetIndexBuffer(texture_pass_index_buffer, wgpu::IndexFormat::Uint32, 0,
+                        texture_pass_index_buffer.GetSize());
+    pass.SetBindGroup(0, texture_pass_test_bind_group, 0, nullptr);
+    pass.Draw(6, 1, 0, 0);
+    pass.End();
   }
 
   auto command_buffer = command_encoder.Finish();
