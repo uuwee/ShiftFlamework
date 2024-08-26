@@ -33,4 +33,11 @@ struct InstanceData {
   alignas(16) uint64_t vertex_size;
   alignas(16) uint64_t index_size;
 };
+
+struct TexturePass{
+    wgpu::RenderPipeline render_pipeline;
+    wgpu::BindGroupLayout texture_bind_group_layout;
+};
+
+TexturePass create_texture_pass(Graphics& graphics);
 }  // namespace SF

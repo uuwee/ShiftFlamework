@@ -422,4 +422,118 @@ AABBPass create_aabb_pass(Graphics& graphics) {
       .camera_constant_bind_group_layout = camera_constant_bind_group_layout,
   };
 }
+
+TexturePass create_texture_pass(Graphics& graphics) {
+  wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
+  wgsl_desc.code = R"(
+    @group(0) @binding(0) var tex: texture_2d<f32>;
+    @group(0) @binding(1) var tex_sampler: sampler;
+
+    struct VertexInput{
+      @builtin(vertex_index) index: u32;
+    };
+
+    struct VertexOutput{
+        @builtin(position) position: vec4f,
+        @location(0) texcoord0: vec2f,
+    };
+
+    @vertex fn vertexMain(in: VertexInput) -> VertexOutput{
+        var out: VertexOutput;
+        out.position = vec4<f32>((in.index << 1) & 2, (in.index & 2) * 2 - 1, 0.0, 1.0);
+        out.texcoord0 = vec2<f32>((in.index << 1) & 2, (in.index & 2) * 2 - 1);
+    };
+
+    @fragment fn fragmentMain(in: VertexOutput) -> @location(0) vec4f{
+        // return textureSample(tex, tex_sampler, in.texcoord0);
+        return vec4<f32>(in.texcoord0 , 0.0, 1.0);
+    };
+  )";
+
+  wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
+  wgpu::ShaderModule shader_module =
+      graphics.get_device().CreateShaderModule(&shader_module_desc);
+
+  std::vector<wgpu::BlendState> blend_states{wgpu::BlendState{
+      .color =
+          wgpu::BlendComponent{
+              .operation = wgpu::BlendOperation::Add,
+              .srcFactor = wgpu::BlendFactor::SrcAlpha,
+              .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
+          },
+      .alpha =
+          wgpu::BlendComponent{
+              .operation = wgpu::BlendOperation::Add,
+              .srcFactor = wgpu::BlendFactor::SrcAlpha,
+              .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
+          },
+  }};
+
+  wgpu::ColorTargetState color_target_state{
+      .format = wgpu::TextureFormat::BGRA8Unorm,
+      .blend = blend_states.data(),
+  };
+
+  wgpu::FragmentState fragment_state{
+      .module = shader_module,
+      .entryPoint = "fragmentMain",
+      .targetCount = 1,
+      .targets = &color_target_state,
+  };
+
+  std::vector<wgpu::BindGroupLayoutEntry> binding_layout_entries{
+      wgpu::BindGroupLayoutEntry{
+          .binding = 0,
+          .visibility = wgpu::ShaderStage::Fragment,
+          .texture =
+              wgpu::TextureBindingLayout{
+                  .sampleType = wgpu::TextureSampleType::Float,
+                  .viewDimension = wgpu::TextureViewDimension::e2D,
+              },
+      },
+      wgpu::BindGroupLayoutEntry{
+          .binding = 1,
+          .visibility = wgpu::ShaderStage::Fragment,
+          .sampler =
+              wgpu::SamplerBindingLayout{
+                  .type = wgpu::SamplerBindingType::Filtering,
+              },
+      },
+  };
+
+  std::vector<wgpu::BindGroupLayoutEntry> texture_layout_entries(
+      binding_layout_entries.begin(), binding_layout_entries.begin() + 2);
+  wgpu::BindGroupLayoutDescriptor texture_layout_desc = {
+      .entryCount = static_cast<uint32_t>(texture_layout_entries.size()),
+      .entries = texture_layout_entries.data(),
+  };
+  auto texture_bind_group_layout =
+      graphics.get_device().CreateBindGroupLayout(&texture_layout_desc);
+
+  std::vector<wgpu::BindGroupLayout> layouts = {texture_bind_group_layout};
+  wgpu::PipelineLayoutDescriptor layout_desc{
+      .bindGroupLayoutCount = static_cast<uint32_t>(layouts.size()),
+      .bindGroupLayouts = layouts.data(),
+  };
+
+  wgpu::PipelineLayout pipeline_layout =
+      graphics.get_device().CreatePipelineLayout(&layout_desc);
+
+  wgpu::RenderPipelineDescriptor render_pipeline_desc{
+      .layout = pipeline_layout,
+      .vertex = {.module = shader_module,
+                 .entryPoint = "vertexMain",
+                 .bufferCount = 0,
+                 .buffers = nullptr},
+      .fragment = &fragment_state,
+  };
+
+  auto render_pipeline =
+      graphics.get_device().CreateRenderPipeline(&render_pipeline_desc);
+
+  return TexturePass{
+      .render_pipeline = render_pipeline,
+      .texture_bind_group_layout = texture_bind_group_layout,
+  };
+}
 }  // namespace SF
