@@ -66,7 +66,7 @@ void ReflectionRenderer::initialize() {
         view_proj_mat_vec.push_back(view_proj_mat.internal_data.at(j).at(i));
       }
     }
-    
+
     // camera buffer
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
@@ -414,7 +414,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
       }
 
       std::vector<std::thread> load_threads;
-      // std::cout << "wait loading textures" << std::endl;
       for (int i = 0; i < std::thread::hardware_concurrency(); i++) {
         load_threads.push_back(std::thread([&load_tasks, &task_mutex]() {
           while (true) {
@@ -433,7 +432,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
       for (auto& thread : load_threads) {
         thread.join();
       }
-      // std::cout << "finish loading textures" << std::endl;
     }
 
     // set is_transparent
