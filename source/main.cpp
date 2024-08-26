@@ -136,12 +136,6 @@ void main_loop() {
   // std::cout << "frame time: " << duration.count() << "ms" << std::endl;
 
   // user script
-  if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::ESCAPE) ==
-      ButtonState::DOWN) {
-    Engine::get_module<ReflectionRenderer>()->lock_command =
-        !Engine::get_module<ReflectionRenderer>()->lock_command;
-  }
-
   if (Engine::get_module<Input>()->get_keyboard_state(Keyboard::Z) ==
       ButtonState::DOWN) {
     Engine::get_module<ReflectionRenderer>()->draw_aabb =

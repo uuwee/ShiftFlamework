@@ -72,6 +72,10 @@ class ReflectionRenderer {
   wgpu::Buffer instance_data_buffer;
   void update_unified_mesh_buffer();
 
+  // texture pass
+  TexturePass texture_pass;
+  wgpu::Buffer texture_pass_index_buffer;
+
   void dispose_gpu_resource(EntityID id);
   std::tuple<wgpu::Buffer, wgpu::Buffer> create_mesh_buffer(EntityID id);
   wgpu::Buffer create_constant_buffer(EntityID id);
@@ -94,8 +98,6 @@ class ReflectionRenderer {
   // camera parameter
   Math::Vector3f camera_position = Math::Vector3f({0, 3, 0});
   Math::Vector3f camera_angle = Math::Vector3f({0, 0, 0});
-
-  bool lock_command = false;
   bool draw_aabb = false;
 };
 }  // namespace SF

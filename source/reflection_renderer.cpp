@@ -359,7 +359,7 @@ void ReflectionRenderer::init_aabb_data() {
 };
 
 void ReflectionRenderer::render(wgpu::TextureView render_target) {
-  if (!lock_command) {
+  if (render_bundle == nullptr) {
     // update constants
     auto entity_list = Engine::get_module<EntityStore>()->get_all();
 
@@ -517,9 +517,8 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
       }
       aabb_render_bundle = render_bundle_encoder.Finish();
     }
-  }
-  // update constants
-  if (!lock_command) {
+
+    // update constants
     for (auto rendered : gpu_resources) {
       const auto entity =
           Engine::get_module<EntityStore>()->get(rendered.first);
@@ -546,10 +545,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
       Engine::get_module<Graphics>()->update_buffer(gpu_transform_buffer,
                                                     world_mat_vec);
     }
-  }
 
-  if (!lock_command) {
-    auto entity_list = Engine::get_module<EntityStore>()->get_all();
     auto rendered_entity_list = std::vector<EntityID>();
     for (const auto& entity : entity_list) {
       const auto& mesh = entity->get_component<Mesh>();
@@ -674,6 +670,9 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     gizmo_pass.ExecuteBundles(1, &aabb_render_bundle);
     gizmo_pass.End();
   }
+
+  {}
+
   auto command_buffer = command_encoder.Finish();
   Engine::get_module<Graphics>()->get_device().GetQueue().Submit(
       1, &command_buffer);
@@ -902,13 +901,12 @@ wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
 
       const auto& instance_data = instance_data_list.at(instance_idx++);
 
-        render_bundle_encoder.SetVertexBuffer(
-            0, mesh_buffer.vertex_buffer, 0,
-            mesh_buffer.vertex_buffer.GetSize());
-        render_bundle_encoder.SetIndexBuffer(mesh_buffer.index_buffer,
-                                             wgpu::IndexFormat::Uint32, 0,
-                                             mesh_buffer.index_buffer.GetSize());
-    
+      render_bundle_encoder.SetVertexBuffer(
+          0, mesh_buffer.vertex_buffer, 0, mesh_buffer.vertex_buffer.GetSize());
+      render_bundle_encoder.SetIndexBuffer(mesh_buffer.index_buffer,
+                                           wgpu::IndexFormat::Uint32, 0,
+                                           mesh_buffer.index_buffer.GetSize());
+
       render_bundle_encoder.SetBindGroup(0, transform_buffer_bind_group, 0,
                                          nullptr);
       render_bundle_encoder.SetBindGroup(1, camera_constant_bind_group, 0,
@@ -919,7 +917,6 @@ wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
     }
   }
 
-  lock_command = true;
   return render_bundle_encoder.Finish();
 }
 
