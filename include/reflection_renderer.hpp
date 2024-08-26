@@ -65,6 +65,13 @@ class ReflectionRenderer {
   int aabb_count = 10;
   bool aabb_initialized = false;
 
+  // unified mesh buffer
+  wgpu::Buffer unified_vertex_buffer = nullptr;
+  wgpu::Buffer unified_index_buffer = nullptr;
+  std::vector<InstanceData> instance_data_list;
+  wgpu::Buffer instance_data_buffer;
+  void update_unified_mesh_buffer();
+
   void dispose_gpu_resource(EntityID id);
   std::tuple<wgpu::Buffer, wgpu::Buffer> create_mesh_buffer(EntityID id);
   wgpu::Buffer create_constant_buffer(EntityID id);

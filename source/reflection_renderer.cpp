@@ -690,7 +690,8 @@ std::tuple<wgpu::Buffer, wgpu::Buffer> ReflectionRenderer::create_mesh_buffer(
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
         .label = "vertex buffer",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::CopySrc |
+                 wgpu::BufferUsage::Vertex,
         .size = vertices.size() * sizeof(Vertex),
         .mappedAtCreation = false};
 
@@ -913,4 +914,65 @@ wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
 
   lock_command = true;
   return render_bundle_encoder.Finish();
+}
+
+void ReflectionRenderer::update_unified_mesh_buffer() {
+  if (unified_vertex_buffer != nullptr) {
+    unified_vertex_buffer.Destroy();
+  }
+  if (unified_index_buffer != nullptr) {
+    unified_index_buffer.Destroy();
+  }
+
+  instance_data_list.clear();
+  instance_data_list.reserve(gpu_resources.size());
+
+  // count size
+  uint64_t vertex_offset = 0;
+  uint64_t index_offset = 0;
+  for (const auto& gpu_resource : gpu_resources) {
+    const auto id = gpu_resource.first;
+    const auto vertex_buffer_size =
+        Engine::get_module<MeshStore>()->get(id)->get_vertices().size() *
+        sizeof(Vertex);
+
+    const auto index_buffer_size =
+        Engine::get_module<MeshStore>()->get(id)->get_indices().size() *
+        sizeof(uint32_t);
+
+    instance_data_list.push_back(InstanceData{.vertex_offset = vertex_offset,
+                                              .index_offset = index_offset,
+                                              .vertex_size = vertex_buffer_size,
+                                              .index_size = index_buffer_size});
+
+    vertex_offset += vertex_buffer_size;
+    index_offset += index_buffer_size;
+  }
+
+  // allocate buffer
+  const wgpu::BufferDescriptor buffer_desc{
+      .nextInChain = nullptr,
+      .label = "unified vertex buffer",
+      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
+      .size = vertex_offset,
+      .mappedAtCreation = false};
+
+  unified_vertex_buffer =
+      Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+
+  // update buffer
+  for (const auto& gpu_resource : gpu_resources) {
+    const auto entity_id = gpu_resource.first;
+
+    const auto& instance_data = instance_data_list.at(entity_id);
+
+    const auto& vertex_data =
+        Engine::get_module<MeshStore>()->get(entity_id)->get_vertices();
+    const auto& index_data =
+        Engine::get_module<MeshStore>()->get(entity_id)->get_indices();
+    Engine::get_module<Graphics>()->update_buffer(
+        unified_vertex_buffer, vertex_data, instance_data.vertex_offset);
+    Engine::get_module<Graphics>()->update_buffer(
+        unified_index_buffer, index_data, instance_data.index_offset);
+  }
 }

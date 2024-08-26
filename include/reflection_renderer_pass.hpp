@@ -26,4 +26,11 @@ struct AABBPass {
 };
 
 AABBPass create_aabb_pass(Graphics& graphics);
+
+struct InstanceData {
+  alignas(16) uint64_t vertex_offset;
+  alignas(16) uint64_t index_offset;
+  alignas(16) uint64_t vertex_size;
+  alignas(16) uint64_t index_size;
+};
 }  // namespace SF
