@@ -95,7 +95,7 @@ void ReflectionRenderer::initialize() {
             &bind_group_desc);
 
     // dummy texture
-    std::vector<uint8_t> texture_data(1 * 1 * 4, 0xff);
+    std::vector<uint8_t> texture_data(1 * 1 * 4, 0xf0);
     const wgpu::TextureDescriptor texture_desc{
         .nextInChain = nullptr,
         .usage =
