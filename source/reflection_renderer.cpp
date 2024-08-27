@@ -359,9 +359,6 @@ void ReflectionRenderer::initialize() {
         Engine::get_module<Graphics>()->get_device().CreateBindGroup(
             &texture_pass_test_bind_group_desc);
   }
-
-  // compute shader test
-  {}
 }
 
 void ReflectionRenderer::init_aabb_data() {
