@@ -176,107 +176,6 @@ void ReflectionRenderer::initialize() {
         Engine::get_module<Graphics>()->get_device().CreateBindGroup(
             &texture_bind_group_desc);
 
-    // gizmo vertex buffer
-    float width = 0.005f;
-    std::vector<GizmoVertex> gizmo_vertex{
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {1.0f + width, 1.0f + width, 1.0f + width, 1.0f}),
-            .color = Math::Vector3f({1.0f, 0.0f, 0.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {1.0f + width, -1.0f - width, 1.0f + width, 1.0f}),
-            .color = Math::Vector3f({0.0f, 1.0f, 0.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {1.0f - width, 1.0f - width, 1.0f - width, 1.0f}),
-            .color = Math::Vector3f({1.0f, 0.0f, 0.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {1.0f - width, -1.0f + width, 1.0f - width, 1.0f}),
-            .color = Math::Vector3f({0.0f, 1.0f, 0.0f}),
-        },
-
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {-1.0f - width, 1.0f + width, 1.0f + width, 1.0f}),
-            .color = Math::Vector3f({0.0f, 0.0f, 1.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {-1.0f - width, -1.0f - width, 1.0f + width, 1.0f}),
-            .color = Math::Vector3f({1.0f, 1.0f, 0.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {-1.0f + width, 1.0f - width, 1.0f - width, 1.0f}),
-            .color = Math::Vector3f({0.0f, 0.0f, 1.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {-1.0f + width, -1.0f + width, 1.0f - width, 1.0f}),
-            .color = Math::Vector3f({1.0f, 1.0f, 0.0f}),
-        },
-
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {1.0f + width, 1.0f + width, -1.0f - width, 1.0f}),
-            .color = Math::Vector3f({1.0f, 0.0f, 1.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {1.0f + width, -1.0f - width, -1.0f - width, 1.0f}),
-            .color = Math::Vector3f({0.0f, 1.0f, 1.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {1.0f - width, 1.0f - width, -1.0f + width, 1.0f}),
-            .color = Math::Vector3f({1.0f, 0.0f, 1.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {1.0f - width, -1.0f + width, -1.0f + width, 1.0f}),
-            .color = Math::Vector3f({0.0f, 1.0f, 1.0f}),
-        },
-
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {-1.0f - width, 1.0f + width, -1.0f - width, 1.0f}),
-            .color = Math::Vector3f({1.0f, 1.0f, 1.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {-1.0f - width, -1.0f - width, -1.0f - width, 1.0f}),
-            .color = Math::Vector3f({0.0f, 0.0f, 0.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {-1.0f + width, 1.0f - width, -1.0f + width, 1.0f}),
-            .color = Math::Vector3f({1.0f, 1.0f, 1.0f}),
-        },
-        GizmoVertex{
-            .position = Math::Vector4f(
-                {-1.0f + width, -1.0f + width, -1.0f + width, 1.0f}),
-            .color = Math::Vector3f({0.0f, 0.0f, 0.0f}),
-        },
-    };
-
-    const wgpu::BufferDescriptor gizmo_vertex_buffer_desc{
-        .nextInChain = nullptr,
-        .label = "gizmo vertex buffer",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
-        .size = sizeof(GizmoVertex) * gizmo_vertex.size(),
-        .mappedAtCreation = false};
-
-    gizmo_vertex_buffer =
-        Engine::get_module<Graphics>()->create_buffer(gizmo_vertex_buffer_desc);
-
-    Engine::get_module<Graphics>()->update_buffer(gizmo_vertex_buffer,
-                                                  gizmo_vertex);
-
     // gizmo index buffer
     std::vector<uint32_t> gizmo_index{
         0,  1,  2,  2,  1,  3,  4, 5,  6,  6,  5,  7,  8, 9, 10, 10, 9, 11,
@@ -541,8 +440,6 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
               .CreateRenderBundleEncoder(&render_bundle_encoder_desc);
 
       render_bundle_encoder.SetPipeline(aabb_pass.render_pipeline);
-      render_bundle_encoder.SetVertexBuffer(0, gizmo_vertex_buffer, 0,
-                                            gizmo_vertex_buffer.GetSize());
       render_bundle_encoder.SetIndexBuffer(gizmo_index_buffer,
                                            wgpu::IndexFormat::Uint32, 0,
                                            gizmo_index_buffer.GetSize());

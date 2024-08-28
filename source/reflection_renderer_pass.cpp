@@ -244,27 +244,6 @@ DiffusePass create_diffuse_pass(Graphics& graphics,
 }
 
 AABBPass create_aabb_pass(Graphics& graphics) {
-  std::vector<wgpu::VertexAttribute> vertex_attributes{
-      wgpu::VertexAttribute{
-          // position
-          .format = wgpu::VertexFormat::Float32x4,
-          .offset = 0,
-          .shaderLocation = 0,
-      },
-      wgpu::VertexAttribute{
-          // color
-          .format = wgpu::VertexFormat::Float32x3,
-          .offset = 4 * 4,  // 4 * sizeof(Float32)
-          .shaderLocation = 1,
-      },
-  };
-
-  wgpu::VertexBufferLayout vertex_buffer_layout{
-      .arrayStride = 7 * 4,  // (4 + 3) * sizeof(Float32)
-      .stepMode = wgpu::VertexStepMode::Vertex,
-      .attributeCount = static_cast<uint32_t>(vertex_attributes.size()),
-      .attributes = vertex_attributes.data()};
-
   wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
   wgsl_desc.code = R"(
     struct AABB{
@@ -275,8 +254,7 @@ AABBPass create_aabb_pass(Graphics& graphics) {
     @group(1) @binding(0)  var<uniform> view_proj_mat: mat4x4f;
 
     struct VertexInput{
-      @location(0) position: vec4f,
-      @location(1) color: vec3f,
+      @builtin(vertex_index) vertex_index: u32,
     };
 
     struct VertexOutput{
@@ -286,12 +264,35 @@ AABBPass create_aabb_pass(Graphics& graphics) {
 
     @vertex fn vertexMain(in: VertexInput) -> VertexOutput{
         var out: VertexOutput;
-        var pos: vec3f = in.position.xyz;
+        var width: f32 = 0.005;
+        var idx2pos: array<vec4f, 16> = array<vec4f, 16>(
+            vec4f(1.0 + width, 1.0 + width, 1.0 + width, 1.0),
+            vec4f(1.0 + width, -1.0 - width, 1.0 + width, 1.0),
+            vec4f(1.0 - width, 1.0 - width, 1.0 - width, 1.0),
+            vec4f(1.0 - width, -1.0 + width, 1.0 - width, 1.0),
+
+            vec4f(-1.0 - width, 1.0 + width, 1.0 + width, 1.0),
+            vec4f(-1.0 - width, -1.0 - width, 1.0 + width, 1.0),
+            vec4f(-1.0 + width, 1.0 - width, 1.0 - width, 1.0),
+            vec4f(-1.0 + width, -1.0 + width, 1.0 - width, 1.0),
+
+            vec4f(1.0 + width, 1.0 + width, -1.0 - width, 1.0),
+            vec4f(1.0 + width, -1.0 - width, -1.0 - width, 1.0),
+            vec4f(1.0 - width, 1.0 - width, -1.0 + width, 1.0),
+            vec4f(1.0 - width, -1.0 + width, -1.0 - width, 1.0),
+
+            vec4f(-1.0 - width, 1.0 + width, -1.0 - width, 1.0),
+            vec4f(-1.0 - width, -1.0 - width, - 1.0 - width, 1.0),
+            vec4f(-1.0 + width, 1.0 - width, -1.0 + width, 1.0),
+            vec4f(-1.0 + width, -1.0 + width, - 1.0 + width, 1.0),
+        );
+
+        var pos: vec3f = idx2pos[in.vertex_index].xyz;
         let center = (aabb.max + aabb.min) / 2.0;
         let scale = (aabb.max - aabb.min) / 2.0;
         pos = (pos * scale) + center;
         out.position = view_proj_mat * vec4f(pos, 1.0);
-        out.color = in.color;
+        out.color = vec3f(1.0, 0.0, 0.0);
         return out;
     };
 
@@ -407,8 +408,8 @@ AABBPass create_aabb_pass(Graphics& graphics) {
       .layout = pipeline_layout,
       .vertex = {.module = shader_module,
                  .entryPoint = "vertexMain",
-                 .bufferCount = 1,
-                 .buffers = &vertex_buffer_layout},
+                 .bufferCount = 0,
+                 .buffers = nullptr},
       .depthStencil = &depth_stencil_state,
       .fragment = &fragment_state,
   };
@@ -440,6 +441,7 @@ TexturePass create_texture_pass(Graphics& graphics) {
 
     @vertex fn vertexMain(in: VertexInput) -> VertexOutput{
         var out: VertexOutput;
+        
         var idx2pos: array<vec2f, 6> = array<vec2f, 6>(
             vec2<f32>(-1.0, -1.0),
             vec2<f32>(1.0, -1.0),

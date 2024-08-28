@@ -56,7 +56,6 @@ class ReflectionRenderer {
 
   // aabb pass
   AABBPass aabb_pass{};
-  wgpu::Buffer gizmo_vertex_buffer;
   wgpu::Buffer gizmo_index_buffer;
   wgpu::Buffer gizmo_constant_buffer;
   wgpu::BindGroup gizmo_constant_bind_group;

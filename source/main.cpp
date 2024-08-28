@@ -33,7 +33,7 @@ using namespace SF;
 
 void import() {
   const auto filePath =
-      "D:/resources/models/Bistro_v5_2/Bistro_v5_2/BistroExterior.fbx";
+      "E:/resources/models/Bistro_v5_2/Bistro_v5_2/BistroExterior.fbx";
   Assimp::Importer importer;
   const aiScene* scene = importer.ReadFile(
       filePath, aiProcess_Triangulate | aiProcess_CalcTangentSpace |
@@ -111,7 +111,7 @@ void import() {
         auto pos = std::string(name.C_Str()).find_last_of("\\");
         auto len = 1;
         auto path = std::filesystem::directory_entry(
-                        "D:/resources/models/Bistro_v5_2/Bistro_v5_2/" +
+                        "E:/resources/models/Bistro_v5_2/Bistro_v5_2/" +
                         std::string(name.C_Str()).replace(pos, len, "/"))
                         .path();
 
