@@ -34,10 +34,19 @@ struct InstanceData {
   alignas(16) uint64_t index_size;
 };
 
-struct TexturePass{
-    wgpu::RenderPipeline render_pipeline;
-    wgpu::BindGroupLayout texture_bind_group_layout;
+struct TexturePass {
+  wgpu::RenderPipeline render_pipeline;
+  wgpu::BindGroupLayout texture_bind_group_layout;
 };
 
 TexturePass create_texture_pass(Graphics& graphics);
+
+struct PrimaryRayPass {
+  wgpu::ComputePipeline compute_pipeline;
+  wgpu::BindGroupLayout bind_group_layout;
+  wgpu::TextureView output_texture_view;
+};
+
+PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
+                                       wgpu::Texture& output_texture);
 }  // namespace SF

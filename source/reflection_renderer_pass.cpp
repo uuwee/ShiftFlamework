@@ -548,4 +548,51 @@ TexturePass create_texture_pass(Graphics& graphics) {
       .texture_bind_group_layout = texture_bind_group_layout,
   };
 }
+
+PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
+                                       wgpu::Texture& texture) {
+  wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
+  wgsl_desc.code = R"(
+    @group(0) @binding(0) var<storage, read_write> output_texture: texture_2d<f32>;
+    @group(0) @binding(1) var sampler: sampler;
+
+    @compute @workgroup_size(32)
+    fn computeMain() {
+    
+    }
+  )";
+
+  wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
+  wgpu::ShaderModule shader_module =
+      graphics.get_device().CreateShaderModule(&shader_module_desc);
+
+  wgpu::ComputePipelineDescriptor compute_pipeline_desc{
+      .compute =
+          {
+              .module = shader_module,
+              .entryPoint = "computeMain",
+          },
+  };
+  wgpu::ComputePipeline compute_pipeline =
+      graphics.get_device().CreateComputePipeline(&compute_pipeline_desc);
+
+  std::vector<wgpu::BindGroupLayoutEntry> binding_layout_entries{
+      wgpu::BindGroupLayoutEntry{
+          .binding = 0,
+          .visibility = wgpu::ShaderStage::Compute,
+          .texture =
+              wgpu::TextureBindingLayout{
+                  .sampleType = wgpu::TextureSampleType::Float,
+                  .viewDimension = wgpu::TextureViewDimension::e2D,
+              },
+      }};
+
+  wgpu::BindGroupLayoutDescriptor bind_group_layout_desc{
+      .entryCount = static_cast<uint32_t>(binding_layout_entries.size()),
+      .entries = binding_layout_entries.data(),
+  };
+
+  wgpu::BindGroupLayout =
+      graphics.get_device().CreateBindGroupLayout(&bind_group_layout_desc);
+}
 }  // namespace SF
