@@ -551,7 +551,24 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
                                        wgpu::Texture& texture) {
   wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
   wgsl_desc.code = R"(
+    struct Vertex{
+      @location(0) position: vec4f,
+      @location(1) normal: vec3f,
+      @location(2) tangent: vec4f,
+      @location(3) texcoord0: vec2f,
+    };
+
+    struct InstanceData{
+      @align(16) vertex_offset: vec2<u32>,
+      @align(16) index_offset: vec2<u32>,
+      @align(16) vertex_size: vec2<u32>,
+      @align(16) index_size: vec2<u32>,
+    };
+
     @group(0) @binding(0) var output_texture: texture_storage_2d<rgba8unorm, write>;
+    @group(0) @binding(1) var<storage, read> vartex_buffer: array<Vertex>;
+    @group(0) @binding(2) var<storage, read> index_buffer: array<u32>;
+    @group(0) @binding(3) var<storage, read> instance_buffer: array<InstanceData>;
 
     @compute @workgroup_size(1, 1)
     fn computeMain(@builtin(global_invocation_id) id: vec3<u32>) {
@@ -561,15 +578,47 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
 
   std::vector<wgpu::BindGroupLayoutEntry> binding_layout_entries{
       wgpu::BindGroupLayoutEntry{
+          // output texture
           .binding = 0,
           .visibility = wgpu::ShaderStage::Compute,
-        .storageTexture =
-            wgpu::StorageTextureBindingLayout{
-                .access = wgpu::StorageTextureAccess::WriteOnly,
-                .format = wgpu::TextureFormat::RGBA8Unorm,
-                .viewDimension = wgpu::TextureViewDimension::e2D,
-            },
-      }};
+          .storageTexture =
+              wgpu::StorageTextureBindingLayout{
+                  .access = wgpu::StorageTextureAccess::WriteOnly,
+                  .format = wgpu::TextureFormat::RGBA8Unorm,
+                  .viewDimension = wgpu::TextureViewDimension::e2D,
+              },
+      },
+      wgpu::BindGroupLayoutEntry{
+          // uniform vertex buffer
+          .binding = 1,
+          .visibility = wgpu::ShaderStage::Compute,
+          .buffer =
+              wgpu::BufferBindingLayout{
+                  .type = wgpu::BufferBindingType::Uniform,
+                  .hasDynamicOffset = false,
+              },
+      },
+      wgpu::BindGroupLayoutEntry{
+          // uniform index buffer
+          .binding = 2,
+          .visibility = wgpu::ShaderStage::Compute,
+          .buffer =
+              wgpu::BufferBindingLayout{
+                  .type = wgpu::BufferBindingType::Uniform,
+                  .hasDynamicOffset = false,
+              },
+      },
+      wgpu::BindGroupLayoutEntry{
+          // uniform instance buffer
+          .binding = 3,
+          .visibility = wgpu::ShaderStage::Compute,
+          .buffer =
+              wgpu::BufferBindingLayout{
+                  .type = wgpu::BufferBindingType::Uniform,
+                  .hasDynamicOffset = false,
+              },
+      },
+  };
 
   wgpu::BindGroupLayoutDescriptor bind_group_layout_desc{
       .entryCount = static_cast<uint32_t>(binding_layout_entries.size()),

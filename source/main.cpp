@@ -203,6 +203,8 @@ void start() {
 
   wgpu::SupportedLimits supported_limits;
   Engine::get_module<Graphics>()->get_device().GetLimits(&supported_limits);
+  std::cout << "max bind size: " << supported_limits.limits.maxUniformBufferBindingSize << std::endl;
+  supported_limits.limits.maxUniformBufferBindingSize = 1024 * 1024 * 1024;
   Engine::get_module<Graphics>()->set_limits(supported_limits.limits);
 
   Engine::get_module<Window>()->initialize_swap_chain(

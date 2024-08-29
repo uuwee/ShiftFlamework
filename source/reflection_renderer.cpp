@@ -50,7 +50,6 @@ void ReflectionRenderer::initialize() {
 
   texture_pass = create_texture_pass(*Engine::get_module<Graphics>());
 
-
   // set up sample data
   {
     auto ratio = 1080.0f / 1080.0f;
@@ -98,8 +97,9 @@ void ReflectionRenderer::initialize() {
     // primary ray pass output texture
     const wgpu::TextureDescriptor texture_desc{
         .nextInChain = nullptr,
-        .usage =
-            wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::StorageBinding,
+        .usage = wgpu::TextureUsage::CopyDst |
+                 wgpu::TextureUsage::TextureBinding |
+                 wgpu::TextureUsage::StorageBinding,
         .dimension = wgpu::TextureDimension::e2D,
         .size = {100, 100, 1},
         .format = wgpu::TextureFormat::RGBA8Unorm,
@@ -109,8 +109,9 @@ void ReflectionRenderer::initialize() {
         .viewFormats = nullptr,
     };
 
-    primary_ray_output = Engine::get_module<Graphics>()->get_device().CreateTexture(
-        &texture_desc);
+    primary_ray_output =
+        Engine::get_module<Graphics>()->get_device().CreateTexture(
+            &texture_desc);
 
     auto texture_view_desc = wgpu::TextureViewDescriptor{
         .format = wgpu::TextureFormat::RGBA8Unorm,
@@ -136,8 +137,9 @@ void ReflectionRenderer::initialize() {
         .compare = wgpu::CompareFunction::Undefined,
         .maxAnisotropy = 1,
     };
-    primary_ray_output_sampler = Engine::get_module<Graphics>()->get_device().CreateSampler(
-        &sampler_desc);
+    primary_ray_output_sampler =
+        Engine::get_module<Graphics>()->get_device().CreateSampler(
+            &sampler_desc);
 
     auto texture_bindings = std::vector<wgpu::BindGroupEntry>(2);
     texture_bindings.at(0) = wgpu::BindGroupEntry{
@@ -231,31 +233,16 @@ void ReflectionRenderer::initialize() {
         },
     };
 
-    wgpu::BindGroupDescriptor texture_pass_test_bind_group_desc{
+    wgpu::BindGroupDescriptor texture_pass_bind_group_desc{
         .layout = texture_pass.texture_bind_group_layout,
         .entryCount = 2,
         .entries = texture_bindings.data(),
     };
 
-    texture_pass_test_bind_group =
+    texture_pass_bind_group =
         Engine::get_module<Graphics>()->get_device().CreateBindGroup(
-            &texture_pass_test_bind_group_desc);
+            &texture_pass_bind_group_desc);
   }
-
-  primary_ray_pass = create_primary_ray_pass(*Engine::get_module<Graphics>(), primary_ray_output);
-  std::vector<wgpu::BindGroupEntry> primary_ray_bindings{
-      wgpu::BindGroupEntry{
-          .binding = 0,
-          .textureView = primary_ray_pass.output_texture_view,
-      },
-  };
-  wgpu::BindGroupDescriptor primary_ray_bind_group_desc{
-      .layout = primary_ray_pass.bind_group_layout,
-      .entryCount = 1,
-      .entries = primary_ray_bindings.data(),
-  };
-  primary_ray_bind_group = Engine::get_module<Graphics>()->get_device().CreateBindGroup(
-      &primary_ray_bind_group_desc);
 }
 
 void ReflectionRenderer::init_aabb_data() {
@@ -613,16 +600,17 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
   // execute test compute shader
   {
     wgpu::ComputePassDescriptor compute_pass_desc{
-      .timestampWriteCount = 0,
-      .timestampWrites = nullptr,
+        .timestampWriteCount = 0,
+        .timestampWrites = nullptr,
     };
-    wgpu::ComputePassEncoder compute_pass = command_encoder.BeginComputePass(&compute_pass_desc);
+    wgpu::ComputePassEncoder compute_pass =
+        command_encoder.BeginComputePass(&compute_pass_desc);
 
     compute_pass.SetPipeline(primary_ray_pass.compute_pipeline);
     compute_pass.SetBindGroup(0, primary_ray_bind_group, 0, nullptr);
 
     compute_pass.DispatchWorkgroups(100, 100, 1);
-    
+
     compute_pass.End();
   }
 
@@ -643,7 +631,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     pass.SetPipeline(texture_pass.render_pipeline);
     pass.SetIndexBuffer(texture_pass_index_buffer, wgpu::IndexFormat::Uint32, 0,
                         texture_pass_index_buffer.GetSize());
-    pass.SetBindGroup(0, texture_pass_test_bind_group, 0, nullptr);
+    pass.SetBindGroup(0, texture_pass_bind_group, 0, nullptr);
     pass.Draw(6, 1, 0, 0);
     pass.End();
   }
@@ -813,6 +801,42 @@ bool ReflectionRenderer::load_texture(std::filesystem::path path) {
 wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
     std::vector<EntityID> render_list) {
   update_unified_mesh_buffer();
+  {
+    primary_ray_pass = create_primary_ray_pass(*Engine::get_module<Graphics>(),
+                                               primary_ray_output);
+    std::vector<wgpu::BindGroupEntry> primary_ray_bindings{
+        wgpu::BindGroupEntry{
+            .binding = 0,
+            .textureView = primary_ray_pass.output_texture_view,
+        },
+        wgpu::BindGroupEntry{
+            .binding = 1,
+            .buffer = unified_vertex_buffer,
+            .offset = 0,
+            .size = unified_vertex_buffer.GetSize(),
+        },
+        wgpu::BindGroupEntry{
+            .binding = 2,
+            .buffer = unified_index_buffer,
+            .offset = 0,
+            .size = unified_index_buffer.GetSize(),
+        },
+        wgpu::BindGroupEntry{
+            .binding = 3,
+            .buffer = instance_data_buffer,
+            .offset = 0,
+            .size = instance_data_list.size() * sizeof(InstanceData),
+        },
+    };
+    wgpu::BindGroupDescriptor primary_ray_bind_group_desc{
+        .layout = primary_ray_pass.bind_group_layout,
+        .entryCount = static_cast<uint32_t>(primary_ray_bindings.size()),
+        .entries = primary_ray_bindings.data(),
+    };
+    primary_ray_bind_group =
+        Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+            &primary_ray_bind_group_desc);
+  }
 
   // render bandle encoder
   auto color_format = wgpu::TextureFormat::BGRA8Unorm;
@@ -919,16 +943,15 @@ void ReflectionRenderer::update_unified_mesh_buffer() {
         Engine::get_module<MeshStore>()->get(id)->get_indices().size() *
         sizeof(uint32_t);
 
-    instance_data_list.push_back(InstanceData{.vertex_offset = vertex_offset,
-                                              .index_offset = index_offset,
-                                              .vertex_size = vertex_buffer_size,
-                                              .index_size = index_buffer_size});
+    instance_data_list.push_back(InstanceData{
+        .vertex_offset = vertex_offset,
+        .index_offset = index_offset,
+        .vertex_size = vertex_buffer_size,
+        .index_size = index_buffer_size,
+    });
 
     vertex_offset += vertex_buffer_size;
     index_offset += index_buffer_size;
-
-    // std::cout << "offset: " << vertex_offset << ", " << index_offset
-    //           << std::endl;
   }
 
   // allocate buffer
@@ -936,32 +959,43 @@ void ReflectionRenderer::update_unified_mesh_buffer() {
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
         .label = "unified vertex buffer",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Vertex,
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform | wgpu::BufferUsage::Storage,
         .size = vertex_offset,
         .mappedAtCreation = false};
 
     unified_vertex_buffer =
         Engine::get_module<Graphics>()->create_buffer(buffer_desc);
   }
-
   {
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
         .label = "unified index buffer",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Index,
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform | wgpu::BufferUsage::Storage,
         .size = index_offset,
         .mappedAtCreation = false};
 
     unified_index_buffer =
         Engine::get_module<Graphics>()->create_buffer(buffer_desc);
   }
+  {
+    const wgpu::BufferDescriptor buffer_desc{
+        .nextInChain = nullptr,
+        .label = "unified instance buffer",
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform | wgpu::BufferUsage::Storage,
+        .size = instance_data_list.size() * sizeof(InstanceData),
+        .mappedAtCreation = false,
+    };
+
+    instance_data_buffer =
+        Engine::get_module<Graphics>()->create_buffer(buffer_desc);
+  }
 
   // update buffer
+  uint32_t instance_idx = 0;
   for (const auto& gpu_resource : gpu_resources) {
     const auto entity_id = gpu_resource.first;
 
-    const auto& instance_data = instance_data_list.at(entity_id);
-
+    const auto& instance_data = instance_data_list.at(instance_idx++);
     const auto& vertex_data =
         Engine::get_module<MeshStore>()->get(entity_id)->get_vertices();
     const auto& index_data =
@@ -971,4 +1005,6 @@ void ReflectionRenderer::update_unified_mesh_buffer() {
     Engine::get_module<Graphics>()->update_buffer(
         unified_index_buffer, index_data, instance_data.index_offset);
   }
+  Engine::get_module<Graphics>()->update_buffer(instance_data_buffer,
+                                                instance_data_list);
 }

@@ -69,7 +69,7 @@ class ReflectionRenderer {
   // texture pass
   TexturePass texture_pass;
   wgpu::Buffer texture_pass_index_buffer;
-  wgpu::BindGroup texture_pass_test_bind_group;
+  wgpu::BindGroup texture_pass_bind_group;
 
   // primary ray pass
   PrimaryRayPass primary_ray_pass;
