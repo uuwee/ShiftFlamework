@@ -76,6 +76,10 @@ class ReflectionRenderer {
   wgpu::Buffer texture_pass_index_buffer;
   wgpu::BindGroup texture_pass_test_bind_group;
 
+  // primary ray pass
+  PrimaryRayPass primary_ray_pass;
+  wgpu::BindGroup primary_ray_bind_group;
+
   void dispose_gpu_resource(EntityID id);
   std::tuple<wgpu::Buffer, wgpu::Buffer> create_mesh_buffer(EntityID id);
   wgpu::Buffer create_constant_buffer(EntityID id);

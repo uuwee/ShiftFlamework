@@ -50,6 +50,7 @@ void ReflectionRenderer::initialize() {
 
   texture_pass = create_texture_pass(*Engine::get_module<Graphics>());
 
+
   // set up sample data
   {
     auto ratio = 1080.0f / 1080.0f;
@@ -99,7 +100,7 @@ void ReflectionRenderer::initialize() {
     const wgpu::TextureDescriptor texture_desc{
         .nextInChain = nullptr,
         .usage =
-            wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding,
+            wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::StorageBinding,
         .dimension = wgpu::TextureDimension::e2D,
         .size = {1, 1, 1},
         .format = wgpu::TextureFormat::RGBA8Unorm,
@@ -258,6 +259,21 @@ void ReflectionRenderer::initialize() {
         Engine::get_module<Graphics>()->get_device().CreateBindGroup(
             &texture_pass_test_bind_group_desc);
   }
+
+  primary_ray_pass = create_primary_ray_pass(*Engine::get_module<Graphics>(), texture);
+  std::vector<wgpu::BindGroupEntry> primary_ray_bindings{
+      wgpu::BindGroupEntry{
+          .binding = 0,
+          .textureView = primary_ray_pass.output_texture_view,
+      },
+  };
+  wgpu::BindGroupDescriptor primary_ray_bind_group_desc{
+      .layout = primary_ray_pass.bind_group_layout,
+      .entryCount = 1,
+      .entries = primary_ray_bindings.data(),
+  };
+  primary_ray_bind_group = Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+      &primary_ray_bind_group_desc);
 }
 
 void ReflectionRenderer::init_aabb_data() {
@@ -610,6 +626,22 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     auto gizmo_pass = command_encoder.BeginRenderPass(&gizmo_pass_desc);
     gizmo_pass.ExecuteBundles(1, &aabb_render_bundle);
     gizmo_pass.End();
+  }
+
+  // execute test compute shader
+  {
+    wgpu::ComputePassDescriptor compute_pass_desc{
+      .timestampWriteCount = 0,
+      .timestampWrites = nullptr,
+    };
+    wgpu::ComputePassEncoder compute_pass = command_encoder.BeginComputePass(&compute_pass_desc);
+
+    compute_pass.SetPipeline(primary_ray_pass.compute_pipeline);
+    compute_pass.SetBindGroup(0, primary_ray_bind_group, 0, nullptr);
+
+    compute_pass.DispatchWorkgroups(1, 1, 1);
+    
+    compute_pass.End();
   }
 
   // execute texture pass

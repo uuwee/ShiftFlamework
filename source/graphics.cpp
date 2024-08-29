@@ -19,8 +19,12 @@ uint32_t Graphics::get_buffer_stride(uint32_t size) {
 }
 
 void request_device(wgpu::Instance instance, void (*callback)(wgpu::Device)) {
+  wgpu::RequestAdapterOptions options{
+    .powerPreference = wgpu::PowerPreference::HighPerformance,
+    .backendType = wgpu::BackendType::D3D12,
+  };
   instance.RequestAdapter(
-      nullptr,
+      &options,
       [](WGPURequestAdapterStatus status, WGPUAdapter c_adapter,
          const char* message, void* userdata) {
         if (status != WGPURequestAdapterStatus_Success) {
