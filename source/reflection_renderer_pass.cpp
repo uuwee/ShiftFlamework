@@ -555,7 +555,7 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
 
     @compute @workgroup_size(1, 1)
     fn computeMain(@builtin(global_invocation_id) id: vec3<u32>) {
-        textureStore(output_texture, id.xy, vec4f(1.0, 0.0, 0.0, 1.0));
+        textureStore(output_texture, id.xy, vec4f(f32(id.x) / 100.0, 0.0, f32(id.y) / 100.0, 1.0));
     }
   )";
 

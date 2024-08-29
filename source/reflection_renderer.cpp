@@ -96,13 +96,12 @@ void ReflectionRenderer::initialize() {
             &bind_group_desc);
 
     // dummy texture
-    std::vector<uint8_t> texture_data(1 * 1 * 4, 0xf0);
     const wgpu::TextureDescriptor texture_desc{
         .nextInChain = nullptr,
         .usage =
             wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::StorageBinding,
         .dimension = wgpu::TextureDimension::e2D,
-        .size = {1, 1, 1},
+        .size = {100, 100, 1},
         .format = wgpu::TextureFormat::RGBA8Unorm,
         .mipLevelCount = 1,
         .sampleCount = 1,
@@ -112,23 +111,6 @@ void ReflectionRenderer::initialize() {
 
     texture = Engine::get_module<Graphics>()->get_device().CreateTexture(
         &texture_desc);
-
-    wgpu::ImageCopyTexture dest{
-        .texture = texture,
-        .mipLevel = 0,
-        .origin = {0, 0, 0},
-        .aspect = wgpu::TextureAspect::All,
-    };
-
-    wgpu::TextureDataLayout source{
-        .offset = 0,
-        .bytesPerRow = 4 * 1,
-        .rowsPerImage = 1,
-    };
-
-    Engine::get_module<Graphics>()->get_device().GetQueue().WriteTexture(
-        &dest, texture_data.data(), texture_data.size(), &source,
-        &texture_desc.size);
 
     auto texture_view_desc = wgpu::TextureViewDescriptor{
         .format = wgpu::TextureFormat::RGBA8Unorm,
@@ -639,7 +621,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
     compute_pass.SetPipeline(primary_ray_pass.compute_pipeline);
     compute_pass.SetBindGroup(0, primary_ray_bind_group, 0, nullptr);
 
-    compute_pass.DispatchWorkgroups(1, 1, 1);
+    compute_pass.DispatchWorkgroups(100, 100, 1);
     
     compute_pass.End();
   }
