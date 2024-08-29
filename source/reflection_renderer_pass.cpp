@@ -563,11 +563,6 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
       wgpu::BindGroupLayoutEntry{
           .binding = 0,
           .visibility = wgpu::ShaderStage::Compute,
-        //   .texture =
-        //       wgpu::TextureBindingLayout{
-        //           .sampleType = wgpu::TextureSampleType::Float,
-        //           .viewDimension = wgpu::TextureViewDimension::e2D,
-        //       },
         .storageTexture =
             wgpu::StorageTextureBindingLayout{
                 .access = wgpu::StorageTextureAccess::WriteOnly,

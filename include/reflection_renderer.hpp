@@ -42,11 +42,6 @@ class ReflectionRenderer {
   // camera parameter
   wgpu::Buffer camera_buffer;
 
-  // dummy texture
-  wgpu::Texture texture;
-  wgpu::Sampler sampler;
-  wgpu::TextureView texture_view;
-  wgpu::BindGroup texture_bind_group;
 
   // aabb
   struct GizmoVertex {
@@ -79,6 +74,10 @@ class ReflectionRenderer {
   // primary ray pass
   PrimaryRayPass primary_ray_pass;
   wgpu::BindGroup primary_ray_bind_group;
+  wgpu::Texture primary_ray_output;
+  wgpu::Sampler primary_ray_output_sampler;
+  wgpu::TextureView primary_ray_output_view;
+  wgpu::BindGroup primary_ray_pass_bind_group;
 
   void dispose_gpu_resource(EntityID id);
   std::tuple<wgpu::Buffer, wgpu::Buffer> create_mesh_buffer(EntityID id);

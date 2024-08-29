@@ -95,7 +95,7 @@ void ReflectionRenderer::initialize() {
         Engine::get_module<Graphics>()->get_device().CreateBindGroup(
             &bind_group_desc);
 
-    // dummy texture
+    // primary ray pass output texture
     const wgpu::TextureDescriptor texture_desc{
         .nextInChain = nullptr,
         .usage =
@@ -109,7 +109,7 @@ void ReflectionRenderer::initialize() {
         .viewFormats = nullptr,
     };
 
-    texture = Engine::get_module<Graphics>()->get_device().CreateTexture(
+    primary_ray_output = Engine::get_module<Graphics>()->get_device().CreateTexture(
         &texture_desc);
 
     auto texture_view_desc = wgpu::TextureViewDescriptor{
@@ -122,12 +122,12 @@ void ReflectionRenderer::initialize() {
         .aspect = wgpu::TextureAspect::All,
     };
 
-    texture_view = texture.CreateView(&texture_view_desc);
+    primary_ray_output_view = primary_ray_output.CreateView(&texture_view_desc);
 
     auto sampler_desc = wgpu::SamplerDescriptor{
-        .addressModeU = wgpu::AddressMode::Repeat,
-        .addressModeV = wgpu::AddressMode::Repeat,
-        .addressModeW = wgpu::AddressMode::Repeat,
+        .addressModeU = wgpu::AddressMode::MirrorRepeat,
+        .addressModeV = wgpu::AddressMode::MirrorRepeat,
+        .addressModeW = wgpu::AddressMode::MirrorRepeat,
         .magFilter = wgpu::FilterMode::Linear,
         .minFilter = wgpu::FilterMode::Linear,
         .mipmapFilter = wgpu::MipmapFilterMode::Linear,
@@ -136,17 +136,17 @@ void ReflectionRenderer::initialize() {
         .compare = wgpu::CompareFunction::Undefined,
         .maxAnisotropy = 1,
     };
-    sampler = Engine::get_module<Graphics>()->get_device().CreateSampler(
+    primary_ray_output_sampler = Engine::get_module<Graphics>()->get_device().CreateSampler(
         &sampler_desc);
 
     auto texture_bindings = std::vector<wgpu::BindGroupEntry>(2);
     texture_bindings.at(0) = wgpu::BindGroupEntry{
         .binding = 0,
-        .textureView = texture_view,
+        .textureView = primary_ray_output_view,
     };
     texture_bindings.at(1) = wgpu::BindGroupEntry{
         .binding = 1,
-        .sampler = sampler,
+        .sampler = primary_ray_output_sampler,
     };
 
     wgpu::BindGroupDescriptor texture_bind_group_desc{
@@ -155,7 +155,7 @@ void ReflectionRenderer::initialize() {
         .entries = texture_bindings.data(),
     };
 
-    texture_bind_group =
+    primary_ray_pass_bind_group =
         Engine::get_module<Graphics>()->get_device().CreateBindGroup(
             &texture_bind_group_desc);
 
@@ -223,11 +223,11 @@ void ReflectionRenderer::initialize() {
     std::vector<wgpu::BindGroupEntry> texture_bindings{
         wgpu::BindGroupEntry{
             .binding = 0,
-            .textureView = texture_view,
+            .textureView = primary_ray_output_view,
         },
         wgpu::BindGroupEntry{
             .binding = 1,
-            .sampler = sampler,
+            .sampler = primary_ray_output_sampler,
         },
     };
 
@@ -242,7 +242,7 @@ void ReflectionRenderer::initialize() {
             &texture_pass_test_bind_group_desc);
   }
 
-  primary_ray_pass = create_primary_ray_pass(*Engine::get_module<Graphics>(), texture);
+  primary_ray_pass = create_primary_ray_pass(*Engine::get_module<Graphics>(), primary_ray_output);
   std::vector<wgpu::BindGroupEntry> primary_ray_bindings{
       wgpu::BindGroupEntry{
           .binding = 0,
@@ -795,12 +795,12 @@ bool ReflectionRenderer::load_texture(std::filesystem::path path) {
       .compare = wgpu::CompareFunction::Undefined,
       .maxAnisotropy = 1,
   };
-  sampler =
+  primary_ray_output_sampler =
       Engine::get_module<Graphics>()->get_device().CreateSampler(&sampler_desc);
 
   GPUTexture gpu_texture{
       .texture = texture,
-      .sampler = sampler,
+      .sampler = primary_ray_output_sampler,
       .texture_view = texture_view,
       .is_transparent = texture_data.alpha,
   };
