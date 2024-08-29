@@ -795,12 +795,12 @@ bool ReflectionRenderer::load_texture(std::filesystem::path path) {
       .compare = wgpu::CompareFunction::Undefined,
       .maxAnisotropy = 1,
   };
-  primary_ray_output_sampler =
+  auto sampler =
       Engine::get_module<Graphics>()->get_device().CreateSampler(&sampler_desc);
 
   GPUTexture gpu_texture{
       .texture = texture,
-      .sampler = primary_ray_output_sampler,
+      .sampler = sampler,
       .texture_view = texture_view,
       .is_transparent = texture_data.alpha,
   };
