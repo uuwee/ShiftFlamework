@@ -594,7 +594,7 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
           .visibility = wgpu::ShaderStage::Compute,
           .buffer =
               wgpu::BufferBindingLayout{
-                  .type = wgpu::BufferBindingType::Uniform,
+                  .type = wgpu::BufferBindingType::ReadOnlyStorage,
                   .hasDynamicOffset = false,
               },
       },
@@ -604,7 +604,7 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
           .visibility = wgpu::ShaderStage::Compute,
           .buffer =
               wgpu::BufferBindingLayout{
-                  .type = wgpu::BufferBindingType::Uniform,
+                  .type = wgpu::BufferBindingType::ReadOnlyStorage,
                   .hasDynamicOffset = false,
               },
       },
@@ -614,7 +614,7 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
           .visibility = wgpu::ShaderStage::Compute,
           .buffer =
               wgpu::BufferBindingLayout{
-                  .type = wgpu::BufferBindingType::Uniform,
+                  .type = wgpu::BufferBindingType::ReadOnlyStorage,
                   .hasDynamicOffset = false,
               },
       },

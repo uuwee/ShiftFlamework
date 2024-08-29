@@ -53,9 +53,14 @@ void import() {
     for (int child = 0; child < scene->mRootNode->mChildren[0]->mNumChildren;
          child++) {
       auto node = scene->mRootNode->mChildren[0]->mChildren[child];
-      // std::cout << "name=" << node->mName.C_Str()
-      //           << " #children=" << node->mNumChildren
-      //           << " #meshes=" << node->mNumMeshes << std::endl;
+      auto name = std::string(node->mName.C_Str());
+      if (name.find("Ivy") != std::string::npos ||
+          name.find("Cypress") != std::string::npos) {
+        continue;
+      }
+      std::cout << "name=" << node->mName.C_Str()
+                << " #children=" << node->mNumChildren
+                << " #meshes=" << node->mNumMeshes << std::endl;
       if (node->mNumChildren > 1) {
         // in bistro scene, this case is camera or directional light
         continue;
