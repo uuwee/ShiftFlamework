@@ -547,8 +547,7 @@ TexturePass create_texture_pass(Graphics& graphics) {
   };
 }
 
-PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
-                                       wgpu::Texture& texture) {
+PrimaryRayPass create_primary_ray_pass(Graphics& graphics) {
   wgpu::ShaderModuleWGSLDescriptor wgsl_desc{};
   wgsl_desc.code = R"(
     struct Vertex{
@@ -565,10 +564,17 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
       @align(16) index_size: vec2<u32>,
     };
 
+    struct AABB{
+        @align(16) min: vec3f,
+        @align(16) max: vec3f,
+    };
+
     @group(0) @binding(0) var output_texture: texture_storage_2d<rgba8unorm, write>;
-    @group(0) @binding(1) var<storage, read> vartex_buffer: array<Vertex>;
-    @group(0) @binding(2) var<storage, read> index_buffer: array<u32>;
-    @group(0) @binding(3) var<storage, read> instance_buffer: array<InstanceData>;
+    @group(1) @binding(0) var<storage, read> vartex_buffer: array<Vertex>;
+    @group(1) @binding(1) var<storage, read> index_buffer: array<u32>;
+    @group(1) @binding(2) var<storage, read> instance_buffer: array<InstanceData>;
+    @group(2) @binding(0) var<storage, read> aabb_buffer: array<AABB>;
+    @group(3) @binding(0) var<uniform> camera: mat4x4f;
 
     @compute @workgroup_size(1, 1)
     fn computeMain(@builtin(global_invocation_id) id: vec3<u32>) {
@@ -590,7 +596,7 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
       },
       wgpu::BindGroupLayoutEntry{
           // uniform vertex buffer
-          .binding = 1,
+          .binding = 0,
           .visibility = wgpu::ShaderStage::Compute,
           .buffer =
               wgpu::BufferBindingLayout{
@@ -600,7 +606,7 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
       },
       wgpu::BindGroupLayoutEntry{
           // uniform index buffer
-          .binding = 2,
+          .binding = 1,
           .visibility = wgpu::ShaderStage::Compute,
           .buffer =
               wgpu::BufferBindingLayout{
@@ -610,7 +616,7 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
       },
       wgpu::BindGroupLayoutEntry{
           // uniform instance buffer
-          .binding = 3,
+          .binding = 2,
           .visibility = wgpu::ShaderStage::Compute,
           .buffer =
               wgpu::BufferBindingLayout{
@@ -618,23 +624,77 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
                   .hasDynamicOffset = false,
               },
       },
+      wgpu::BindGroupLayoutEntry{
+          // aabb buffer
+          .binding = 0,
+          .visibility = wgpu::ShaderStage::Compute,
+          .buffer =
+              wgpu::BufferBindingLayout{
+                  .type = wgpu::BufferBindingType::ReadOnlyStorage,
+                  .hasDynamicOffset = false,
+              },
+      },
+      wgpu::BindGroupLayoutEntry{
+          // camera
+          .binding = 0,
+          .visibility = wgpu::ShaderStage::Compute,
+          .buffer =
+              wgpu::BufferBindingLayout{
+                  .type = wgpu::BufferBindingType::Uniform,
+                  .hasDynamicOffset = false,
+                  .minBindingSize = sizeof(Math::Matrix4x4f),
+              },
+      },
   };
 
-  wgpu::BindGroupLayoutDescriptor bind_group_layout_desc{
-      .entryCount = static_cast<uint32_t>(binding_layout_entries.size()),
-      .entries = binding_layout_entries.data(),
+  wgpu::BindGroupLayoutDescriptor output_bind_group_layout_desc{
+      .entryCount = 1,
+      .entries = &binding_layout_entries.at(0),
   };
 
-  wgpu::BindGroupLayout bind_group_layout =
-      graphics.get_device().CreateBindGroupLayout(&bind_group_layout_desc);
+  std::vector<wgpu::BindGroupLayoutEntry> geometry_layout_entries(
+      binding_layout_entries.begin() + 1, binding_layout_entries.begin() + 4);
+  wgpu::BindGroupLayoutDescriptor geometry_bind_group_layout_desc{
+      .entryCount = static_cast<uint32_t>(geometry_layout_entries.size()),
+      .entries = geometry_layout_entries.data(),
+  };
+
+  wgpu::BindGroupLayoutDescriptor aabb_bind_group_layout_desc{
+      .entryCount = 1,
+      .entries = &binding_layout_entries.at(4),
+  };
+
+  wgpu::BindGroupLayoutDescriptor camera_bind_group_layout_desc{
+      .entryCount = 1,
+      .entries = &binding_layout_entries.at(5),
+  };
+
+  wgpu::BindGroupLayout output_bind_group_layout =
+      graphics.get_device().CreateBindGroupLayout(
+          &output_bind_group_layout_desc);
+
+  wgpu::BindGroupLayout geometry_bind_group_layout =
+      graphics.get_device().CreateBindGroupLayout(
+          &geometry_bind_group_layout_desc);
+
+  wgpu::BindGroupLayout aabb_bind_group_layout =
+      graphics.get_device().CreateBindGroupLayout(&aabb_bind_group_layout_desc);
+
+  wgpu::BindGroupLayout camera_bind_group_layout =
+      graphics.get_device().CreateBindGroupLayout(
+          &camera_bind_group_layout_desc);
+
+  std::vector<wgpu::BindGroupLayout> layouts = {
+      output_bind_group_layout, geometry_bind_group_layout,
+      aabb_bind_group_layout, camera_bind_group_layout};
 
   wgpu::ShaderModuleDescriptor shader_module_desc{.nextInChain = &wgsl_desc};
   wgpu::ShaderModule shader_module =
       graphics.get_device().CreateShaderModule(&shader_module_desc);
 
   wgpu::PipelineLayoutDescriptor layout_desc{
-      .bindGroupLayoutCount = 1,
-      .bindGroupLayouts = &bind_group_layout,
+      .bindGroupLayoutCount = static_cast<uint32_t>(layouts.size()),
+      .bindGroupLayouts = layouts.data(),
   };
   wgpu::PipelineLayout pipeline_layout =
       graphics.get_device().CreatePipelineLayout(&layout_desc);
@@ -650,19 +710,12 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
   wgpu::ComputePipeline compute_pipeline =
       graphics.get_device().CreateComputePipeline(&compute_pipeline_desc);
 
-  wgpu::TextureViewDescriptor outputTextureViewDesc{
-      .nextInChain = nullptr,
-      .format = wgpu::TextureFormat::RGBA8Unorm,
-      .dimension = wgpu::TextureViewDimension::e2D,
-  };
-
-  wgpu::TextureView output_texture_view =
-      texture.CreateView(&outputTextureViewDesc);
-
   return PrimaryRayPass{
       .compute_pipeline = compute_pipeline,
-      .bind_group_layout = bind_group_layout,
-      .output_texture_view = output_texture_view,
+      .output_bind_group_layout = output_bind_group_layout,
+      .geometry_bind_group_layout = geometry_bind_group_layout,
+      .aabb_bind_group_layout = aabb_bind_group_layout,
+      .camera_bind_group_layout = camera_bind_group_layout,
   };
 }
 }  // namespace SF

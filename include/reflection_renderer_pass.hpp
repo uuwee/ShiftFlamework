@@ -43,10 +43,11 @@ TexturePass create_texture_pass(Graphics& graphics);
 
 struct PrimaryRayPass {
   wgpu::ComputePipeline compute_pipeline;
-  wgpu::BindGroupLayout bind_group_layout;
-  wgpu::TextureView output_texture_view;
+  wgpu::BindGroupLayout output_bind_group_layout;
+  wgpu::BindGroupLayout geometry_bind_group_layout;
+  wgpu::BindGroupLayout aabb_bind_group_layout;
+  wgpu::BindGroupLayout camera_bind_group_layout;
 };
 
-PrimaryRayPass create_primary_ray_pass(Graphics& graphics,
-                                       wgpu::Texture& output_texture);
+PrimaryRayPass create_primary_ray_pass(Graphics& graphics);
 }  // namespace SF

@@ -250,7 +250,7 @@ void ReflectionRenderer::init_aabb_data() {
   auto gizmo_constant_buffer_desc = wgpu::BufferDescriptor{
       .nextInChain = nullptr,
       .label = "gizmo constant buffer",
-      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
+      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform | wgpu::BufferUsage::Storage,
       .size = Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB)) *
               aabb_count,
       .mappedAtCreation = false,
@@ -607,7 +607,11 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
         command_encoder.BeginComputePass(&compute_pass_desc);
 
     compute_pass.SetPipeline(primary_ray_pass.compute_pipeline);
-    compute_pass.SetBindGroup(0, primary_ray_bind_group, 0, nullptr);
+    compute_pass.SetBindGroup(0, primary_ray_output_bind_group, 0, nullptr);
+    compute_pass.SetBindGroup(1, primary_ray_geometry_bind_group, 0,
+                              nullptr);
+    compute_pass.SetBindGroup(2, primary_ray_aabb_bind_group, 0, nullptr);
+    compute_pass.SetBindGroup(3, primary_ray_camera_bind_group, 0, nullptr);
 
     compute_pass.DispatchWorkgroups(100, 100, 1);
 
@@ -802,40 +806,89 @@ wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
     std::vector<EntityID> render_list) {
   update_unified_mesh_buffer();
   {
-    primary_ray_pass = create_primary_ray_pass(*Engine::get_module<Graphics>(),
-                                               primary_ray_output);
-    std::vector<wgpu::BindGroupEntry> primary_ray_bindings{
+    primary_ray_pass = create_primary_ray_pass(*Engine::get_module<Graphics>());
+    wgpu::TextureViewDescriptor texture_view_desc{
+        .nextInChain = nullptr,
+        .format = wgpu::TextureFormat::RGBA8Unorm,
+        .dimension = wgpu::TextureViewDimension::e2D,
+    };
+    primary_ray_output_view = primary_ray_output.CreateView(&texture_view_desc);
+
+    wgpu::BindGroupEntry output_binding{
+        .binding = 0,
+        .textureView = primary_ray_output_view,
+    };
+
+    std::vector<wgpu::BindGroupEntry> geometry_bindings{
         wgpu::BindGroupEntry{
             .binding = 0,
-            .textureView = primary_ray_pass.output_texture_view,
-        },
-        wgpu::BindGroupEntry{
-            .binding = 1,
             .buffer = unified_vertex_buffer,
             .offset = 0,
             .size = unified_vertex_buffer.GetSize(),
         },
         wgpu::BindGroupEntry{
-            .binding = 2,
+            .binding = 1,
             .buffer = unified_index_buffer,
             .offset = 0,
             .size = unified_index_buffer.GetSize(),
         },
         wgpu::BindGroupEntry{
-            .binding = 3,
+            .binding = 2,
             .buffer = instance_data_buffer,
             .offset = 0,
             .size = instance_data_list.size() * sizeof(InstanceData),
         },
     };
-    wgpu::BindGroupDescriptor primary_ray_bind_group_desc{
-        .layout = primary_ray_pass.bind_group_layout,
-        .entryCount = static_cast<uint32_t>(primary_ray_bindings.size()),
-        .entries = primary_ray_bindings.data(),
+
+    wgpu::BindGroupEntry aabb_binding{
+        .binding = 0,
+        .buffer = gizmo_constant_buffer,
+        .offset = 0,
+        .size = gizmo_constant_buffer.GetSize(),
     };
-    primary_ray_bind_group =
+
+    wgpu::BindGroupEntry camera_binding{
+        .binding = 0,
+        .buffer = camera_buffer,
+        .offset = 0,
+        .size = camera_buffer.GetSize(),
+    };
+
+    wgpu::BindGroupDescriptor output_bind_group_desc{
+        .layout = primary_ray_pass.output_bind_group_layout,
+        .entryCount = 1,
+        .entries = &output_binding,
+    };
+    primary_ray_output_bind_group =
         Engine::get_module<Graphics>()->get_device().CreateBindGroup(
-            &primary_ray_bind_group_desc);
+            &output_bind_group_desc);
+
+    wgpu::BindGroupDescriptor geometry_bind_group_desc{
+        .layout = primary_ray_pass.geometry_bind_group_layout,
+        .entryCount = static_cast<uint32_t>(geometry_bindings.size()),
+        .entries = geometry_bindings.data(),
+    };
+    primary_ray_geometry_bind_group =
+        Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+            &geometry_bind_group_desc);
+
+    wgpu::BindGroupDescriptor aabb_bind_group_desc{
+        .layout = aabb_pass.aabb_data_bind_group_layout,
+        .entryCount = 1,
+        .entries = &aabb_binding,
+    };
+    primary_ray_aabb_bind_group =
+        Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+            &aabb_bind_group_desc);
+
+    wgpu::BindGroupDescriptor camera_bind_group_desc{
+        .layout = primary_ray_pass.camera_bind_group_layout,
+        .entryCount = 1,
+        .entries = &camera_binding,
+    };
+    primary_ray_camera_bind_group =
+        Engine::get_module<Graphics>()->get_device().CreateBindGroup(
+            &camera_bind_group_desc);
   }
 
   // render bandle encoder
@@ -959,7 +1012,8 @@ void ReflectionRenderer::update_unified_mesh_buffer() {
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
         .label = "unified vertex buffer",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform | wgpu::BufferUsage::Storage,
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform |
+                 wgpu::BufferUsage::Storage,
         .size = vertex_offset,
         .mappedAtCreation = false};
 
@@ -970,7 +1024,8 @@ void ReflectionRenderer::update_unified_mesh_buffer() {
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
         .label = "unified index buffer",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform | wgpu::BufferUsage::Storage,
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform |
+                 wgpu::BufferUsage::Storage,
         .size = index_offset,
         .mappedAtCreation = false};
 
@@ -981,7 +1036,8 @@ void ReflectionRenderer::update_unified_mesh_buffer() {
     const wgpu::BufferDescriptor buffer_desc{
         .nextInChain = nullptr,
         .label = "unified instance buffer",
-        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform | wgpu::BufferUsage::Storage,
+        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform |
+                 wgpu::BufferUsage::Storage,
         .size = instance_data_list.size() * sizeof(InstanceData),
         .mappedAtCreation = false,
     };
