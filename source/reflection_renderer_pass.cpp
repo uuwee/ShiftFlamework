@@ -578,7 +578,28 @@ PrimaryRayPass create_primary_ray_pass(Graphics& graphics) {
 
     @compute @workgroup_size(1, 1)
     fn computeMain(@builtin(global_invocation_id) id: vec3<u32>) {
-        textureStore(output_texture, id.xy, vec4f(f32(id.x) / 100.0, 0.0, f32(id.y) / 100.0, 1.0));
+        var dist: f32 = 10000.0;
+        for (var i: i32 = 0; i < 100; i++) {
+            var aabb: AABB = aabb_buffer[i];
+            var center: vec3f = (aabb.max + aabb.min) / 2.0;
+            var scale: vec3f = (aabb.max - aabb.min) / 2.0;
+            var ray_origin: vec3f = vec3f(camera[3].xyz);
+            var ray_dir: vec3f = normalize((camera * vec4f(vec2f(id.xy), 0.0, 1.0)).xyz);
+            var tmin: f32 = -10000.0;
+            var tmax: f32 = 10000.0;
+            for (var j: i32 = 0; j < 3; j++) {
+                var t0: f32 = (center[j] - ray_origin[j] - scale[j]) / ray_dir[j];
+                var t1: f32 = (center[j] - ray_origin[j] + scale[j]) / ray_dir[j];
+                tmin = max(tmin, min(t0, t1));
+                tmax = min(tmax, max(t0, t1));
+            }
+            if (tmax < tmin) {
+                continue;
+            }
+            dist = min(dist, tmin);
+        }
+        // textureStore(output_texture, id.xy, vec4f(f32(id.x) / 100.0, 0.0, f32(id.y) / 100.0, 1.0));
+        textureStore(output_texture, id.xy, vec4f(dist / 100.0, 0.0, 0.0, 1.0));
     }
   )";
 

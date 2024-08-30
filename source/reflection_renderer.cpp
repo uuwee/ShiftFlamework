@@ -250,7 +250,8 @@ void ReflectionRenderer::init_aabb_data() {
   auto gizmo_constant_buffer_desc = wgpu::BufferDescriptor{
       .nextInChain = nullptr,
       .label = "gizmo constant buffer",
-      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform | wgpu::BufferUsage::Storage,
+      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform |
+               wgpu::BufferUsage::Storage,
       .size = Engine::get_module<Graphics>()->get_buffer_stride(sizeof(AABB)) *
               aabb_count,
       .mappedAtCreation = false,
@@ -332,31 +333,35 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
 
     // load
     {
-      std::queue<std::function<void()>> load_tasks;
-      std::mutex task_mutex;
+      //   std::queue<std::function<void()>> load_tasks;
+      //   std::mutex task_mutex;
 
+      //   for (auto& texture_path : added_textures) {
+      //     load_tasks.push([this, texture_path]() {
+      //     load_texture(texture_path); });
+      //   }
+
+      //   std::vector<std::thread> load_threads;
+      //   for (int i = 0; i < std::thread::hardware_concurrency(); i++) {
+      //     load_threads.push_back(std::thread([&load_tasks, &task_mutex]() {
+      //       while (true) {
+      //         task_mutex.lock();
+      //         if (load_tasks.empty()) {
+      //           task_mutex.unlock();
+      //           break;
+      //         }
+      //         auto task = load_tasks.front();
+      //         load_tasks.pop();
+      //         task_mutex.unlock();
+      //         task();
+      //       }
+      //     }));
+      //   }
+      //   for (auto& thread : load_threads) {
+      //     thread.join();
+      //   }
       for (auto& texture_path : added_textures) {
-        load_tasks.push([this, texture_path]() { load_texture(texture_path); });
-      }
-
-      std::vector<std::thread> load_threads;
-      for (int i = 0; i < std::thread::hardware_concurrency(); i++) {
-        load_threads.push_back(std::thread([&load_tasks, &task_mutex]() {
-          while (true) {
-            task_mutex.lock();
-            if (load_tasks.empty()) {
-              task_mutex.unlock();
-              break;
-            }
-            auto task = load_tasks.front();
-            load_tasks.pop();
-            task_mutex.unlock();
-            task();
-          }
-        }));
-      }
-      for (auto& thread : load_threads) {
-        thread.join();
+        load_texture(texture_path);
       }
     }
 
@@ -608,8 +613,7 @@ void ReflectionRenderer::render(wgpu::TextureView render_target) {
 
     compute_pass.SetPipeline(primary_ray_pass.compute_pipeline);
     compute_pass.SetBindGroup(0, primary_ray_output_bind_group, 0, nullptr);
-    compute_pass.SetBindGroup(1, primary_ray_geometry_bind_group, 0,
-                              nullptr);
+    compute_pass.SetBindGroup(1, primary_ray_geometry_bind_group, 0, nullptr);
     compute_pass.SetBindGroup(2, primary_ray_aabb_bind_group, 0, nullptr);
     compute_pass.SetBindGroup(3, primary_ray_camera_bind_group, 0, nullptr);
 
