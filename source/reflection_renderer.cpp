@@ -873,7 +873,7 @@ wgpu::RenderBundle ReflectionRenderer::create_diffuse_pass_render_bundle(
             &geometry_bind_group_desc);
 
     wgpu::BindGroupDescriptor aabb_bind_group_desc{
-        .layout = aabb_pass.aabb_data_bind_group_layout,
+        .layout = primary_ray_pass.aabb_bind_group_layout,
         .entryCount = 1,
         .entries = &aabb_binding,
     };
